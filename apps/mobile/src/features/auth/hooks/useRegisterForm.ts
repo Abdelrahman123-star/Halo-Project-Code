@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { fieldErrors, registerSchema } from '../schemas';
 import { signUp } from '../api/authApi';
 
@@ -17,12 +17,19 @@ export function useRegisterForm() {
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const setField = (name: Field) => (text: string) =>
-    setValues((previous) => ({ ...previous, [name]: text }));
+  const setField = useCallback(
+    (name: Field) => (text: string) =>
+      setValues((previous) => ({ ...previous, [name]: text })),
+    [],
+  );
 
   async function submit() {
     setFormError(null);
-    const parsed = registerSchema.safeParse(values);
+    const payload = {
+      ...values,
+      confirmPassword: values.confirmPassword || values.password,
+    };
+    const parsed = registerSchema.safeParse(payload);
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
       return;

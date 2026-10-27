@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { fieldErrors, loginSchema } from '../schemas';
 import { signIn } from '../api/authApi';
 
@@ -9,8 +9,11 @@ export function useLoginForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const setField = (name: 'email' | 'password') => (text: string) =>
-    setValues((previous) => ({ ...previous, [name]: text }));
+  const setField = useCallback(
+    (name: 'email' | 'password') => (text: string) =>
+      setValues((previous) => ({ ...previous, [name]: text })),
+    [],
+  );
 
   async function submit() {
     setFormError(null);

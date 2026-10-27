@@ -13,7 +13,7 @@ function RootStack() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={colors.text} />
+        <ActivityIndicator color={colors.lavender} />
       </View>
     );
   }
@@ -22,7 +22,7 @@ function RootStack() {
   // and automatically redirects using redirectTo when accessing an excluded route.
   return (
     <Stack
-      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.midnight } }}
     >
       <Stack.Protected guard={!session} redirectTo="/(app)">
         <Stack.Screen name="(auth)" />
@@ -36,7 +36,7 @@ function RootStack() {
 
 function MissingConfig() {
   return (
-    <Screen>
+    <Screen variant="midnight">
       <Text style={styles.title}>Setup needed</Text>
       <Text style={styles.body}>
         Supabase is not configured. Copy apps/mobile/.env.example to apps/mobile/.env, fill in
@@ -50,7 +50,7 @@ function MissingConfig() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       {isSupabaseConfigured ? (
         <SessionProvider>
           <RootStack />
