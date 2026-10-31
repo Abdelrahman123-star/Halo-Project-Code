@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +7,7 @@ import { SessionProvider, useSession } from '@/features/auth/hooks/useSession';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 import { Screen } from '@/shared/ui/Screen';
 import { colors, fontSize, spacing } from '@/shared/theme/tokens';
+import { LaunchScreen } from '@/features/launch/components/LaunchScreen';
 
 function RootStack() {
   const { session, loading } = useSession();
@@ -48,15 +50,27 @@ function MissingConfig() {
 }
 
 export default function RootLayout() {
+  // showLaunch stays true until the LaunchScreen animation finishes.
+  // The navigator still mounts underneath so session/routing resolves
+  // in parallel — no extra delay when the launch screen fades out.
+  const [showLaunch, setShowLaunch] = useState(true);
+
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      {/*
+       * StatusBar style switches from light (on the dark midnight nav)
+       * to dark while the pastel launch screen is visible, then back.
+       */}
+      <StatusBar style={showLaunch ? 'dark' : 'light'} />
       {isSupabaseConfigured ? (
         <SessionProvider>
           <RootStack />
         </SessionProvider>
       ) : (
         <MissingConfig />
+      )}
+      {showLaunch && (
+        <LaunchScreen onFinished={() => setShowLaunch(false)} />
       )}
     </SafeAreaProvider>
   );
