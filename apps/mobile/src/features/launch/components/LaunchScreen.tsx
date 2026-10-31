@@ -9,6 +9,13 @@
  *   600–1300 ms  halo glow expands + logo appears
  *   1300–2000 ms hold
  *   2000–2600 ms everything fades out → onFinished()
+ *
+ * Fix notes:
+ * - root always has the cream background colour so there is never a black
+ *   flash before the gradient fades in.
+ * - LinearGradient is always mounted at full opacity; we animate a plain
+ *   View overlay on top that fades from cream→transparent, which avoids
+ *   the useNativeDriver + non-Image-child limitation on Android.
  */
 import { useEffect, useRef } from 'react';
 import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
@@ -20,6 +27,8 @@ const { width: SCREEN_W } = Dimensions.get('window');
 // Soft pastel palette: blush pink → lavender → warm cream
 const PASTEL = {
   bgGradient: ['#F7E8EF', '#EDE4F5', '#FAF3EC'] as const,
+  // Starting colour of the fade-in overlay (matches the gradient's avg tone)
+  fadeOverlay: '#F4EDF5',
   logoText: '#C5A8C8',
   logoRing: '#D4B8D8',
 };
@@ -29,18 +38,19 @@ type Props = {
 };
 
 export function LaunchScreen({ onFinished }: Props) {
-  const bgOpacity     = useRef(new Animated.Value(0)).current;
-  const glowScale     = useRef(new Animated.Value(0.4)).current;
-  const glowOpacity   = useRef(new Animated.Value(0)).current;
-  const logoOpacity   = useRef(new Animated.Value(0)).current;
-  const logoScale     = useRef(new Animated.Value(0.82)).current;
-  const masterOpacity = useRef(new Animated.Value(1)).current;
+  // Overlay fades OUT (1→0) to reveal the gradient beneath
+  const overlayOpacity = useRef(new Animated.Value(1)).current;
+  const glowScale      = useRef(new Animated.Value(0.4)).current;
+  const glowOpacity    = useRef(new Animated.Value(0)).current;
+  const logoOpacity    = useRef(new Animated.Value(0)).current;
+  const logoScale      = useRef(new Animated.Value(0.82)).current;
+  const masterOpacity  = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.sequence([
-      // Phase 1: pastel background fades in
-      Animated.timing(bgOpacity, {
-        toValue: 1,
+      // Phase 1: reveal the pastel gradient by fading the overlay away
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
         duration: 600,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
@@ -74,7 +84,7 @@ export function LaunchScreen({ onFinished }: Props) {
       ]),
       // Phase 3: hold
       Animated.delay(700),
-      // Phase 4: gentle fade-out
+      // Phase 4: gentle fade-out of entire screen
       Animated.timing(masterOpacity, {
         toValue: 0,
         duration: 600,
@@ -82,19 +92,29 @@ export function LaunchScreen({ onFinished }: Props) {
         useNativeDriver: true,
       }),
     ]).start(() => onFinished());
-  }, [bgOpacity, glowOpacity, glowScale, logoOpacity, logoScale, masterOpacity, onFinished]);
+  }, [overlayOpacity, glowOpacity, glowScale, logoOpacity, logoScale, masterOpacity, onFinished]);
 
   return (
     <Animated.View style={[styles.root, { opacity: masterOpacity }]}>
-      {/* Pastel gradient background */}
-      <Animated.View style={[StyleSheet.absoluteFill, { opacity: bgOpacity }]}>
-        <LinearGradient
-          colors={PASTEL.bgGradient}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.85, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
+      {/* Pastel gradient — always mounted, full opacity, no animation on it directly */}
+      <LinearGradient
+        colors={PASTEL.bgGradient}
+        start={{ x: 0.15, y: 0 }}
+        end={{ x: 0.85, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/*
+       * Plain-colour overlay that starts opaque and fades out,
+       * "revealing" the gradient underneath. This avoids the
+       * useNativeDriver limitation with LinearGradient children.
+       */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: PASTEL.fadeOverlay, opacity: overlayOpacity },
+        ]}
+      />
 
       {/* Dreamy radial halo glow */}
       <Animated.View
@@ -139,6 +159,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9999,
+    // Solid fallback so there is NEVER a black/transparent flash
+    backgroundColor: '#F4EDF5',
   },
   glowContainer: {
     position: 'absolute',
@@ -152,24 +174,24 @@ const styles = StyleSheet.create({
     width: GLOW_OUTER_SIZE,
     height: GLOW_OUTER_SIZE,
     borderRadius: GLOW_OUTER_SIZE / 2,
-    backgroundColor: 'rgba(220, 190, 230, 0.16)',
+    backgroundColor: 'rgba(220, 190, 230, 0.22)',
     shadowColor: '#D4B0E0',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.55,
     shadowRadius: 65,
-    elevation: 0,
+    elevation: 8,
   },
   glowInner: {
     position: 'absolute',
     width: GLOW_INNER_SIZE,
     height: GLOW_INNER_SIZE,
     borderRadius: GLOW_INNER_SIZE / 2,
-    backgroundColor: 'rgba(230, 200, 240, 0.28)',
+    backgroundColor: 'rgba(230, 200, 240, 0.35)',
     shadowColor: '#C8A0D8',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.65,
+    shadowOpacity: 0.7,
     shadowRadius: 44,
-    elevation: 0,
+    elevation: 12,
   },
   logoContainer: {
     alignItems: 'center',
@@ -180,7 +202,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
-    elevation: 0,
+    elevation: 4,
   },
   wordmark: {
     fontSize: 26,
@@ -192,7 +214,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.45,
     shadowRadius: 12,
     elevation: 0,
-    // Compensate visual shift from wide letterSpacing so it looks centred
+    // Compensate optical shift from wide letterSpacing
     marginLeft: 14,
   },
 });
