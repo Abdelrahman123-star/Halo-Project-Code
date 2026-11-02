@@ -18,19 +18,15 @@
  *   the useNativeDriver + non-Image-child limitation on Android.
  */
 import { useEffect, useRef } from 'react';
-import { Animated, Dimensions, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Easing, Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle } from 'react-native-svg';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
 // Soft pastel palette: blush pink → lavender → warm cream
 const PASTEL = {
   bgGradient: ['#F7E8EF', '#EDE4F5', '#FAF3EC'] as const,
-  // Starting colour of the fade-in overlay (matches the gradient's avg tone)
   fadeOverlay: '#F4EDF5',
-  logoText: '#C5A8C8',
-  logoRing: '#D4B8D8',
 };
 
 type Props = {
@@ -127,24 +123,18 @@ export function LaunchScreen({ onFinished }: Props) {
         <View style={styles.glowInner} />
       </Animated.View>
 
-      {/* HALO logo: concentric ring mark + wordmark */}
+      {/* HALO logo image */}
       <Animated.View
         style={[
           styles.logoContainer,
           { opacity: logoOpacity, transform: [{ scale: logoScale }] },
         ]}
       >
-        {/* Ring mark: three concentric circles */}
-        <View style={styles.markWrapper}>
-          <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
-            <Circle cx={32} cy={32} r={29} stroke={PASTEL.logoRing} strokeWidth={1.6} strokeOpacity={0.85} />
-            <Circle cx={32} cy={32} r={18} stroke={PASTEL.logoRing} strokeWidth={1.3} strokeOpacity={0.6} />
-            <Circle cx={32} cy={32} r={6}  stroke={PASTEL.logoRing} strokeWidth={1.1} strokeOpacity={0.45} />
-          </Svg>
-        </View>
-
-        {/* Wordmark */}
-        <Animated.Text style={styles.wordmark}>HALO</Animated.Text>
+        <Image
+          source={require('../../../../assets/halo-logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
       </Animated.View>
     </Animated.View>
   );
@@ -155,11 +145,11 @@ const GLOW_INNER_SIZE = SCREEN_W * 0.50;
 
 const styles = StyleSheet.create({
   root: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 9999,
-    // Solid fallback so there is NEVER a black/transparent flash
+    // Solid fallback colour — visible for the first frame before the
+    // gradient renders, preventing any white/black flash.
     backgroundColor: '#F4EDF5',
   },
   glowContainer: {
@@ -195,26 +185,15 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    gap: 20,
+    justifyContent: 'center',
   },
-  markWrapper: {
-    shadowColor: '#C0A0D0',
+  logoImage: {
+    width: SCREEN_W * 0.62,
+    height: SCREEN_W * 0.62,
+    // The PNG has a white background — drop-shadow glow via shadow props
+    shadowColor: '#D4B0E0',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 4,
-  },
-  wordmark: {
-    fontSize: 26,
-    fontWeight: '300',
-    letterSpacing: 14,
-    color: PASTEL.logoText,
-    shadowColor: '#C8A0D8',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 0,
-    // Compensate optical shift from wide letterSpacing
-    marginLeft: 14,
+    shadowRadius: 30,
   },
 });

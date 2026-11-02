@@ -50,27 +50,29 @@ function MissingConfig() {
 }
 
 export default function RootLayout() {
-  // showLaunch stays true until the LaunchScreen animation finishes.
-  // The navigator still mounts underneath so session/routing resolves
-  // in parallel — no extra delay when the launch screen fades out.
+  // Render ONLY the launch screen until the animation finishes, then
+  // swap to the real navigator. This avoids all z-index / stacking-context
+  // fights between the absolute-positioned launch screen and the navigator.
   const [showLaunch, setShowLaunch] = useState(true);
+
+  if (showLaunch) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <LaunchScreen onFinished={() => setShowLaunch(false)} />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
-      {/*
-       * StatusBar style switches from light (on the dark midnight nav)
-       * to dark while the pastel launch screen is visible, then back.
-       */}
-      <StatusBar style={showLaunch ? 'dark' : 'light'} />
+      <StatusBar style="light" />
       {isSupabaseConfigured ? (
         <SessionProvider>
           <RootStack />
         </SessionProvider>
       ) : (
         <MissingConfig />
-      )}
-      {showLaunch && (
-        <LaunchScreen onFinished={() => setShowLaunch(false)} />
       )}
     </SafeAreaProvider>
   );

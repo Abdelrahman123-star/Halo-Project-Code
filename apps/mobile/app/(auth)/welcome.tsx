@@ -41,12 +41,12 @@ export default function WelcomeScreen() {
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 0.15,
-        duration: 100,
+        duration: 800,
         useNativeDriver: true,
       }),
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 200,
+        duration: 1000,
         useNativeDriver: true,
       }),
     ]).start();
