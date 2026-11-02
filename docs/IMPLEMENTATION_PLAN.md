@@ -1,19 +1,33 @@
 # Active Implementation Plan
 
-**Current task:** Fix route redirection for unauthenticated users and sanitize Supabase base URL.
+**Current task:** Implement HALO — Futuristic, Peaceful, Immersive Mobile UI/UX Design System & Screens.
 
-## Problem Analysis
-1. **Unmatched route at `halo:///`:**
-   In `app/_layout.tsx`, `<Stack.Protected guard={Boolean(session)}>` hid `(app)` without specifying a `redirectTo` prop. When an unauthenticated user launched the app at `/`, Expo Router had no accessible route matching `/` (since `(app)/index.tsx` was excluded and `(auth)` only exposed `/login` and `/register`), resulting in an Unmatched Route 404 error screen.
-2. **"Something went wrong" on signup/login with 404 in Supabase edge logs:**
-   In `apps/mobile/.env`, `EXPO_PUBLIC_SUPABASE_URL` was set to `https://tjfbytzzchatzfwteyls.supabase.co/rest/v1/`. `@supabase/supabase-js` expects the project root URL and appends `/auth/v1/...` internally, causing calls to hit `/rest/v1/auth/v1/signup` (which does not exist, returning HTTP 404).
+## Objective
+Design and implement the complete visual identity and screen experience for HALO:
+1. **Design System & Architectural Theme Tokens**: Establish the warm ivory, midnight blue-black, soft cream, muted lavender, and luminous halo lighting palette.
+2. **First-Open Welcome Experience (`welcome.tsx`)**: Atmospheric apartment entrance, ambient door lighting, logo with halo, peaceful skippable entrance animation, first-launch tracking via AsyncStorage.
+3. **Login & Registration Screens (`login.tsx`, `register.tsx`)**: Architectural theme, password visibility toggle, subtle halo outline on focus, real Supabase auth integration with validation.
+4. **The Signature Home Screen (`(app)/index.tsx`)**: Futuristic apartment entrance door with subtle ambient light, floor reflections, and digital twin avatar:
+   - First-time avatar state: Stylized silhouette with floating pulsing luminous '+' invitation button and CTA to create digital twin.
+   - Configured avatar state: Display personalized avatar with outfit and contextual actions.
+   - Environmental widgets: Wardrobe shortcut, add clothing action, profile avatar header.
+5. **Avatar Creation Flow (`(app)/create-avatar.tsx`)**: Expanding halo transition, front/back/face photo guide, connection to scan data pipeline.
+6. **Navigation & Main App Screens (`(app)/_layout.tsx`, `wardrobe.tsx`, `avatar.tsx`, `profile.tsx`)**:
+   - Floating luxury bottom navigation bar.
+   - Wardrobe screen: digital closet, category filters, garment cards, add garment flow.
+   - Avatar Studio screen: 3D studio viewport placeholder ready for GLB/R3F per ADR-0002, appearance customization controls (skin tone, hair, proportions).
+   - Profile screen: account details, security/privacy, logout.
+7. **Quality & Honesty**: All files TypeScript strict, modular (<250 lines), zero fabricated AI outputs, unit tests updated & passing, bundle compiles.
 
-## Solution Steps
+## Plan Steps
 | # | Step | Files | Verification |
 |---|---|---|---|
-| 1 | Add `redirectTo` to `Stack.Protected` in `app/_layout.tsx` and specify `initialRouteName` in `app/(auth)/_layout.tsx` | `apps/mobile/app/_layout.tsx`, `apps/mobile/app/(auth)/_layout.tsx` | `npx expo export --platform android` & route test |
-| 2 | Clean and sanitize `EXPO_PUBLIC_SUPABASE_URL` defensively in code (strip trailing `/rest/v1/` and slashes) | `apps/mobile/src/shared/lib/supabase.ts` | Unit tests for URL sanitizer |
-| 3 | Update `apps/mobile/.env` to the canonical project base URL | `apps/mobile/.env` | Curl/API check |
-| 4 | Surface raw error details in `__DEV__` mode in `authApi.ts` for actionable debugging | `apps/mobile/src/features/auth/api/authApi.ts` | Unit tests & code review |
-| 5 | Run typecheck, unit tests, and bundle verification | `apps/mobile` | `npm run typecheck`, `npm test`, `npx expo export` |
-| 6 | Update documentation (`PROGRESS.md`, `CHANGELOG.md`, `README.md`) | `docs/`, root | Docs accurately reflect fixes |
+| 1 | Upgrade theme tokens (`tokens.ts`) with official HALO palette, halos, and architectural shadows/lighting | `src/shared/theme/tokens.ts` | Typecheck |
+| 2 | Build core UI components: `HaloBadge`, `HaloDoorScene`, `HaloButton`, `HaloTextField`, `FloatingNavBar` | `src/shared/ui/` | Unit tests / Typecheck |
+| 3 | Implement First-Open Welcome Screen with entrance animation and AsyncStorage flag | `app/(auth)/welcome.tsx`, `app/(auth)/index.tsx` | Verification on route redirect |
+| 4 | Upgrade Login & Register screens with password toggle, halo focus, and real auth | `app/(auth)/login.tsx`, `app/(auth)/register.tsx` | Unit test suite |
+| 5 | Build the Apartment Front Door Home Screen with avatar silhouette & pulsing '+' button | `app/(app)/index.tsx`, `src/features/avatar/` | Render check & unit test |
+| 6 | Build Avatar Creation modal/screen with scan guide | `app/(app)/create-avatar.tsx` | Typecheck & navigation |
+| 7 | Implement Wardrobe, Avatar Studio, and Profile screens with floating bottom navigation | `app/(app)/_layout.tsx`, `wardrobe.tsx`, `avatar.tsx`, `profile.tsx` | Typecheck & expo export |
+| 8 | Run full test suite, verify compilation (`npx expo export`), document progress in docs | `docs/PROGRESS.md`, `CHANGELOG.md` | `npm test`, `npx expo export` |
+
