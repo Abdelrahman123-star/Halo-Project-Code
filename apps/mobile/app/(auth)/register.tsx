@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -8,17 +10,18 @@ import {
   View,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import {
   AuthButton,
+  AuthCard,
   AuthInput,
+  AuthTabBar,
   authTheme,
   HairlineDivider,
-  HaloMark,
   SocialButtons,
 } from '@/features/auth/components/AuthComponents';
+import { PastelBackground } from '@/features/auth/components/PastelBackground';
 import { useRegisterForm } from '@/features/auth/hooks/useRegisterForm';
 import { Banner } from '@/shared/ui/Banner';
 
@@ -27,38 +30,68 @@ export default function RegisterScreen() {
   const { values, errors, formError, confirmationSent, loading, setField, submit } =
     useRegisterForm();
 
+  // Confirm-password is managed locally — the hook validates the rest.
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmError, setConfirmError]       = useState('');
+
+  function handleSubmit() {
+    if (values.password && confirmPassword !== values.password) {
+      setConfirmError('Passwords do not match');
+      return;
+    }
+    setConfirmError('');
+    submit();
+  }
+
+  // ─── "You're all set!" success screen ────────────────────────────────────────
   if (confirmationSent) {
     return (
-      <LinearGradient
-        colors={authTheme.bgGradient}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={styles.gradientContainer}
-      >
+      <View style={styles.root}>
+        <PastelBackground />
         <SafeAreaView style={styles.safeArea}>
-          <View style={styles.confirmationContent}>
-            <HaloMark />
-            <Text style={styles.authTitle}>Check your email</Text>
-            <Banner
-              tone="success"
-              message={`We sent a confirmation link to ${values.email.trim()}. Open it, then log in to step into your space.`}
+          <View style={styles.successContent}>
+            {/* Logo */}
+            <Image
+              source={require('../../assets/halo-logo.png')}
+              style={styles.successLogo}
+              resizeMode="contain"
             />
-            <Link href="/(auth)/login" style={styles.footerLink}>
-              Back to log in
-            </Link>
+
+            {/* Teal check circle */}
+            <View style={styles.checkCircle}>
+              <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M20 6L9 17l-5-5"
+                  stroke="#FFFFFF"
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </View>
+
+            <Text style={styles.successTitle}>You're all set!</Text>
+            <Text style={styles.successSubtitle}>
+              Welcome to your personalized{'\n'}HALO experience.
+            </Text>
+
+            <View style={styles.successBtnWrapper}>
+              <AuthButton
+                label="Continue"
+                onPress={() => router.replace('/(auth)/login')}
+              />
+            </View>
           </View>
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     );
   }
 
+  // ─── Registration form ────────────────────────────────────────────────────────
   return (
-    <LinearGradient
-      colors={authTheme.bgGradient}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
-      style={styles.gradientContainer}
-    >
+    <View style={styles.root}>
+      <PastelBackground />
+
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.keyboardView}
@@ -70,99 +103,101 @@ export default function RegisterScreen() {
             keyboardDismissMode="none"
             showsVerticalScrollIndicator={false}
           >
-            {/* Header */}
-            <View style={styles.authHeader}>
-              <View style={styles.topNavRow}>
-                <Pressable
-                  onPress={() => router.replace('/(auth)/welcome')}
-                  style={styles.backBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M15 18l-6-6 6-6"
-                      stroke={authTheme.textMain}
-                      strokeWidth={2.4}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                </Pressable>
-                <HaloMark />
-                <View style={styles.backBtnSpacer} />
+            {/* HALO logo */}
+            <View style={styles.logoArea}>
+              <Image
+                source={require('../../assets/halo-logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+
+            <AuthCard>
+              {/* Tab switcher — Register is active */}
+              <AuthTabBar
+                activeTab="register"
+                onTabChange={(tab) => {
+                  if (tab === 'login') router.replace('/(auth)/login');
+                }}
+              />
+
+              {formError ? <Banner tone="error" message={formError} /> : null}
+
+              {/* Registration inputs */}
+              <View style={styles.form}>
+                <AuthInput
+                  iconType="user"
+                  placeholder="Full Name"
+                  value={values.displayName}
+                  onChangeText={setField('displayName')}
+                  error={errors.displayName}
+                  autoComplete="name"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+                <AuthInput
+                  iconType="mail"
+                  placeholder="Email Address"
+                  value={values.email}
+                  onChangeText={setField('email')}
+                  error={errors.email}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+                <AuthInput
+                  iconType="lock"
+                  placeholder="Password"
+                  value={values.password}
+                  onChangeText={setField('password')}
+                  error={errors.password}
+                  isPassword
+                  autoComplete="new-password"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+                <AuthInput
+                  iconType="lock"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    if (confirmError) setConfirmError('');
+                  }}
+                  error={confirmError}
+                  isPassword
+                  autoComplete="new-password"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmit}
+                />
+
+                <AuthButton label="Create Account" onPress={handleSubmit} loading={loading} />
               </View>
-              <Text style={styles.authTitle}>Welcome to HALO.</Text>
-              <Text style={styles.authSubtitle}>
-                Create your account and meet your smartest reflection yet.
-              </Text>
-            </View>
 
-            {formError ? <Banner tone="error" message={formError} /> : null}
+              <HairlineDivider />
+              <SocialButtons />
 
-            {/* Register Form */}
-            <View style={styles.authForm}>
-              <AuthInput
-                iconType="user"
-                placeholder="Full name"
-                value={values.displayName}
-                onChangeText={setField('displayName')}
-                error={errors.displayName}
-                autoComplete="name"
-                returnKeyType="next"
-                blurOnSubmit={false}
-              />
+              {/* Switch to Login */}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <Link href="/(auth)/login" style={styles.footerLink}>Log In</Link>
+              </View>
+            </AuthCard>
 
-              <AuthInput
-                iconType="mail"
-                placeholder="Email address"
-                value={values.email}
-                onChangeText={setField('email')}
-                error={errors.email}
-                autoCapitalize="none"
-                autoComplete="email"
-                keyboardType="email-address"
-                returnKeyType="next"
-                blurOnSubmit={false}
-              />
-
-              <AuthInput
-                iconType="lock"
-                placeholder="Password"
-                value={values.password}
-                onChangeText={setField('password')}
-                error={errors.password}
-                isPassword
-                autoComplete="new-password"
-                returnKeyType="done"
-                onSubmitEditing={submit}
-              />
-
-              <AuthButton label="Create account" onPress={submit} loading={loading} />
-            </View>
-
-            {/* Hairline Divider */}
-            <HairlineDivider />
-
-            {/* Social Auth */}
-            <SocialButtons />
-
-            {/* Footer */}
-            <View style={styles.authFooter}>
-              <Text style={styles.footerPrompt}>Already have an account? </Text>
-              <Link href="/(auth)/login" style={styles.footerLink}>
-                Log in
-              </Link>
-            </View>
+            <View style={styles.bottomSpacer} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientContainer: {
+  root: {
     flex: 1,
+    backgroundColor: '#F5F0FC',
   },
   safeArea: {
     flex: 1,
@@ -172,76 +207,79 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 36,
-    paddingBottom: 28,
-    justifyContent: 'space-between',
-    maxWidth: 440,
-    width: '100%',
-    alignSelf: 'center',
-    gap: 16,
-  },
-  confirmationContent: {
-    flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    gap: 16,
+    paddingVertical: 24,
   },
-  authHeader: {
+  logoArea: {
     alignItems: 'center',
+    marginBottom: 24,
   },
-  topNavRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  logoImage: {
+    width: 160,
+    height: 80,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  backBtnSpacer: {
-    width: 36,
-  },
-  authTitle: {
-    fontSize: 27,
-    fontWeight: '700',
-    color: authTheme.textMain,
-    marginTop: 16,
-    letterSpacing: -0.3,
-  },
-  authSubtitle: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: authTheme.textMuted,
-    textAlign: 'center',
-    maxWidth: 250,
-    marginTop: 8,
-  },
-  authForm: {
+  form: {
     gap: 12,
-    marginTop: 8,
   },
-  authFooter: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 4,
   },
-  footerPrompt: {
-    fontSize: 12,
+  footerText: {
+    fontSize: 13,
     color: authTheme.textMuted,
   },
   footerLink: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: authTheme.textMain,
-    textDecorationLine: 'underline',
+  },
+  bottomSpacer: {
+    height: 24,
+  },
+
+  // ── Success screen ──
+  successContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 20,
+  },
+  successLogo: {
+    width: 160,
+    height: 80,
+    marginBottom: 8,
+  },
+  checkCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#6DCAAA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6DCAAA',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  successTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: authTheme.textMain,
+    letterSpacing: -0.3,
+  },
+  successSubtitle: {
+    fontSize: 15,
+    color: authTheme.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  successBtnWrapper: {
+    width: '100%',
+    marginTop: 8,
   },
 });
