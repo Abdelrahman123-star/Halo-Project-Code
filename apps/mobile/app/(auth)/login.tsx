@@ -7,10 +7,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 import {
   AuthButton,
   AuthInput,
@@ -23,7 +22,6 @@ import { useLoginForm } from '@/features/auth/hooks/useLoginForm';
 import { Banner } from '@/shared/ui/Banner';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const { values, errors, formError, loading, setField, submit } = useLoginForm();
 
   return (
@@ -46,25 +44,7 @@ export default function LoginScreen() {
           >
             {/* Header */}
             <View style={styles.authHeader}>
-              <View style={styles.topNavRow}>
-                <Pressable
-                  onPress={() => router.replace('/(auth)/welcome')}
-                  style={styles.backBtn}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-                    <Path
-                      d="M15 18l-6-6 6-6"
-                      stroke={authTheme.textMain}
-                      strokeWidth={2.4}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </Svg>
-                </Pressable>
-                <HaloMark />
-                <View style={styles.backBtnSpacer} />
-              </View>
+              <HaloMark />
               <Text style={styles.authTitle}>Hello again.</Text>
               <Text style={styles.authSubtitle}>
                 Your mirror remembered everything — just confirm it's you.
@@ -94,8 +74,8 @@ export default function LoginScreen() {
                 value={values.password}
                 onChangeText={setField('password')}
                 error={errors.password}
+                secureTextEntry
                 isPassword
-                autoComplete="password"
                 returnKeyType="done"
                 onSubmitEditing={submit}
               />
@@ -106,14 +86,16 @@ export default function LoginScreen() {
             {/* Hairline Divider */}
             <HairlineDivider />
 
-            {/* Social Auth */}
+            {/* Social Authentication */}
             <SocialButtons />
 
             {/* Footer */}
             <View style={styles.authFooter}>
               <Text style={styles.footerPrompt}>Don't have an account? </Text>
-              <Link href="/(auth)/register" style={styles.footerLink}>
-                Sign up
+              <Link href="/(auth)/register" asChild>
+                <Pressable>
+                  <Text style={styles.footerLink}>Sign up</Text>
+                </Pressable>
               </Link>
             </View>
           </ScrollView>
@@ -146,24 +128,7 @@ const styles = StyleSheet.create({
   },
   authHeader: {
     alignItems: 'center',
-  },
-  topNavRow: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  backBtnSpacer: {
-    width: 36,
+    textAlign: 'center',
   },
   authTitle: {
     fontSize: 27,
