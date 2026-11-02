@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authTheme, HaloMark } from '@/features/auth/components/AuthComponents';
+import { useAuthTransition } from '@/features/auth/hooks/useAuthTransition';
 import {
   AvatarVisual,
   MirrorVisual,
