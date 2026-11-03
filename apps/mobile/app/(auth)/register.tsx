@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import {
   AuthButton,
   AuthCard,
@@ -34,6 +35,43 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [confirmError, setConfirmError]       = useState('');
 
+  // Staggered entrance animators
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  const itemAnim1 = useRef(new Animated.Value(0)).current;
+  const itemAnim2 = useRef(new Animated.Value(0)).current;
+  const itemAnim3 = useRef(new Animated.Value(0)).current;
+  const itemAnim4 = useRef(new Animated.Value(0)).current;
+  const itemAnim5 = useRef(new Animated.Value(0)).current;
+  const itemAnim6 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Graceful initial entrance for the logo and card
+    Animated.parallel([
+      Animated.timing(logoAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(cardAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 45,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Subtle staggered cascade for form inputs
+    Animated.stagger(50, [
+      Animated.spring(itemAnim1, { toValue: 1, friction: 8, tension: 45, useNativeDriver: true }),
+      Animated.spring(itemAnim2, { toValue: 1, friction: 8, tension: 45, useNativeDriver: true }),
+      Animated.spring(itemAnim3, { toValue: 1, friction: 8, tension: 45, useNativeDriver: true }),
+      Animated.spring(itemAnim4, { toValue: 1, friction: 8, tension: 45, useNativeDriver: true }),
+      Animated.spring(itemAnim5, { toValue: 1, friction: 8, tension: 45, useNativeDriver: true }),
+      Animated.spring(itemAnim6, { toValue: 1, friction: 8, tension: 45, useNativeDriver: true }),
+    ]).start();
+  }, [cardAnim, itemAnim1, itemAnim2, itemAnim3, itemAnim4, itemAnim5, itemAnim6, logoAnim]);
+
   function handleSubmit() {
     if (values.password && confirmPassword !== values.password) {
       setConfirmError('Passwords do not match');
@@ -43,6 +81,18 @@ export default function RegisterScreen() {
     submit();
   }
 
+  const makeItemStyle = (anim: Animated.Value) => ({
+    opacity: anim,
+    transform: [
+      {
+        translateY: anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [14, 0],
+        }),
+      },
+    ],
+  });
+
   // ─── "You're all set!" success screen ────────────────────────────────────────
   if (confirmationSent) {
     return (
@@ -50,14 +100,12 @@ export default function RegisterScreen() {
         <PastelBackground />
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.successContent}>
-            {/* Logo */}
             <Image
               source={require('../../assets/halo-logo.png')}
               style={styles.successLogo}
               resizeMode="contain"
             />
 
-            {/* Teal check circle */}
             <View style={styles.checkCircle}>
               <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
                 <Path
@@ -104,87 +152,131 @@ export default function RegisterScreen() {
             showsVerticalScrollIndicator={false}
           >
             {/* HALO logo */}
-            <View style={styles.logoArea}>
+            <Animated.View
+              style={[
+                styles.logoArea,
+                {
+                  opacity: logoAnim,
+                  transform: [
+                    {
+                      scale: logoAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.94, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
               <Image
                 source={require('../../assets/halo-logo.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
-            </View>
+            </Animated.View>
 
-            <AuthCard>
-              {/* Tab switcher — Register is active */}
-              <AuthTabBar
-                activeTab="register"
-                onTabChange={(tab) => {
-                  if (tab === 'login') router.replace('/(auth)/login');
-                }}
-              />
+            <Animated.View
+              style={{
+                opacity: cardAnim,
+                transform: [
+                  {
+                    translateY: cardAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [30, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <AuthCard>
+                {/* Tab switcher — Register is active */}
+                <Animated.View style={makeItemStyle(itemAnim1)}>
+                  <AuthTabBar
+                    activeTab="register"
+                    onTabChange={(tab) => {
+                      if (tab === 'login') router.replace('/(auth)/login');
+                    }}
+                  />
+                </Animated.View>
 
-              {formError ? <Banner tone="error" message={formError} /> : null}
+                {formError ? <Banner tone="error" message={formError} /> : null}
 
-              {/* Registration inputs */}
-              <View style={styles.form}>
-                <AuthInput
-                  iconType="user"
-                  placeholder="Full Name"
-                  value={values.displayName}
-                  onChangeText={setField('displayName')}
-                  error={errors.displayName}
-                  autoComplete="name"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
-                />
-                <AuthInput
-                  iconType="mail"
-                  placeholder="Email Address"
-                  value={values.email}
-                  onChangeText={setField('email')}
-                  error={errors.email}
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
-                />
-                <AuthInput
-                  iconType="lock"
-                  placeholder="Password"
-                  value={values.password}
-                  onChangeText={setField('password')}
-                  error={errors.password}
-                  isPassword
-                  autoComplete="new-password"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
-                />
-                <AuthInput
-                  iconType="lock"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={(text) => {
-                    setConfirmPassword(text);
-                    if (confirmError) setConfirmError('');
-                  }}
-                  error={confirmError}
-                  isPassword
-                  autoComplete="new-password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit}
-                />
+                {/* Registration inputs with staggered reveal */}
+                <View style={styles.form}>
+                  <Animated.View style={makeItemStyle(itemAnim2)}>
+                    <AuthInput
+                      iconType="user"
+                      placeholder="Full Name"
+                      value={values.displayName}
+                      onChangeText={setField('displayName')}
+                      error={errors.displayName}
+                      autoComplete="name"
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+                  </Animated.View>
 
-                <AuthButton label="Create Account" onPress={handleSubmit} loading={loading} />
-              </View>
+                  <Animated.View style={makeItemStyle(itemAnim3)}>
+                    <AuthInput
+                      iconType="mail"
+                      placeholder="Email Address"
+                      value={values.email}
+                      onChangeText={setField('email')}
+                      error={errors.email}
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      keyboardType="email-address"
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+                  </Animated.View>
 
-              <HairlineDivider />
-              <SocialButtons />
+                  <Animated.View style={makeItemStyle(itemAnim4)}>
+                    <AuthInput
+                      iconType="lock"
+                      placeholder="Password"
+                      value={values.password}
+                      onChangeText={setField('password')}
+                      error={errors.password}
+                      isPassword
+                      autoComplete="new-password"
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                    />
+                  </Animated.View>
 
-              {/* Switch to Login */}
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>Already have an account? </Text>
-                <Link href="/(auth)/login" style={styles.footerLink}>Log In</Link>
-              </View>
-            </AuthCard>
+                  <Animated.View style={makeItemStyle(itemAnim5)}>
+                    <AuthInput
+                      iconType="lock"
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChangeText={(text) => {
+                        setConfirmPassword(text);
+                        if (confirmError) setConfirmError('');
+                      }}
+                      error={confirmError}
+                      isPassword
+                      autoComplete="new-password"
+                      returnKeyType="done"
+                      onSubmitEditing={handleSubmit}
+                    />
+                  </Animated.View>
+
+                  <Animated.View style={makeItemStyle(itemAnim6)}>
+                    <AuthButton label="Create Account" onPress={handleSubmit} loading={loading} />
+                  </Animated.View>
+                </View>
+
+                <HairlineDivider />
+                <SocialButtons />
+
+                {/* Switch to Login */}
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>Already have an account? </Text>
+                  <Link href="/(auth)/login" style={styles.footerLink}>Log In</Link>
+                </View>
+              </AuthCard>
+            </Animated.View>
 
             <View style={styles.bottomSpacer} />
           </ScrollView>

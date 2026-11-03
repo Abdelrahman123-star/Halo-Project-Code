@@ -24,7 +24,7 @@ function RootStack() {
   // and automatically redirects using redirectTo when accessing an excluded route.
   return (
     <Stack
-      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.midnight } }}
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F5F0FC' } }}
     >
       <Stack.Protected guard={!session} redirectTo="/(app)">
         <Stack.Screen name="(auth)" />
@@ -79,7 +79,7 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F0FC' },
   title: { fontSize: fontSize.title, fontWeight: '700', color: colors.text },
   body: { fontSize: fontSize.body, color: colors.textMuted, lineHeight: 24, marginTop: spacing.sm },
 });
