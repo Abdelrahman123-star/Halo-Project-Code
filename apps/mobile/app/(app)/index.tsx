@@ -26,13 +26,11 @@ export default function HomeScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const meta = session?.user?.user_metadata;
   const username =
     profileState.status === 'ready' && profileState.profile?.display_name
       ? profileState.profile.display_name
-      : (session?.user?.user_metadata?.full_name as string | undefined) ||
-        (session?.user?.user_metadata?.display_name as string | undefined) ||
-        session?.user?.email?.split('@')[0] ||
-        'User';
+      : (meta?.full_name as string) || (meta?.display_name as string) || session?.user?.email?.split('@')[0] || 'User';
 
   const userEmail = session?.user?.email ?? '';
 
@@ -107,6 +105,25 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Test Garment AI Page Shortcut */}
+          <Pressable
+            onPress={() => router.push('/(app)/test-garment')}
+            style={styles.actionCard}
+            accessibilityRole="button"
+            accessibilityLabel="Go to Garment Recognition Test"
+          >
+            <View style={styles.actionCardLeft}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.actionIconText}>🧥</Text>
+              </View>
+              <View>
+                <Text style={styles.actionCardTitle}>Garment Recognition Test</Text>
+                <Text style={styles.actionCardDesc}>Test camera & gallery AI garment analysis</Text>
+              </View>
+            </View>
+            <Text style={styles.actionArrow}>›</Text>
+          </Pressable>
+
           {/* Profile Shortcut Card */}
           <Pressable
             onPress={() => router.push('/(app)/profile')}
@@ -157,35 +174,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 110,
-    gap: 16,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 110, gap: 16 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 2,
-    color: authTheme.textMain,
-  },
-  profileBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: authTheme.inputBg,
-    borderWidth: 1.5,
-    borderColor: authTheme.inputBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  brandTitle: { fontSize: 18, fontWeight: '800', letterSpacing: 2, color: authTheme.textMain },
+  profileBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: authTheme.inputBg, borderWidth: 1.5, borderColor: authTheme.inputBorder, alignItems: 'center', justifyContent: 'center' },
   profileInitial: { fontSize: 15, fontWeight: '700', color: authTheme.textMain },
   welcomeCard: {
     backgroundColor: authTheme.inputBg,
@@ -233,12 +226,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(192, 132, 252, 0.25)',
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   infoLabel: { fontSize: 12, fontWeight: '600', color: authTheme.textMuted },
   infoValue: { fontSize: 12, fontWeight: '700', color: authTheme.textMain, maxWidth: '65%' },
   divider: { height: 1, backgroundColor: 'rgba(42, 11, 63, 0.08)', marginVertical: 4 },
@@ -266,11 +254,6 @@ const styles = StyleSheet.create({
   actionCardDesc: { fontSize: 11, color: authTheme.textMuted, marginTop: 2 },
   actionArrow: { fontSize: 22, color: authTheme.textMain, opacity: 0.5, paddingHorizontal: 8 },
   logoutBtn: { width: '100%', marginTop: 8 },
-  logoutGradient: {
-    height: 52,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  logoutGradient: { height: 52, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   logoutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });
