@@ -1,10 +1,10 @@
 import { Buffer } from 'buffer';
+import { useState } from 'react';
 
 const globalScope = globalThis as unknown as { Buffer?: typeof Buffer };
 if (!globalScope.Buffer) {
   globalScope.Buffer = Buffer;
 }
-
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,6 +13,7 @@ import { SessionProvider, useSession } from '@/features/auth/hooks/useSession';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 import { Screen } from '@/shared/ui/Screen';
 import { colors, fontSize, spacing } from '@/shared/theme/tokens';
+import { LaunchScreen } from '@/features/launch/components/LaunchScreen';
 
 function RootStack() {
   const { session, loading } = useSession();
@@ -29,7 +30,7 @@ function RootStack() {
   // and automatically redirects using redirectTo when accessing an excluded route.
   return (
     <Stack
-      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.midnight } }}
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#F5F0FC' } }}
     >
       <Stack.Protected guard={!session} redirectTo="/(app)">
         <Stack.Screen name="(auth)" />
@@ -55,6 +56,20 @@ function MissingConfig() {
 }
 
 export default function RootLayout() {
+  // Render ONLY the launch screen until the animation finishes, then
+  // swap to the real navigator. This avoids all z-index / stacking-context
+  // fights between the absolute-positioned launch screen and the navigator.
+  const [showLaunch, setShowLaunch] = useState(true);
+
+  if (showLaunch) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <LaunchScreen onFinished={() => setShowLaunch(false)} />
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
@@ -70,7 +85,7 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F0FC' },
   title: { fontSize: fontSize.title, fontWeight: '700', color: colors.text },
   body: { fontSize: fontSize.body, color: colors.textMuted, lineHeight: 24, marginTop: spacing.sm },
 });

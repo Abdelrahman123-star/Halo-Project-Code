@@ -1,4 +1,5 @@
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -7,34 +8,35 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   AuthButton,
+  AuthCard,
   AuthInput,
+  AuthTabBar,
   authTheme,
   HairlineDivider,
-  HaloMark,
   SocialButtons,
 } from '@/features/auth/components/AuthComponents';
+import { PastelBackground } from '@/features/auth/components/PastelBackground';
 import { useLoginForm } from '@/features/auth/hooks/useLoginForm';
 import { Banner } from '@/shared/ui/Banner';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const { values, errors, formError, loading, setField, submit } = useLoginForm();
 
   return (
-    <LinearGradient
-      colors={authTheme.bgGradient}
-      start={{ x: 0.1, y: 0 }}
-      end={{ x: 0.9, y: 1 }}
-      style={styles.gradientContainer}
-    >
+    <View style={styles.root}>
+      {/* Full-screen pastel blob background */}
+      <PastelBackground />
+
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.keyboardView}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -42,72 +44,85 @@ export default function LoginScreen() {
             keyboardDismissMode="none"
             showsVerticalScrollIndicator={false}
           >
-            {/* Header */}
-            <View style={styles.authHeader}>
-              <HaloMark />
-              <Text style={styles.authTitle}>Hello again.</Text>
-              <Text style={styles.authSubtitle}>
-                Your mirror remembered everything — just confirm it's you.
-              </Text>
+            {/* HALO logo above the card */}
+            <View style={styles.logoArea}>
+              <Image
+                source={require('../../assets/halo-logo.png')}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
             </View>
 
-            {formError ? <Banner tone="error" message={formError} /> : null}
-
-            {/* Login Form */}
-            <View style={styles.authForm}>
-              <AuthInput
-                iconType="mail"
-                placeholder="Email address"
-                value={values.email}
-                onChangeText={setField('email')}
-                error={errors.email}
-                autoCapitalize="none"
-                autoComplete="email"
-                keyboardType="email-address"
-                returnKeyType="next"
-                blurOnSubmit={false}
+            {/* Floating white authentication card */}
+            <AuthCard>
+              {/* Tab switcher — Log In is active */}
+              <AuthTabBar
+                activeTab="login"
+                onTabChange={(tab) => {
+                  if (tab === 'register') router.replace('/(auth)/register');
+                }}
               />
 
-              <AuthInput
-                iconType="lock"
-                placeholder="Password"
-                value={values.password}
-                onChangeText={setField('password')}
-                error={errors.password}
-                secureTextEntry
-                isPassword
-                returnKeyType="done"
-                onSubmitEditing={submit}
-              />
+              {/* Form-level error */}
+              {formError ? <Banner tone="error" message={formError} /> : null}
 
-              <AuthButton label="Log in" onPress={submit} loading={loading} />
-            </View>
+              {/* Login inputs */}
+              <View style={styles.form}>
+                <AuthInput
+                  iconType="mail"
+                  placeholder="Email Address"
+                  value={values.email}
+                  onChangeText={setField('email')}
+                  error={errors.email}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+                <AuthInput
+                  iconType="lock"
+                  placeholder="Password"
+                  value={values.password}
+                  onChangeText={setField('password')}
+                  error={errors.password}
+                  isPassword
+                  autoComplete="password"
+                  returnKeyType="done"
+                  onSubmitEditing={submit}
+                />
 
-            {/* Hairline Divider */}
-            <HairlineDivider />
-
-            {/* Social Authentication */}
-            <SocialButtons />
-
-            {/* Footer */}
-            <View style={styles.authFooter}>
-              <Text style={styles.footerPrompt}>Don't have an account? </Text>
-              <Link href="/(auth)/register" asChild>
-                <Pressable>
-                  <Text style={styles.footerLink}>Sign up</Text>
+                {/* Forgot password — right-aligned, no extra navigation yet */}
+                <Pressable style={styles.forgotRow} hitSlop={{ top: 8, bottom: 8 }}>
+                  <Text style={styles.forgotText}>Forgot password?</Text>
                 </Pressable>
-              </Link>
-            </View>
+
+                <AuthButton label="Log In" onPress={submit} loading={loading} />
+              </View>
+
+              <HairlineDivider />
+              <SocialButtons />
+
+              {/* Switch to Register */}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Link href="/(auth)/register" style={styles.footerLink}>Register</Link>
+              </View>
+            </AuthCard>
+
+            {/* Bottom breathing room */}
+            <View style={styles.bottomSpacer} />
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradientContainer: {
+  root: {
     flex: 1,
+    backgroundColor: '#F5F0FC',
   },
   safeArea: {
     flex: 1,
@@ -117,52 +132,45 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 36,
-    paddingBottom: 28,
-    justifyContent: 'space-between',
-    maxWidth: 440,
-    width: '100%',
-    alignSelf: 'center',
-    gap: 16,
+    justifyContent: 'center',
+    paddingVertical: 24,
   },
-  authHeader: {
+  logoArea: {
     alignItems: 'center',
-    textAlign: 'center',
+    marginBottom: 24,
   },
-  authTitle: {
-    fontSize: 27,
-    fontWeight: '700',
-    color: authTheme.textMain,
-    marginTop: 16,
-    letterSpacing: -0.3,
+  logoImage: {
+    width: 160,
+    height: 80,
   },
-  authSubtitle: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: authTheme.textMuted,
-    textAlign: 'center',
-    maxWidth: 250,
-    marginTop: 8,
-  },
-  authForm: {
+  form: {
     gap: 12,
-    marginTop: 8,
   },
-  authFooter: {
+  forgotRow: {
+    alignItems: 'flex-end',
+    marginTop: -4,
+  },
+  forgotText: {
+    fontSize: 13,
+    color: authTheme.textMain,
+    fontWeight: '600',
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 4,
   },
-  footerPrompt: {
-    fontSize: 12,
+  footerText: {
+    fontSize: 13,
     color: authTheme.textMuted,
   },
   footerLink: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: authTheme.textMain,
-    textDecorationLine: 'underline',
+  },
+  bottomSpacer: {
+    height: 24,
   },
 });
