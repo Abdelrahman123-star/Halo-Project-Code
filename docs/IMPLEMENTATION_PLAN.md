@@ -81,13 +81,18 @@
 | 4 | **On-Device Attribute Classifier (`attributeClassifier.ts`)** | Compute subtype, fabric, and pattern candidate rankings from DeepFashion2 class and extracted color distribution. | ✅ Unit tests pass |
 | 5 | **Single-Command Mobile Startup (`package.json`)** | Restore `"start": "expo start"` so `npm start` launches the mobile app cleanly without requiring a background PC server or tunnel. | ✅ `npx tsc --noEmit` & 35/35 Jest tests pass |
 
-## 5. Reversion of Heuristic Rotation & Deskewing
+## 6. Phase 3: HALO Garment Studio UI Redesign
 
-**Status:** Completed ✅
-Per user instruction, the rotation and deskewing heuristics were completely removed. Garments are extracted faithfully from the segmentation polygon onto a clean white background with 5% padding without artificial rotation or warping.
+**Status:** Completed & Verified ✅  
+**Goal:** Designed the luxury pearlescent Garment Studio screen (`apps/mobile/app/(app)/garment.tsx`) following HALO's refined pastel visual identity (Lavender mist `#D9CFF1`, Blush pink `#F1D9E5`, Pearl blue `#D4E9EC`, Soft mint `#D7EAE3`, Warm ivory `#F6EBDD`, Dusty mauve `#77708F`).
 
 | # | Step | Description | Verification |
 |---|---|---|---|
-| 1 | **Remove Deskew & Orientation Modules** | Deleted `deskew.ts` and `orientation.ts`. Cleaned `imageProcessor.ts` to un-distorted polygon mask isolation. | ✅ Verified clean polygon masking |
-| 2 | **Remove UI Rotate & Align Buttons** | Removed `rotate90` and `autoAlign` buttons and callbacks from `test-garment.tsx` and `useGarmentAnalysis.ts`. | ✅ Clean, uncluttered UI |
-| 3 | **Tests & Verification** | Cleaned unit tests in `garmentApi.test.ts`. Verified `tsc --noEmit` and all 35 Jest tests pass. | ✅ 35/35 Jest tests & 31/31 pytest passing |
+| 1 | **Pearlescent Canvas & Tokens** | Created `PearlescentBackground.tsx` and exported `luxuryPastel` theme tokens in `tokens.ts`. | ✅ Verified color accuracy and rendering |
+| 2 | **Modular UI Primitives** | Created `HaloHeader.tsx`, `FrostedGlassCard.tsx`, `GarmentOptionCard.tsx`, `PhotoCaptureGuide.tsx`, and `WardrobeHangerDecor.tsx`. | ✅ All components <250 lines & strict TS |
+| 3 | **Interactive Pre-Analysis Preview** | Created `GarmentPreview.tsx` with smooth scale/fade animations, "Retake / Choose Another", and prominent "Continue" CTA. | ✅ User confirms before AI processing runs |
+| 4 | **Progressive Analysis & Results** | Created `GarmentProcessingView.tsx`, `GarmentDetectedCard.tsx`, and `GarmentRoadmapCard.tsx` with honest Phase 3 disclosure. | ✅ In-memory pipeline executed; 0 DB/disk writes |
+| 5 | **Screen Orchestration & Navigation** | Created `garment.tsx`, updated `test-garment.tsx` forwarder, and linked `index.tsx` Home action card. | ✅ Smooth back navigation and flow transitions |
+| 6 | **Verification & Zero Backend Touches** | Ran `npm run typecheck` and `npm test` across mobile suite. | ✅ 41/41 Jest tests passed; 0 backend files touched |
+
+

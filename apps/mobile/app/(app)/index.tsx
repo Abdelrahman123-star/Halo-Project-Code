@@ -105,20 +105,20 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Test Garment AI Page Shortcut */}
+          {/* Garment Studio Shortcut */}
           <Pressable
-            onPress={() => router.push('/(app)/test-garment')}
+            onPress={() => router.push('/(app)/garment')}
             style={styles.actionCard}
             accessibilityRole="button"
-            accessibilityLabel="Go to Garment Recognition Test"
+            accessibilityLabel="Add to Your Wardrobe"
           >
             <View style={styles.actionCardLeft}>
               <View style={styles.iconCircle}>
-                <Text style={styles.actionIconText}>🧥</Text>
+                <Text style={styles.actionIconText}>👗</Text>
               </View>
               <View>
-                <Text style={styles.actionCardTitle}>Garment Recognition Test</Text>
-                <Text style={styles.actionCardDesc}>Test camera & gallery AI garment analysis</Text>
+                <Text style={styles.actionCardTitle}>Add to Your Wardrobe</Text>
+                <Text style={styles.actionCardDesc}>Capture & analyze clothing for your digital closet</Text>
               </View>
             </View>
             <Text style={styles.actionArrow}>›</Text>

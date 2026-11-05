@@ -1,6 +1,22 @@
 # Changelog
 
 ## [Unreleased]
+### Added — Luxury Pearlescent Garment Studio UI (`apps/mobile`) (2026-11-05)
+- **Garment Studio Screen (`app/(app)/garment.tsx`)**:
+  - Full luxury beauty & fashion visual identity following HALO brand guidelines (Lavender mist `#D9CFF1`, Blush pink `#F1D9E5`, Pearl blue `#D4E9EC`, Soft mint `#D7EAE3`, Warm ivory `#F6EBDD`, Dusty mauve `#77708F`).
+  - Luminous pearlescent multi-radial pastel background (`PearlescentBackground.tsx`) with subtle light reflections and organic shapes.
+  - Safe-area header (`HaloHeader.tsx`) with back navigation and centered HALO logo mark.
+  - Refined heading "Add to Your Wardrobe" with subtitle and minimal clothing hanger decorative element (`WardrobeHangerDecor.tsx`).
+  - Interactive frosted-glass selection cards (`GarmentOptionCard.tsx`) for "Take a Photo" and "Choose from Gallery" with tactile spring scale-down press animations, ambient glows, and thin-line icons.
+  - Subtle frosted guidance card (`PhotoCaptureGuide.tsx`) with capture tips.
+  - Image review preview screen (`GarmentPreview.tsx`) inside a frosted glass panel with "Choose Another" and prominent "Continue" CTA.
+  - Progressive AI analysis view (`GarmentProcessingView.tsx`) with live stages ("Preparing image...", "Detecting garments with AI...", "Extracting colors & attributes...").
+  - Luxury detected garment card (`GarmentDetectedCard.tsx`) displaying isolated item crop on white background, category, color swatches with percentage pills, and fabric/pattern attributes.
+  - Honest 3D pipeline roadmap card (`GarmentRoadmapCard.tsx`) stating that 3D template fitting and avatar try-on are in development (per `AGENTS.md` §3).
+  - Preserves original image URI and connects seamlessly to native in-app pipeline via `useGarmentAnalysis.ts`.
+  - Developer route `/test-garment` and Home screen shortcut updated to route seamlessly to the new Garment screen.
+  - 41/41 mobile Jest unit tests passing across 6 test suites; all files strictly under 250 lines; zero backend modifications.
+
 ### Added — In-Memory CV Garment Recognition Pipeline & Mobile Test Screen (2026-11-03)
 - **Ported Prototype into Production Backend (`services/api`)**:
   - Refactored `Cloth Recognation Code` into a clean, modular, in-memory AI package (`services/api/app/ai/garment/`):

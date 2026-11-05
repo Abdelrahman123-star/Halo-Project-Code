@@ -41,6 +41,24 @@ export const colors = {
   success: '#5FA87F',
 } as const;
 
+// HALO Luxury Pastel Palette (Beauty, fashion, wellness space)
+export const luxuryPastel = {
+  lavenderMist: '#D9CFF1',
+  blushPink: '#F1D9E5',
+  pearlBlue: '#D4E9EC',
+  softMint: '#D7EAE3',
+  warmIvory: '#F6EBDD',
+  dustyMauve: '#77708F',
+  textMauve: '#5A4A7A',
+  textSecondary: '#8B7BAB',
+  surfaceGlass: 'rgba(255, 255, 255, 0.78)',
+  surfaceGlassCard: 'rgba(255, 255, 255, 0.88)',
+  borderGlass: 'rgba(255, 255, 255, 0.92)',
+  borderSubtle: 'rgba(217, 207, 241, 0.45)',
+  shadowMauve: '#77708F',
+} as const;
+
+
 export const spacing = {
   xs: 4,
   sm: 8,
