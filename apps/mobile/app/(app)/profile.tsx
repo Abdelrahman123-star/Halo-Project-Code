@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { signOut } from '@/features/auth/api/authApi';
+import { authTheme, HaloMark } from '@/features/auth/components/AuthComponents';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
-import { colors, fontSize, radius, spacing } from '@/shared/theme/tokens';
 import { Banner } from '@/shared/ui/Banner';
-import { Button } from '@/shared/ui/Button';
 import { FloatingNavBar, type NavTab } from '@/shared/ui/FloatingNavBar';
-import { HaloLogo } from '@/shared/ui/HaloLogo';
-import { Screen } from '@/shared/ui/Screen';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -34,206 +40,243 @@ export default function ProfileScreen() {
 
   function handleSelectTab(tab: NavTab) {
     if (tab === 'home') router.push('/(app)');
-    else if (tab === 'wardrobe') router.push('/(app)/wardrobe');
-    else if (tab === 'avatar') router.push('/(app)/avatar');
   }
 
   const name =
     profileState.status === 'ready' && profileState.profile?.display_name
       ? profileState.profile.display_name
-      : 'HALO Resident';
+      : (session?.user?.user_metadata?.full_name as string | undefined) ||
+        (session?.user?.user_metadata?.display_name as string | undefined) ||
+        session?.user?.email?.split('@')[0] ||
+        'HALO User';
 
   return (
-    <View style={styles.outer}>
-      <Screen variant="midnight" contentStyle={styles.screenContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Account & Space</Text>
-            <Text style={styles.subtitle}>Privacy, scan data, and preferences</Text>
+    <LinearGradient
+      colors={authTheme.bgGradient}
+      start={{ x: 0.1, y: 0 }}
+      end={{ x: 0.9, y: 1 }}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => router.push('/(app)')}
+              style={styles.backBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Home"
+            >
+              <Text style={styles.backArrow}>←</Text>
+            </Pressable>
+            <Text style={styles.headerTitle}>My Profile</Text>
+            <HaloMark />
           </View>
-          <HaloLogo size="small" />
-        </View>
 
-        {signOutError ? <Banner tone="error" message={signOutError} /> : null}
-        {privacyNotice ? <Banner tone="success" message={privacyNotice} /> : null}
+          {signOutError ? <Banner tone="error" message={signOutError} /> : null}
+          {privacyNotice ? <Banner tone="success" message={privacyNotice} /> : null}
 
-        {/* User Card */}
-        <View style={styles.userCard}>
-          <View style={styles.avatarRing}>
-            <View style={styles.avatarCircle}>
+          {/* User Profile Card */}
+          <View style={styles.userCard}>
+            <View style={styles.avatarOrb}>
               <Text style={styles.avatarInitial}>{name.charAt(0).toUpperCase()}</Text>
             </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{name}</Text>
+              <Text style={styles.userEmail}>{session?.user.email}</Text>
+            </View>
           </View>
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{name}</Text>
-            <Text style={styles.userEmail}>{session?.user.email}</Text>
+
+          {/* Privacy & Security Section */}
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionHeader}>Security & Privacy</Text>
+
+            <Pressable
+              onPress={() =>
+                setPrivacyNotice('Row Level Security is active: Your data is isolated to your user ID.')
+              }
+              style={styles.settingRow}
+              accessibilityRole="button"
+            >
+              <Text style={styles.settingLabel}>Data ownership & RLS</Text>
+              <Text style={styles.settingValue}>Protected ›</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() =>
+                setPrivacyNotice('User storage is isolated in private Supabase buckets.')
+              }
+              style={styles.settingRow}
+              accessibilityRole="button"
+            >
+              <Text style={styles.settingLabel}>Private Storage</Text>
+              <Text style={styles.settingValue}>Encrypted ›</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() =>
+                setPrivacyNotice('Cloud third-party inference is disabled by default.')
+              }
+              style={[styles.settingRow, styles.noBorder]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.settingLabel}>AI Model Processing</Text>
+              <Text style={styles.settingValue}>Private ›</Text>
+            </Pressable>
           </View>
-        </View>
 
-        {/* Privacy & Security Section */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeader}>Security & Privacy</Text>
-
+          {/* Sign Out Button */}
           <Pressable
-            onPress={() =>
-              setPrivacyNotice(
-                'Row Level Security is active: Your scans and wardrobe are isolated to your user ID.',
-              )
-            }
-            style={styles.settingRow}
+            onPress={handleSignOut}
+            disabled={signingOut}
+            style={styles.signOutBtn}
             accessibilityRole="button"
           >
-            <Text style={styles.settingLabel}>Data ownership & RLS</Text>
-            <Text style={styles.settingValue}>Protected ›</Text>
+            <LinearGradient
+              colors={authTheme.btnGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.signOutGradient}
+            >
+              {signingOut ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.signOutBtnText}>Sign out of HALO</Text>
+              )}
+            </LinearGradient>
           </Pressable>
+        </ScrollView>
 
-          <Pressable
-            onPress={() =>
-              setPrivacyNotice(
-                'Scan images are stored in a private bucket with signed URL access only.',
-              )
-            }
-            style={styles.settingRow}
-            accessibilityRole="button"
-          >
-            <Text style={styles.settingLabel}>Scan image storage</Text>
-            <Text style={styles.settingValue}>Private ›</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() =>
-              setPrivacyNotice(
-                'Third-party cloud inference is disabled by default per HALO Privacy Rules.',
-              )
-            }
-            style={styles.settingRow}
-            accessibilityRole="button"
-          >
-            <Text style={styles.settingLabel}>AI model processing</Text>
-            <Text style={styles.settingValue}>Local / Private ›</Text>
-          </Pressable>
-        </View>
-
-        {/* Sign Out Button */}
-        <Button
-          label="Sign out of HALO"
-          variant="ghost"
-          onPress={handleSignOut}
-          loading={signingOut}
-          style={styles.signOutBtn}
-        />
-      </Screen>
-
-      <FloatingNavBar currentTab="profile" onSelectTab={handleSelectTab} />
-    </View>
+        <FloatingNavBar currentTab="profile" onSelectTab={handleSelectTab} />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  outer: {
-    flex: 1,
-    backgroundColor: colors.midnight,
-  },
-  screenContent: {
+  gradient: { flex: 1 },
+  safeArea: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 110,
-    justifyContent: 'flex-start',
-    gap: spacing.lg,
+    gap: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: spacing.md,
+    paddingVertical: 8,
   },
-  title: {
-    fontSize: fontSize.title,
-    fontWeight: '300',
-    color: colors.luminousWhite,
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: authTheme.inputBg,
+    borderWidth: 1,
+    borderColor: authTheme.inputBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backArrow: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: authTheme.textMain,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
     letterSpacing: 0.5,
-  },
-  subtitle: {
-    fontSize: fontSize.small,
-    color: colors.silver,
-    marginTop: 2,
+    color: authTheme.textMain,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  avatarRing: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    gap: 16,
+    backgroundColor: authTheme.inputBg,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1.5,
-    borderColor: colors.lavender,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: authTheme.inputBorder,
   },
-  avatarCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
+  avatarOrb: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(147, 51, 234, 0.15)',
+    borderWidth: 2,
+    borderColor: '#9333ea',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
-    color: colors.luminousWhite,
-    fontSize: fontSize.heading,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
+    color: authTheme.textMain,
   },
-  userInfo: {
-    flex: 1,
-    gap: 2,
-  },
+  userInfo: { flex: 1, gap: 2 },
   userName: {
-    color: colors.luminousWhite,
-    fontSize: fontSize.body + 1,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
+    color: authTheme.textMain,
   },
   userEmail: {
-    color: colors.textMuted,
-    fontSize: fontSize.small,
+    fontSize: 12,
+    color: authTheme.textMuted,
   },
   sectionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: authTheme.inputBg,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    gap: spacing.sm,
+    borderColor: authTheme.inputBorder,
+    padding: 18,
+    gap: 6,
   },
   sectionHeader: {
-    color: colors.silver,
-    fontSize: fontSize.small,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-    letterSpacing: 0.4,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    color: authTheme.textMuted,
+    marginBottom: 4,
+    textTransform: 'uppercase',
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(201, 205, 212, 0.08)',
+    borderBottomColor: 'rgba(42, 11, 63, 0.08)',
+  },
+  noBorder: {
+    borderBottomWidth: 0,
   },
   settingLabel: {
-    color: colors.luminousWhite,
-    fontSize: fontSize.body,
+    fontSize: 13,
+    fontWeight: '600',
+    color: authTheme.textMain,
   },
   settingValue: {
-    color: colors.lavender,
-    fontSize: fontSize.small,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#9333ea',
   },
   signOutBtn: {
-    marginTop: spacing.md,
+    marginTop: 8,
+  },
+  signOutGradient: {
+    height: 52,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
