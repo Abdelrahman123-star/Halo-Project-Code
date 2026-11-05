@@ -1,6 +1,29 @@
 # Changelog
 
 ## [Unreleased]
+### Added — In-Memory CV Garment Recognition Pipeline & Mobile Test Screen (2026-11-03)
+- **Ported Prototype into Production Backend (`services/api`)**:
+  - Refactored `Cloth Recognation Code` into a clean, modular, in-memory AI package (`services/api/app/ai/garment/`):
+    - `color_extractor.py`: K-Means clustering with human-perception redmean metric and curated fashion palette.
+    - `classifier.py`: Fashion-CLIP zero-shot attribute classification (`open_clip_torch`, ViT-B-32) for fabric, pattern, and subtype.
+    - `postprocess.py`: OpenCV bilateral symmetry auto-straightening (deskew), hanger hook cleanup, and white canvas compositing.
+    - `detector.py`: Roboflow `deepfashion2-m-10k/2` serverless client with header-based authentication.
+    - `pipeline.py`: In-memory orchestrator returning structured Pydantic responses with base64 data URI crop previews.
+  - **Zero Disk Writes**: Eliminated all local file generation (`annotated_result.jpg`, `local_fashion_report.json`, `result.json`, `garment_crops/`); all operations run via `io.BytesIO` and base64 strings.
+  - **Zero Database Persistence**: Pure computation pipeline; does not write to Postgres/Supabase tables until explicitly requested.
+  - **Garment Test Router (`app/routers/garment.py`)**: `POST /v1/garment/analyze-test` accepting multipart image uploads with standard error envelopes.
+  - **Backend Test Suite (`services/api/tests/`)**: 31 unit tests covering color extraction, deskew post-processing, Pydantic schemas, and router mocks.
+  - **Mobile Feature Layer & Standalone Native Execution (`apps/mobile`)**:
+  - Installed `expo-image-picker`, `expo-image-manipulator`, `buffer`, `expo-file-system`, and `jpeg-js`.
+  - Implemented 100% native in-app garment analysis pipeline (`garmentApi.ts`, `imageProcessor.ts`, `colorExtractor.ts`, `attributeClassifier.ts`) that calls Roboflow Serverless HTTPS API directly with base64 image data and runs polygon segmentation masking, white-background isolation, K-Means color extraction, and attribute classification in memory on the device.
+  - Reverted experimental rotation/deskewing heuristics per user request to maintain un-distorted, faithful garment isolation.
+  - Added `Buffer` polyfill in `app/_layout.tsx` and `imageProcessor.ts` so `jpeg-js` encoder executes cleanly in React Native Hermes.
+  - Added hardware image optimization via `expo-image-manipulator` to downscale high-resolution camera photos (e.g. 12MP/4000x3000) to max 1024px.
+  - Added comprehensive real-time command-line (CMD) logging at every stage with timing, network status, predictions, dominant colors, and attributes.
+  - Implemented 25-second `AbortController` network timeout so fetch never hangs indefinitely.
+  - 35/35 mobile Jest unit tests and 31/31 backend pytest tests passing.
+- **Cleanup**: Safely deleted temporary prototype folder `Cloth Recognation Code`.
+
 ### Changed — Project Scope Simplification & Demo Home Implementation (2026-10-28)
 - **Direct Auth Redirection (`app/(auth)/index.tsx`)**: Removed onboarding landing pages (`welcome.tsx`, `features/onboarding/`). Unauthenticated users now redirect directly to the Lavender Sherbet Login screen.
 - **Demo Home Page (`app/(app)/index.tsx`)**: Replaced complex architectural apartment 3D scene with a clean, focused demo home screen:
