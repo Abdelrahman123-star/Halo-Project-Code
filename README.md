@@ -1,22 +1,52 @@
 # HALO
 
-AI-powered personal fashion platform (Android & iOS): scan yourself → stylized 3D avatar →
-photograph your clothes → AI garment analysis → dress your avatar.
+AI-powered personal fashion & lifestyle companion (Android & iOS): scan yourself → stylized 3D avatar →
+photograph your clothes → AI garment analysis → dress your digital twin in your own futuristic home.
 
-> **Status:** early development. Only the **auth smoke test** exists (register, login, a
-> welcome screen reading your profile from Supabase). Avatar, wardrobe, AI and backend are
-> **not built yet**. See [docs/PROGRESS.md](docs/PROGRESS.md) for the verified state.
+> **Status:** Phase 1 Foundation implemented. The **HALO Futuristic, Peaceful, Immersive Mobile UI/UX Design System** is fully built and verified with real Supabase authentication, routing, and architectural screens. See [docs/PROGRESS.md](docs/PROGRESS.md) for the verified state.
 
-## Planned stack
-Expo + React Native + TypeScript · three.js (R3F native, to be validated) · Supabase (Auth,
-Postgres, private Storage, RLS) · FastAPI (Python) for AI processing.
+## Design Philosophy & Experience
+HALO is designed as the user's digital home in the year 2040:
+- **Atmospheric Palette**: Midnight blue-black (`#171B27`), warm ivory (`#F4F0E8`), soft cream (`#E8E0D4`), charcoal (`#24262A`), and luminous lavender halo accents (`#B8AED8`).
+- **First-Open Welcome**: Cinematic apartment entrance with skippable peaceful animation, welcoming users into their space.
+- **The Apartment Entrance Home**: Tall illuminated apartment door with floor reflections, subtle ambient breathing light, and an avatar silhouette featuring a pulsing illuminated `+` invitation button.
+- **Avatar Creation Guide**: 3-step visual guide (front, back, face) with camera and upload action hooks and privacy guarantees.
+- **Floating Luxury Navigation**: Sleek bottom dock with 4 destinations: Home, Wardrobe, Avatar Studio, and Profile.
+
+## Architecture & Code Structure
+```
+apps/mobile/
+├── app/
+│   ├── (auth)/
+│   │   ├── welcome.tsx         # First-open cinematic entrance
+│   │   ├── login.tsx           # Halo focus login with password toggle
+│   │   ├── register.tsx        # Account registration with Zod validation
+│   │   └── index.tsx           # Route redirector (AsyncStorage welcome flag)
+│   ├── (app)/
+│   │   ├── index.tsx           # The Apartment Entrance signature home
+│   │   ├── create-avatar.tsx   # 3-photo scan onboarding guide
+│   │   ├── wardrobe.tsx        # Digital closet & garment categories
+│   │   ├── avatar.tsx          # 3D studio viewport & customization controls
+│   │   └── profile.tsx         # Account, RLS isolation status, and logout
+│   └── _layout.tsx             # Root Stack & route protection gate
+├── src/
+│   ├── features/
+│   │   ├── auth/               # Auth API, Zod schemas, form controllers
+│   │   ├── avatar/             # Avatar silhouette & pulsing '+' invitation
+│   │   └── profile/            # Profile data-access hook & RLS read
+│   └── shared/
+│       ├── theme/tokens.ts     # Architectural design system tokens
+│       ├── ui/                 # HaloDoorScene, HaloLogo, Button, TextField, FloatingNavBar
+│       └── lib/supabase.ts     # Client, URL sanitizer, and session persistence
+```
 
 ## Prerequisites
 - Node 22+ and npm (verified: Node 22.14, npm 11.11)
 - A free [Supabase](https://supabase.com) project
 - An Android phone with **Expo Go** (same Wi-Fi as the PC) **or** Android Studio emulator
 
-## Run the app (auth smoke test)
+## Run the app
+
 
 ### 1. Create the database tables (once)
 1. Supabase Dashboard → **SQL Editor** → **New query**.

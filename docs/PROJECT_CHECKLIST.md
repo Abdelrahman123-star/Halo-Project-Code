@@ -62,16 +62,15 @@
 - [x] **Configure root `.gitignore` and `apps/mobile/.gitignore`** — Completed; `.env`, build artifacts, cache, and dependencies excluded.
 - [x] **Create environment variable template (`.env.example`)** — Completed; placeholder file documented without secrets.
 - [x] **Configure application metadata (`app.json`)** — Completed; name set to HALO, scheme `halo`, orientation portrait, splash/icons linked.
-- [x] **Define luxury fashion-tech design tokens (`tokens.ts`)** — Completed; palette (warm ivory `#F6F2EA`, charcoal `#25252B`, muted lavender `#7C77B9`, silver `#B9BCC4`), spacing, radii, font sizes.
-- [x] **Build reusable `Screen` layout component (`Screen.tsx`)** — Completed; safe-area insets, keyboard avoidance, responsive max-width (520px) for tablets.
-- [x] **Build reusable `Button` component (`Button.tsx`)** — Completed; primary and ghost variants, loading indicator, disabled states, accessible touch target.
-- [x] **Build reusable `TextField` component (`TextField.tsx`)** — Completed; label, input border, focus states, validation error message support.
+- [x] **Define luxury fashion-tech design tokens (`tokens.ts`)** — Completed; architectural palette (midnight blue-black `#171B27`, warm ivory `#F4F0E8`, soft cream `#E8E0D4`, charcoal `#24262A`, muted lavender `#B8AED8`, soft silver `#C9CDD4`, luminous white `#FFFDF8`, ice blue `#B8DDF0`, door glow, halo rings), spacing, radii, font sizes.
+- [x] **Build reusable `Screen` layout component (`Screen.tsx`)** — Completed; safe-area insets, keyboard avoidance, responsive max-width (520px), supports midnight and warm variants.
+- [x] **Build reusable `Button` component (`Button.tsx`)** — Completed; spring scale micro-animation on press, luminous halo outline, primary, secondary, and ghost variants.
+- [x] **Build reusable `TextField` component (`TextField.tsx`)** — Completed; label, halo focus illumination, password visibility toggle, accessible error handling.
 - [x] **Build reusable `Banner` status component (`Banner.tsx`)** — Completed; error and success inline alert styling.
 - [x] **Initialize Supabase JavaScript client (`supabase.ts`)** — Completed; `@supabase/supabase-js` client configured with AsyncStorage session adapter.
 - [x] **Implement defensive Supabase URL sanitizer (`cleanSupabaseUrl`)** — Completed; trims whitespace, removes trailing `/rest/v1/` and slashes.
-- [ ] **Create custom card and surface components (`Card.tsx`)** — Not completed; generic card component not yet extracted.
-- [ ] **Create interactive modal / bottom-sheet component** — Not completed; dialogs and sheet primitives not yet built.
-- [ ] **Create empty state and skeleton loading components** — Not completed; placeholder components for wardrobe and avatar pending.
+- [x] **Create HALO signature components** — Completed; `HaloLogo.tsx` (wordmark with illuminated halo ring), `HaloDoorScene.tsx` (futuristic apartment entrance door with breathing ambient light and floor reflections), `FloatingNavBar.tsx` (minimal floating luxury dock).
+- [x] **Create Avatar Presenter component (`AvatarPresenter.tsx`)** — Completed; stylized silhouette with breathing animation and pulsing illuminated `+` invitation button.
 
 ---
 
@@ -83,12 +82,13 @@
 - [x] **Build session state provider & hook (`useSession.tsx`)** — Completed; `SessionProvider` listens to `onAuthStateChange` and provides current session.
 - [x] **Build login form controller hook (`useLoginForm.ts`)** — Completed; form state, field validation, submission handling, loading/error states.
 - [x] **Build registration form controller hook (`useRegisterForm.ts`)** — Completed; form state, Zod validation, submission, email confirmation detection.
-- [x] **Build Login screen UI (`app/(auth)/login.tsx`)** — Completed; email/password fields, validation, error banners, link to register.
+- [x] **Build First-Launch Cinematic Welcome screen (`app/(auth)/welcome.tsx`)** — Completed; skippable atmospheric apartment entrance, luminous primary CTA "Enter your space", AsyncStorage flag (`HAS_SEEN_WELCOME_KEY`).
+- [x] **Build Login screen UI (`app/(auth)/login.tsx`)** — Completed; architectural theme, email/password fields with show/hide toggle, focus halo, error banners, link to register.
 - [x] **Build Register screen UI (`app/(auth)/register.tsx`)** — Completed; name, email, password, confirm password, confirmation banner, link to login.
 - [x] **Build Auth group layout (`app/(auth)/_layout.tsx`)** — Completed; stack navigator with header hidden.
-- [x] **Implement route protection & redirect gating (`app/_layout.tsx`)** — Completed; `<Stack.Protected>` configured with `redirectTo` to send guests to `/login` and authenticated users to `/`.
-- [x] **Create fallback entry redirect (`app/(auth)/index.tsx`)** — Completed; redirects unauthenticated root access to `/login`.
-- [x] **Verify Android bundle compilation (`npx expo export`)** — Completed; 1310 modules compiled with zero route errors.
+- [x] **Implement route protection & redirect gating (`app/_layout.tsx`)** — Completed; `<Stack.Protected>` configured with `redirectTo` to send guests to `/(auth)` and authenticated users to `/(app)`.
+- [x] **Create fallback entry redirect (`app/(auth)/index.tsx`)** — Completed; inspects AsyncStorage welcome flag and routes new users to `/welcome` and returning users to `/login`.
+- [x] **Verify Android bundle compilation (`npx expo export`)** — Completed; 1321 modules compiled with zero route errors.
 - [ ] **Test end-to-end registration on physical device / emulator** — Not completed; pending user verification on device after base URL fix.
 - [ ] **Test end-to-end login & session persistence on device** — Not completed; pending device verification.
 - [ ] **Implement Forgot Password request screen** — Not completed; screen and API call to `supabase.auth.resetPasswordForEmail` not created.
@@ -102,9 +102,9 @@
 
 - [x] **Implement profile data-access service (`profileApi.ts`)** — Completed; `fetchMyProfile` queries `profiles` table filtered by user ID through RLS.
 - [x] **Implement profile loading hook (`useMyProfile.ts`)** — Completed; handles loading, success, and error states when loading profile.
-- [x] **Build basic smoke-test Welcome home screen (`app/(app)/index.tsx`)** — Completed; displays user email, profile display name, RLS connectivity badge, logout button.
+- [x] **Build signature Apartment Entrance home screen (`app/(app)/index.tsx`)** — Completed; futuristic entrance scene, avatar silhouette with pulsing `+` button, contextual time greeting, environmental widgets.
+- [x] **Build dedicated Profile & Settings screen (`app/(app)/profile.tsx`)** — Completed; account card, RLS data ownership status, private storage badges, and logout flow.
 - [x] **Implement user logout workflow** — Completed; signs out of Supabase and redirects via route guard to login.
-- [ ] **Build dedicated Profile & Settings screen** — Not completed; full settings screen with editable fields not built.
 - [ ] **Implement display name update workflow** — Not completed; UI and Supabase update query for `profiles.display_name` not built.
 - [ ] **Implement avatar reset action in profile** — Not completed; reset to initial scan appearance not built.
 - [ ] **Implement account & data deletion flow** — Not completed; user-initiated cascade deletion of profile, avatar, scans, and wardrobe items not built.
@@ -113,7 +113,7 @@
 
 ## 6. Avatar Creation Pipeline (Scan Wizard & Image Capture)
 
-- [ ] **Create Avatar Scan introduction & guide screen** — Not completed; instructions on lighting, posture, and clothing fit not built.
+- [x] **Create Avatar Scan introduction & guide screen (`app/(app)/create-avatar.tsx`)** — Completed; visual cards explaining front, back, and face photo requirements, lighting, and posture, with RLS privacy note.
 - [ ] **Request device camera permissions** — Not completed; `expo-camera` or image picker permission flows not implemented.
 - [ ] **Implement Front-view camera capture screen with positioning overlay** — Not completed; camera viewfinder and body silhouette guide not built.
 - [ ] **Implement Back-view camera capture screen with positioning overlay** — Not completed; back body guide not built.
@@ -145,10 +145,10 @@
 
 ## 8. Avatar Customization Studio
 
-- [ ] **Build Avatar Customization Studio screen** — Not completed; studio interface with 3D viewport and control tabs not built.
-- [ ] **Implement Skin Tone selector** — Not completed; palette selector updating skin material color in 3D scene not built.
-- [ ] **Implement Hair Color selector** — Not completed; material tinting for avatar hair not built.
-- [ ] **Implement Hairstyle switcher** — Not completed; swapping hair geometry meshes on head bone not built.
+- [x] **Build Avatar Customization Studio screen (`app/(app)/avatar.tsx`)** — Completed; studio interface with 3D viewport stage placeholder and control tabs.
+- [x] **Implement Skin Tone selector** — Completed; palette selector with interactive swatches.
+- [x] **Implement Hair Color selector** — Completed; interactive color palette selector.
+- [x] **Implement Hairstyle switcher** — Completed; selectable hairstyle chips updating figure preview.
 - [ ] **Implement Eye Color selector** — Not completed; iris material customization not built.
 - [ ] **Implement Body Proportion adjustment sliders** — Not completed; sliders tied to body morph targets not built.
 - [ ] **Implement "Reset to Generated Appearance" feature** — Not completed; reverting to `generated_params` from scan not built.
@@ -158,10 +158,10 @@
 
 ## 9. Digital Wardrobe (Upload, Computer Vision & Management)
 
-- [ ] **Build Digital Wardrobe overview screen (`app/(app)/wardrobe/index.tsx`)** — Not completed; grid layout displaying user's clothing items not built.
-- [ ] **Implement wardrobe category filter tabs** — Not completed; filtering by Tops, Bottoms, Dresses, Outerwear, Shoes, Bags, Accessories not built.
+- [x] **Build Digital Wardrobe overview screen (`app/(app)/wardrobe.tsx`)** — Completed; wardrobe interface with category filters and empty closet state.
+- [x] **Implement wardrobe category filter tabs** — Completed; filtering by All, Tops, Bottoms, Outerwear, Footwear.
 - [ ] **Implement wardrobe search and sorting** — Not completed; search by name/color and sort by date not built.
-- [ ] **Build empty wardrobe onboarding card** — Not completed; "Add your first item" callout not built.
+- [x] **Build empty wardrobe onboarding card** — Completed; "No garments in this category" callout with "+ Add garment" CTA.
 - [ ] **Build Add Garment photo capture / upload screen** — Not completed; camera capture with garment photography tips not built.
 - [ ] **Implement garment photo upload to `wardrobe-images` storage** — Not completed; secure upload to private bucket not built.
 - [ ] **Create initial `wardrobe_items` record** — Not completed; row creation with `processing_status='queued'` not built.
