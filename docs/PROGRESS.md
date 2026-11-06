@@ -1,17 +1,42 @@
 # Progress
 
-_Last updated: 2026-11-05_
+_Last updated: 2026-11-06_
 
 ## Current state
 Phase 0 docs done. Auth smoke test & HALO Futuristic Peaceful UI/UX Design System fully implemented and verified.
-**Garment Studio Screen (`app/(app)/garment.tsx`) is designed and implemented with HALO's refined luxury visual identity (Lavender mist `#D9CFF1`, Blush pink `#F1D9E5`, Pearl blue `#D4E9EC`, Soft mint `#D7EAE3`, Warm ivory `#F6EBDD`, Dusty mauve `#77708F`). Features a luminous pearlescent background (`PearlescentBackground`), frosted-glass interactive cards (`FrostedGlassCard`, `GarmentOptionCard`), hanger decorative element (`WardrobeHangerDecor`), safe-area header with back navigation and centered HALO logo (`HaloHeader`), capture guidance tips (`PhotoCaptureGuide`), pre-analysis photo review (`GarmentPreview`), and progressive analysis state (`GarmentProcessingView`, `GarmentDetectedCard`, `GarmentRoadmapCard`). Preserves the original image URI and connects cleanly to the native in-memory Roboflow detection and color/attribute classification pipeline. Honest Phase 3 pipeline disclosure included per AGENTS.md §3 (3D template fitting and avatar try-on clearly labelled as in development). Zero local server/tunnel requirement, zero disk writes, zero DB writes, and zero backend modifications.**
+**Auth Screens Redesign (Login & Register) completed and verified:**
+- Frosted glass card inspired by Reference 1 with translucent backdrop blur simulation (`rgba(255, 255, 255, 0.40)`), subtle white borders (`rgba(255, 255, 255, 0.88)`), rounded corners (`borderRadius: 32`), and soft ambient shadow (`shadowRadius: 28`).
+- Dreamy pastel palette from Reference 2 (pastel lavender `#B392F8`, baby blue `#67BFFC`, cyan `#48E5DC`, pink `#FA7DB9`, and lilac `#C98CFA`).
+- One large, soft, blurred organic multi-radial gradient blob positioned directly behind the frosted glass card (`PastelBlobBackground.tsx`) with vivid luminescence extending beyond the card boundaries so it is clearly visible shining through the frosted glass.
+- Auth primary button (`AuthButton`) uses a pearl gradient (`#F2C4E2 → #D5C6F6 → #BCD6F6`) with a white sheen and dark plum label to match the iridescent orb; other screens still use `btnGradient` (`['#686EE8', '#9475F5']`).
+- Smooth animated spring sliding indicator in `AuthTabBar` ([`AuthComponents.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/src/features/auth/components/AuthComponents.tsx)) that smoothly glides horizontally within the same toggle container (`friction: 9, tension: 50`) between Login and Register with zero frame-flash or jump on render.
+- Form content slider (`AuthSlideContainer.tsx`) placed directly underneath the shared toggle within a single frosted glass card, creating a unified premium interaction.
+- Animated iridescent orb background (`PastelBlobBackground.tsx` + `IridescentOrb.tsx`): a frosted SVG orb whose pink/lavender/sky/aqua radial-gradient lobes each orbit and breathe at independent speeds, plus soft drifting corner glows. Replaces the static `assets/pearlescent-blob.png` image (asset no longer referenced). Freezes when reduce-motion is on. Checks: `tsc --noEmit` clean, 41/41 Jest tests pass; not yet verified visually on a device.
+- Multi-layered native animations: continuous organic vertical float (`-20px` to `+22px`), horizontal drift (`-15px` to `+18px`), gentle breathing scale (`0.94` to `1.06`), zero-gravity orbital tilt (`-5°` to `+6°`), liquid morphing (counter-axis stretching), dynamic rotating chromatic aura refraction, and specular gleam pulsing.
+- 100% native driver animations (`useNativeDriver: true`) running smoothly on iOS and Android with zero React re-render state overhead; reduced-motion compliant.
+- Classy smooth slide motion transition (`AuthSlideContainer.tsx`) between Login and Register with fluid cubic deceleration (`Easing.bezier(0.25, 1, 0.4, 1)`), synchronized sliding pill indicator on the tab bar (`AuthTabBar`), and cross-fade fallback for reduced-motion.
+- Fixed direct routing in `app/(auth)/index.tsx` to immediately load `/(auth)/login`.
+- Extracted modular forms (`AuthForms.tsx`) and success view (`AuthSuccessView.tsx`) to ensure strict adherence to the <250 lines rule.
+- Continuous, slow, seamless floating, horizontal drifting, and breathing scale movements looping at non-harmonic speeds.
+- Accessibility compliance: strict detection of `AccessibilityInfo.isReduceMotionEnabled()` with real-time listener to halt animations for users with reduced-motion preferences.
+- Brand logo updated with user-provided shimmering script HALO logo asset (`assets/halo-logo.png`).
+- 100% preservation of auth handlers, form state, error banners, input validation, and navigation; zero backend/API/database modifications.
+- File constraint verified (<250 lines per file); 41/41 mobile Jest unit tests and strict TypeScript typecheck passing.
 
-## Environment (verified 2026-11-05)
+## Environment (verified 2026-11-06)
 Node v22.14.0 · npm 11.11.1 · Python 3.13.1 · Git 2.49.0 · Expo SDK 58 (React Native 0.88, React 19.3).
 
-## What exists — Garment AI Recognition & Mobile Layer
+## What exists — Auth & Garment UI Layer
 | Item | Where | Description |
 |---|---|---|
+| Frosted Glass Login Screen | `apps/mobile/app/(auth)/login.tsx` | Reference 1 translucent glass card, Reference 2 palette, animated blob, new logo |
+| Frosted Glass Register Screen | `apps/mobile/app/(auth)/register.tsx` | Cohesive account creation screen with smooth entrance animations and responsive layout |
+| Smooth Sliding Auth Container | `apps/mobile/src/features/auth/components/AuthSlideContainer.tsx` | Fluid slide transition between Login and Register with cubic easing |
+| Modular Auth Forms | `apps/mobile/src/features/auth/components/AuthForms.tsx` | Encapsulated Login and Register form views under 250 lines |
+| Registration Success View | `apps/mobile/src/features/auth/components/AuthSuccessView.tsx` | "You're all set!" confirmation screen with continue CTA |
+| Animated Iridescent Orb Canvas | `apps/mobile/src/features/auth/components/PastelBlobBackground.tsx`, `IridescentOrb.tsx` | Frosted pastel orb with orbiting colour swirls, floating motion and drifting corner glows |
+| Frosted Glass Auth Components | `apps/mobile/src/features/auth/components/AuthComponents.tsx` | Translucent glass card, pill inputs, gradient CTA button, social buttons, tabs |
+| Shimmering Script Logo Asset | `apps/mobile/assets/halo-logo.png` | User-provided starry script HALO brand logo |
 | Garment Studio Screen | `apps/mobile/app/(app)/garment.tsx` | Luxury pearlescent wardrobe addition flow (selection, preview, analysis, honest results) |
 | Pearlescent Canvas | `apps/mobile/src/features/garment/components/PearlescentBackground.tsx` | Multi-radial organic pastel gradient SVG background with delicate sparkles |
 | Frosted Glass Card | `apps/mobile/src/features/garment/components/FrostedGlassCard.tsx` | Translucent white surface, delicate white border, soft mauve ambient shadow |

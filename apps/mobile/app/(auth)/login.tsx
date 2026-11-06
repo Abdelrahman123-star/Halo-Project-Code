@@ -1,36 +1,60 @@
+/**
+ * LoginScreen — Redesigned HALO Sign In Screen with Smooth Sliding Indicator.
+ */
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  AuthButton,
-  AuthCard,
-  AuthInput,
-  AuthTabBar,
-  authTheme,
-  HairlineDivider,
-  SocialButtons,
-} from '@/features/auth/components/AuthComponents';
-import { PastelBackground } from '@/features/auth/components/PastelBackground';
+import { AuthCard, AuthTabBar } from '@/features/auth/components/AuthComponents';
+import { AuthSlideContainer } from '@/features/auth/components/AuthSlideContainer';
+import { LoginFormView, RegisterFormView } from '@/features/auth/components/AuthForms';
+import { AuthSuccessView } from '@/features/auth/components/AuthSuccessView';
+import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 import { useLoginForm } from '@/features/auth/hooks/useLoginForm';
-import { Banner } from '@/shared/ui/Banner';
+import { useRegisterForm } from '@/features/auth/hooks/useRegisterForm';
 
 export default function LoginScreen() {
-  const router = useRouter();
-  const { values, errors, formError, loading, setField, submit } = useLoginForm();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const loginForm = useLoginForm();
+  const registerForm = useRegisterForm();
+
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirmError, setConfirmError]       = useState('');
+
+  const logoFade = useRef(new Animated.Value(0)).current;
+  const cardFade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(logoFade, { toValue: 1, duration: 450, useNativeDriver: true }),
+      Animated.spring(cardFade, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true }),
+    ]).start();
+  }, [cardFade, logoFade]);
+
+  function handleRegisterSubmit() {
+    if (registerForm.values.password && confirmPassword !== registerForm.values.password) {
+      setConfirmError('Passwords do not match');
+      return;
+    }
+    setConfirmError('');
+    registerForm.submit();
+  }
+
+  if (registerForm.confirmationSent) {
+    return <AuthSuccessView onContinue={() => setMode('login')} />;
+  }
 
   return (
     <View style={styles.root}>
-      {/* Full-screen pastel blob background */}
-      <PastelBackground />
+      {/* Dynamic pearlescent liquid blob background */}
+      <PastelBlobBackground />
 
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
@@ -44,73 +68,62 @@ export default function LoginScreen() {
             keyboardDismissMode="none"
             showsVerticalScrollIndicator={false}
           >
-            {/* HALO logo above the card */}
-            <View style={styles.logoArea}>
+            {/* Shimmering script HALO brand logo */}
+            <Animated.View
+              style={[
+                styles.logoArea,
+                {
+                  opacity: logoFade,
+                  transform: [
+                    { scale: logoFade.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) },
+                  ],
+                },
+              ]}
+            >
               <Image
                 source={require('../../assets/halo-logo.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
+                accessibilityLabel="HALO Logo"
               />
-            </View>
+            </Animated.View>
 
-            {/* Floating white authentication card */}
-            <AuthCard>
-              {/* Tab switcher — Log In is active */}
-              <AuthTabBar
-                activeTab="login"
-                onTabChange={(tab) => {
-                  if (tab === 'register') router.replace('/(auth)/register');
-                }}
-              />
+            {/* Frosted Glass Card with Shared Toggle Container */}
+            <Animated.View
+              style={{
+                opacity: cardFade,
+                transform: [
+                  { translateY: cardFade.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) },
+                ],
+              }}
+            >
+              <AuthCard>
+                {/* ── Shared Toggle with Smooth Animated Sliding Indicator ── */}
+                <AuthTabBar activeTab={mode} onTabChange={(tab) => setMode(tab)} />
 
-              {/* Form-level error */}
-              {formError ? <Banner tone="error" message={formError} /> : null}
-
-              {/* Login inputs */}
-              <View style={styles.form}>
-                <AuthInput
-                  iconType="mail"
-                  placeholder="Email Address"
-                  value={values.email}
-                  onChangeText={setField('email')}
-                  error={errors.email}
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
+                {/* ── Smooth Form Sliding Transition ── */}
+                <AuthSlideContainer
+                  mode={mode}
+                  renderLogin={() => (
+                    <LoginFormView form={loginForm} onSwitchToRegister={() => setMode('register')} />
+                  )}
+                  renderRegister={() => (
+                    <RegisterFormView
+                      form={registerForm}
+                      confirmPassword={confirmPassword}
+                      confirmError={confirmError}
+                      onConfirmPasswordChange={(text) => {
+                        setConfirmPassword(text);
+                        if (confirmError) setConfirmError('');
+                      }}
+                      onSubmit={handleRegisterSubmit}
+                      onSwitchToLogin={() => setMode('login')}
+                    />
+                  )}
                 />
-                <AuthInput
-                  iconType="lock"
-                  placeholder="Password"
-                  value={values.password}
-                  onChangeText={setField('password')}
-                  error={errors.password}
-                  isPassword
-                  autoComplete="password"
-                  returnKeyType="done"
-                  onSubmitEditing={submit}
-                />
+              </AuthCard>
+            </Animated.View>
 
-                {/* Forgot password — right-aligned, no extra navigation yet */}
-                <Pressable style={styles.forgotRow} hitSlop={{ top: 8, bottom: 8 }}>
-                  <Text style={styles.forgotText}>Forgot password?</Text>
-                </Pressable>
-
-                <AuthButton label="Log In" onPress={submit} loading={loading} />
-              </View>
-
-              <HairlineDivider />
-              <SocialButtons />
-
-              {/* Switch to Register */}
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
-                <Link href="/(auth)/register" style={styles.footerLink}>Register</Link>
-              </View>
-            </AuthCard>
-
-            {/* Bottom breathing room */}
             <View style={styles.bottomSpacer} />
           </ScrollView>
         </KeyboardAvoidingView>
@@ -120,57 +133,11 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#F5F0FC',
-  },
-  safeArea: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 24,
-  },
-  logoArea: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoImage: {
-    width: 160,
-    height: 80,
-  },
-  form: {
-    gap: 12,
-  },
-  forgotRow: {
-    alignItems: 'flex-end',
-    marginTop: -4,
-  },
-  forgotText: {
-    fontSize: 13,
-    color: authTheme.textMain,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  footerText: {
-    fontSize: 13,
-    color: authTheme.textMuted,
-  },
-  footerLink: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: authTheme.textMain,
-  },
-  bottomSpacer: {
-    height: 24,
-  },
+  root: { flex: 1, backgroundColor: '#EEF2FB' },
+  safeArea: { flex: 1 },
+  keyboardView: { flex: 1 },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 },
+  logoArea: { alignItems: 'center', marginBottom: 20 },
+  logoImage: { width: 175, height: 95 },
+  bottomSpacer: { height: 24 },
 });

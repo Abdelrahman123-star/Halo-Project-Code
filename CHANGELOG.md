@@ -1,6 +1,39 @@
 # Changelog
 
 ## [Unreleased]
+### Changed — Auth background blob replaced with animated iridescent orb (2026-11-06)
+- `apps/mobile/src/features/auth/components/IridescentOrb.tsx` (new): frosted orb drawn with `react-native-svg` radial gradients; five pastel colour lobes orbit the centre at different speeds/directions and pulse in scale under a white frost veil, (the breathing outer halo was later removed — it showed as an arc below the card).
+- `PastelBlobBackground.tsx`: now renders a pale lilac canvas, three slowly drifting corner glows (lavender, pink, blue) and the floating orb. No longer uses `assets/pearlescent-blob.png`. Same exports (`PastelBlobBackground`, `PastelBackground`), so login, register, welcome, transition overlay and success view pick it up automatically.
+- Native-driver transform/opacity animations only; reduce-motion still freezes all motion. No new dependencies.
+- Visibility pass: added an opaque lavender sphere body under the swirls, raised swirl opacity/saturation, shrank the white frost to a centre highlight, and raised the orb size cap to `min(screenWidth * 1.05, 520)` so the orb reads clearly through the translucent auth card.
+- Pearl pass: milky white-lilac body, soft pearl palette (blush, lilac, powder blue, mint, champagne), and a travelling white sheen lobe.
+- Removed the two bottom corner glows (pink bottom-right, blue bottom-left) from `PastelBlobBackground.tsx`; only the top-right lavender glow remains.
+- Fixed: removed the orb rim-lustre layer. It was not absolutely positioned, so it rendered one orb-height below the orb and showed as a pink ring under the login card.
+- `AuthButton` (`AuthComponents.tsx`) restyled to a pearl gradient (`authTheme.pearlBtnGradient`: `#F2C4E2 → #D5C6F6 → #BCD6F6`) with a white top sheen, white hairline border and dark plum label (`#3D3055`) for contrast on the light fill. `authTheme.btnGradient` is unchanged, so home/profile/onboarding buttons keep the old purple gradient.
+- Checks: `tsc --noEmit` clean; 41/41 Jest tests pass. Not yet verified visually on a device.
+### Added — Frosted Glass Auth Screens Redesign & Animated Pastel Blob Background (2026-11-06)
+- **Visual Identity Redesign (Reference 1 & Reference 2)**:
+  - Combined Reference 1's frosted glass card (translucent backdrop `rgba(255, 255, 255, 0.40)`, subtle white hairline border `rgba(255, 255, 255, 0.88)`, rounded corners `borderRadius: 32`, delicate top sheen highlight, and soft ambient shadow) with Reference 2's dreamy pastel palette (pastel lavender `#B392F8`, baby blue `#67BFFC`, cyan `#48E5DC`, pink `#FA7DB9`, and lilac `#C98CFA`).
+  - Implemented `PastelBlobBackground.tsx`: One large, soft, blurred organic multi-radial gradient blob positioned directly behind the glass card that animates continuously with slow, seamless floating, horizontal drifting, and breathing scale movements at different speeds. Specially tuned size and luminous opacity to ensure vibrant visibility blooming behind the card.
+  - Harmonized button colors to match the page palette with a periwinkle-to-lilac gradient (`['#686EE8', '#9475F5']`).
+  - Implemented smooth animated spring-like sliding indicator for Login/Register toggle (`AuthTabBar` in `AuthComponents.tsx`):
+    - Slides smoothly within the same toggle container using spring dynamics (`friction: 9, tension: 50`) without button unmounting or cross-fade flashes.
+    - Preserves solid white background, rounded corners (`borderRadius: 13`), and soft drop shadow.
+    - Unified into a single shared toggle container at the top of `AuthCard` in both `login.tsx` and `register.tsx`.
+  - Integrated user-provided 3D pearlescent iridescent liquid blob asset with orbital ring (`assets/pearlescent-blob.png`) into `PastelBlobBackground.tsx`:
+    - Dynamic multi-layered native animations: organic floating/drifting, breathing scale, microgravity orbital tilt, fluid liquid morphing via non-uniform scale pulsing, and underlying rotating chromatic aura refraction.
+    - 100% performant native driver animations (`useNativeDriver: true`) without React state re-render overhead.
+  - Added smooth sliding motion transition (`AuthSlideContainer.tsx`) with fluid cubic deceleration easing (`bezier(0.25, 1, 0.4, 1)`) and synchronized sliding pill indicator on the tab bar (`AuthTabBar`).
+  - Fixed `app/(auth)/index.tsx` entry redirect to route straight to `/(auth)/login`.
+  - Added reduced-motion accessibility support via `AccessibilityInfo.isReduceMotionEnabled()` and `reduceMotionChanged` listener to freeze animations if requested by the user.
+  - Updated brand logo across the app with the new shimmering script HALO logo asset (`assets/halo-logo.png`).
+- **Mobile Auth Screens (`apps/mobile`)**:
+  - Redesigned `app/(auth)/login.tsx` and `app/(auth)/register.tsx` with responsive `KeyboardAvoidingView` / `ScrollView` layouts, entrance animations, and cohesive glassmorphic styling.
+  - Created modular `AuthForms.tsx` and `AuthSuccessView.tsx` for clean architecture and strict file line size limits (<250 lines).
+  - Maintained 100% of existing authentication logic, handlers, validation rules, state management, and navigation routes.
+  - Zero modifications to backend services, APIs, database schemas, or business logic.
+  - All touched files strictly conform to the <250 lines rule; 41/41 mobile Jest unit tests and TypeScript check passing.
+
 ### Added — Luxury Pearlescent Garment Studio UI (`apps/mobile`) (2026-11-05)
 - **Garment Studio Screen (`app/(app)/garment.tsx`)**:
   - Full luxury beauty & fashion visual identity following HALO brand guidelines (Lavender mist `#D9CFF1`, Blush pink `#F1D9E5`, Pearl blue `#D4E9EC`, Soft mint `#D7EAE3`, Warm ivory `#F6EBDD`, Dusty mauve `#77708F`).

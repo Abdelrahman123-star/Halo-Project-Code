@@ -1,7 +1,67 @@
-# Active Implementation Plan — Garment Recognition Pipeline Integration
+# Active Implementation Plan — Garment Recognition Pipeline Integration & Auth Screen Redesign
 
-**Current task:** Port and integrate Computer Vision & Fashion AI Garment Recognition from prototype (`Cloth Recognation Code`) into production FastAPI backend (`services/api`) and Expo mobile app (`apps/mobile`) with a standalone developer test page.  
+**Current task:** Redesign Mobile Login and Register screens using Reference 1 for frosted glass card and Reference 2 for pastel lavender, baby blue, cyan, pink, and lilac palette, animated continuous floating/drifting/scaling background blob behind the glass card, and new HALO brand logo.  
 **Status:** Completed & Verified ✅
+
+---
+
+## 1. Objectives & Constraints
+
+1. **Visual Redesign (Reference 1 & Reference 2)**:
+   - Combine Reference 1's frosted glass card (translucent backdrop, subtle white border, rounded corners, soft shadows) with Reference 2's pastel palette (pastel lavender, baby blue, cyan, pink, lilac).
+   - Create one large, soft, blurred organic gradient blob BEHIND the glass card like Reference 2.
+   - Animate the blob continuously with slow, seamless floating, drifting, and scaling movements at different speeds.
+   - Support `AccessibilityInfo.isReduceMotionEnabled()` to respect user reduced-motion preferences.
+2. **New Brand Logo**:
+   - Replace current HALO logo with the newly provided shimmering script HALO logo asset (`assets/halo-logo.png`).
+3. **Strict Zero Backend / Zero Auth Logic Modification**:
+   - Frontend-only: no changes to backend code, APIs, endpoints, Supabase schemas, models, controllers, routes, auth logic, validation rules, or business logic.
+   - Reuse existing `useLoginForm` and `useRegisterForm` hooks, error banners, field handlers, and navigation.
+4. **Responsive & Smooth UX**:
+   - `KeyboardAvoidingView` and `ScrollView` for all device heights, preserving keyboard accessibility and hit slops.
+   - Smooth staggered entrance transitions and clean visual hierarchy.
+
+---
+
+## 2. Technical Architecture & File Layout
+
+### Mobile: `apps/mobile`
+- `apps/mobile/assets/halo-logo.png`: Updated with the user-provided script HALO logo.
+- `apps/mobile/src/features/auth/components/PastelBlobBackground.tsx`:
+  - Full-screen pastel background with one large, soft, blurred organic multi-color gradient blob (lavender `#CEB8F8`, baby blue `#A8D4FE`, cyan `#98F3EC`, pink `#F8B6D3`, lilac `#DFB8FC`).
+  - Seamless non-repeating continuous floating, drifting, and breathing scale animations using React Native `Animated.loop`.
+  - Native `AccessibilityInfo` listener to freeze animations if reduced motion is enabled.
+- `apps/mobile/src/features/auth/components/AuthComponents.tsx`:
+  - Updated `authTheme` with Reference 2 pastel palette and Reference 1 frosted glass tokens.
+  - Refined `AuthCard`: true frosted-glass surface container with translucent fill, subtle crisp white border, delicate top sheen, and soft diffuse ambient shadow.
+  - Refined `AuthInput`: translucent pill input with delicate white border, clear placeholder, and refined icon strokes.
+  - Refined `AuthButton`: Reference 1/2 dreamy periwinkle-to-rose/lilac gradient with spring press interaction.
+  - Refined `AuthTabBar`: translucent glass capsule pill with smooth active indicator.
+  - Refined `SocialButtons` & `HairlineDivider`: frosted pill buttons with clean typography and subtle borders.
+- `apps/mobile/src/features/auth/components/AuthSuccessView.tsx`:
+  - Modular "You're all set!" confirmation screen after successful registration.
+- `apps/mobile/app/(auth)/login.tsx`:
+  - Redesigned Login screen integrating the new frosted glass card, animated background blob, new logo, and responsive keyboard layout.
+- `apps/mobile/app/(auth)/register.tsx`:
+  - Redesigned Register screen matching Login visual identity with smooth entrance animations, success state, and responsive layout.
+
+---
+
+## 3. Step-by-Step Implementation Plan
+
+| # | Step | Description | Status |
+|---|---|---|---|
+| 1 | **Logo Asset Update** | Replace `apps/mobile/assets/halo-logo.png` with the user-uploaded script logo. | ✅ Verified |
+| 2 | **Animated Pastel Blob Background** | Implement `PastelBlobBackground.tsx` with one large soft blurred multi-radial organic blob, continuous drifting/scaling animation loops, and reduced motion detection. | ✅ Verified |
+| 3 | **Frosted Glass Auth Components** | Redesign `AuthCard`, `AuthInput`, `AuthButton`, `AuthTabBar`, and theme tokens in `AuthComponents.tsx` to match Reference 1 frosted glass and Reference 2 colors. | ✅ Verified |
+| 4 | **Login Screen Redesign** | Update `app/(auth)/login.tsx` with frosted glass card, new logo, animated blob background, and responsive layout while keeping all existing state/handlers. | ✅ Verified |
+| 5 | **Register Screen Redesign** | Update `app/(auth)/register.tsx` with identical styling, animations, success state, and responsive layout while keeping all existing state/handlers. | ✅ Verified |
+| 6 | **Verification & Automated Tests** | Run `npm run typecheck` and `npm test` across mobile test suites. Verify <250 lines per file and zero backend touches. | ✅ 41/41 Jest tests passed; 0 errors |
+
+---
+
+## 4. Historical Reference
+
 
 ---
 
