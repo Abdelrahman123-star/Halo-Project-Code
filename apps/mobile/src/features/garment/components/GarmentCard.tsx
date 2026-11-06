@@ -1,10 +1,18 @@
 /**
  * Component for displaying an individual detected garment's details:
  * Category, confidence, base64 crop preview, dominant colors, and fabric/pattern attributes.
+ * Optionally includes a "Save to Wardrobe" action.
  */
 
 import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import type {
   ColorResult,
   DetectedGarment,
@@ -21,17 +29,54 @@ export function ColorSwatch({ color }: { color: ColorResult }) {
   );
 }
 
-export function GarmentCard({ garment }: { garment: DetectedGarment }) {
+interface GarmentCardProps {
+  garment: DetectedGarment;
+  onSave?: (garment: DetectedGarment) => Promise<unknown>;
+  isSaving?: boolean;
+  isSaved?: boolean;
+}
+
+export function GarmentCard({
+  garment,
+  onSave,
+  isSaving,
+  isSaved,
+}: GarmentCardProps) {
   const { fabric, pattern, subtype } = garment.attributes;
 
   return (
     <View style={styles.card}>
-      <Text style={styles.cardTitle}>
-        #{garment.item_number} — {garment.category.replace(/_/g, " ").toUpperCase()}
-      </Text>
-      <Text style={styles.cardMeta}>
-        Confidence: {(garment.confidence * 100).toFixed(1)}%
-      </Text>
+      <View style={styles.cardHeader}>
+        <View style={styles.headerTexts}>
+          <Text style={styles.cardTitle}>
+            #{garment.item_number} — {garment.category.replace(/_/g, " ").toUpperCase()}
+          </Text>
+          <Text style={styles.cardMeta}>
+            Confidence: {(garment.confidence * 100).toFixed(1)}%
+          </Text>
+        </View>
+
+        {onSave ? (
+          <Pressable
+            style={[
+              styles.saveBtn,
+              isSaved && styles.savedBtn,
+              isSaving && styles.savingBtn,
+            ]}
+            onPress={() => onSave(garment)}
+            disabled={isSaving || isSaved}
+            accessibilityRole="button"
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={[styles.saveBtnText, isSaved && styles.savedBtnText]}>
+                {isSaved ? "Saved ✓" : "Save to Wardrobe"}
+              </Text>
+            )}
+          </Pressable>
+        ) : null}
+      </View>
 
       {/* Crop preview (base64 data URI) */}
       {garment.crop_base64 ? (
@@ -92,8 +137,43 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  headerTexts: {
+    flex: 1,
+    marginRight: 8,
+  },
   cardTitle: { fontSize: 16, fontWeight: "700", color: "#1a0533", marginBottom: 2 },
-  cardMeta: { fontSize: 12, color: "#888", marginBottom: 10 },
+  cardMeta: { fontSize: 12, color: "#888" },
+  saveBtn: {
+    backgroundColor: "#6366f1",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 110,
+  },
+  savedBtn: {
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#10b981",
+  },
+  savingBtn: {
+    opacity: 0.7,
+  },
+  saveBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  savedBtnText: {
+    color: "#059669",
+  },
   cropPreview: {
     width: "100%",
     height: 200,
@@ -114,4 +194,3 @@ const styles = StyleSheet.create({
   swatchBox: { width: 20, height: 20, borderRadius: 4, marginRight: 8 },
   swatchText: { fontSize: 12, color: "#444" },
 });
-

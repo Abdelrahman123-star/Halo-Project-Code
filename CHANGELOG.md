@@ -1,6 +1,24 @@
 # Changelog
 
 ## [Unreleased]
+### Added — Local Cloned 3D Closet Build from HAR Archive (2026-11-06)
+- Extracted and cloned all 93 production assets from the user's DevTools HAR capture into `apps/mobile/public/closet/`: includes all high-res transparent side & front shirts, realistic 3D shoe models (`jordan-4.glb`, `derby.glb`, `samba-left.glb`, etc.), studio HDRI (`studio_small_03_512.hdr`), watch textures, and Next.js client bundles.
+- Configured Metro enhanced middleware in `apps/mobile/metro.config.js` to serve these assets locally to mobile devices and emulators with custom RSC route handlers for `/rack`, `/shoes`, and `/accessories`.
+- Removed all external Vercel URLs: `apps/mobile/app/(app)/test-closet.tsx` is now strictly local and offline.
+- Created `apps/mobile/src/features/closet/logic/garmentModelConverter.ts` to convert scanned wardrobe items into 3D rack hanging profiles and pre-inject them via `window.__HALO_WARDROBE__` so the user's saved clothes hang on the 3D rail.
+- Checks run: `tsc --noEmit` ✅ · Jest 57/57 ✅ · Pytest 31/31 ✅.
+- Created native 3D Walk-in Closet (`apps/mobile/app/(app)/closet.tsx`) with R3F Canvas, animated doors, sliding chrome rail, in-memory JPEG `DataTexture` loader, and close-up garment inspection.
+- Fixed `TypeError: process.emitWarning is not a function` in Hermes: created `apps/mobile/src/shared/lib/polyfills.ts` and application entry point `apps/mobile/index.js` polyfilling `process.emitWarning` before Three.js CJS build evaluates.
+- Checks run: `tsc --noEmit` ✅ · Jest 53/53 ✅ · Pytest 31/31 ✅.
+
+### Added — 3D Closet Reference Viewer test screen (2026-11-06)
+- New test-only route `apps/mobile/app/(app)/test-closet.tsx` that shows the third-party demo https://ricks-closet.vercel.app/ in a `WebView` as design inspiration for a future HALO 3D wardrobe. We load the live site and do **not** copy its code, photos, or 3D models (they belong to their author). This is not HALO functionality.
+- Home screen (`app/(app)/index.tsx`) gets a "3D Closet Test" shortcut card.
+- New dependency: `react-native-webview@14.0.1` (installed with `npx expo install`, so the version matches the Expo SDK; MIT licence; included in Expo Go).
+- Checks run: `tsc --noEmit` ✅ · Jest 50/50 ✅.
+
+### Added — Wardrobe item editing with category dropdown (2026-11-06)
+- `updateWardrobeItem` API (Supabase + offline cache), `editItem` hook, `EditWardrobeModal.tsx`, and an ✏️ edit button on `WardrobeItemCard`.
 ### Added — In-Memory CV Garment Recognition Pipeline & Mobile Test Screen (2026-11-03)
 - **Ported Prototype into Production Backend (`services/api`)**:
   - Refactored `Cloth Recognation Code` into a clean, modular, in-memory AI package (`services/api/app/ai/garment/`):
