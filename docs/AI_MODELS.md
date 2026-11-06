@@ -49,3 +49,9 @@ Output is validated by Pydantic; failures raise standard HTTP exceptions matchin
   ]
 }
 ```
+
+
+## Prototype placeholders in the app (not models)
+- **Preview avatar** (`src/features/avatar/previewAvatar.ts`, `assets/avatar-preview.png`): after the
+  Create Avatar capture flow, every user gets the same fixed sample avatar image. No model runs and the
+  user's photos are not used. Labelled "Preview avatar" in the UI. Replace with real avatar generation.

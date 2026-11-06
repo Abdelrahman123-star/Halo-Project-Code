@@ -1,6 +1,22 @@
 # Changelog
 
 ## [Unreleased]
+### Added — Preview avatar after capture + avatar page with delete (PROTOTYPE, no generation)
+- New asset `assets/avatar-preview.png` (user-provided sample character; white background removed by edge flood-fill and cropped to 179×610). It is a fixed sample, NOT generated from the user's photos; labelled "Preview avatar" wherever shown.
+- `src/features/avatar/previewAvatar.ts` + `hooks/usePreviewAvatar.ts`: per-user on-device flag (AsyncStorage key `halo.preview-avatar.v1.<userId>`), re-read on screen focus. No upload, no backend.
+- Create Avatar: "Create My Avatar" saves the flag (with loading/error handling), then the final screen shows the preview avatar ("Meet your HALO avatar", "Preview avatar" pill, honest copy that personalized generation is coming soon).
+- Home (`HouseHero` gained `hasAvatar`): with an avatar, the preview image stands in the silhouette's spot (no "+") and opens the new `app/(app)/avatar.tsx`; without one, the "+" silhouette opens Create Avatar as before. Nothing is drawn while the flag is loading.
+- New `app/(app)/avatar.tsx`: large preview avatar, Back to home, Delete avatar (confirmation) → returns Home showing the "+" silhouette. Empty state links to Create Avatar.
+- New `PreviewAvatarFigure` component. Bedroom's "3D Dressing Suite" link still opens Create Avatar (unchanged).
+- Checks: `tsc --noEmit` clean; Jest 66/66 (3 new in `src/features/avatar/__tests__/previewAvatar.test.ts`); `npx expo export --platform ios` includes the asset. Not yet verified on a device.
+### Added — Create Your Avatar: guided camera capture (UI + working camera; no avatar generation)
+- New dependency: `expo-camera` (~58.0.14, first-party Expo, MIT, Expo Go compatible; `npx expo install`). `app.json`: `expo-camera` plugin (camera permission text; microphone and Android audio recording disabled). The shared iOS camera permission string now covers avatar photos and clothing (also set on `expo-image-picker` so neither overrides the other).
+- `app/(app)/create-avatar.tsx` rewritten (still reached from the avatar "+" on Home and from the bedroom): intro → Front view → Back view → Face close-up → Review → "Your photos are ready!" placeholder. Single route + `useReducer`, so moving between steps never drops photos. Leaving with photos asks for confirmation; iOS swipe-back disabled on this screen; Android hardware back steps backwards through the flow.
+- New `src/features/avatar/`: `avatarSteps.ts` (step copy + default camera per step), `avatarCaptureState.ts` (pure reducer), components `CameraCapture` (permission states incl. Open Settings, live `CameraView`, positioning guide, shutter, front/rear switch, 0/3/10 s self-timer, mount/capture error + restart; camera unmounted when screen unfocused), `CaptureStepView`, `CaptureProgress` (tappable Front/Back/Face with done state), `CaptureGuides` (dashed body/back/face guides; pearly illustration variant), `AvatarIntroView`, `AvatarReviewView` (per-photo retake), `AvatarReadyView` (honest "coming soon", empty silhouette), `CaptureFrame`, `SoftButton`, `AvatarIcons`.
+- `AvatarSilhouette.tsx`: exported `HUMAN_SILHOUETTE_PATH` / `SILHOUETTE_ASPECT_RATIO` for reuse (no visual change). Deleted unused `ComingSoonScreen.tsx`.
+- Photos stay in memory/app cache only: no upload, no API, no avatar generation (see `docs/SECURITY_AND_PRIVACY.md`).
+- Checks: `tsc --noEmit` clean; Jest 63/63 (6 new in `src/features/avatar/__tests__/avatarCaptureState.test.ts`); `npx expo export` iOS + Android bundle; `npx expo config --type introspect` shows the camera permission text applied. Camera not yet verified on a physical device.
+- Note: `NSMicrophoneUsageDescription` / `RECORD_AUDIO` still appear in the generated config — they come from the existing `expo-image-picker` plugin defaults, not from `expo-camera`.
 ### Changed — Home bottom nav is now real frosted glass
 - New dependency: `expo-blur` (~58.0.5, first-party Expo, MIT, supported in Expo Go; installed with `npx expo install`).
 - `HomeBottomNav`: `BlurView` (`systemUltraThinMaterialLight`; intensity tuned to 20 with a lighter tint for clearer glass) under a faint pearl tint gradient, white rim and top sheen, replacing the 78% white fill. Shadow moved to an outer layer so the blur can be clipped to the rounded shape.

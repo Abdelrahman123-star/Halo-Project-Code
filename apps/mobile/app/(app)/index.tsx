@@ -9,6 +9,7 @@ import { BlurTargetView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
+import { usePreviewAvatar } from '@/features/avatar/hooks/usePreviewAvatar';
 import { FadeInView } from '@/features/home/components/FadeInView';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
 import { HOME_BOTTOM_NAV_HEIGHT, HomeBottomNav } from '@/features/home/components/HomeBottomNav';
@@ -20,6 +21,8 @@ const SCREEN_GUTTER = 20;
 export default function HomeScreen() {
   const router = useRouter();
   const displayName = useDisplayName();
+  const { state: avatarState } = usePreviewAvatar();
+  const hasAvatar = avatarState.status === 'ready' ? avatarState.hasAvatar : null;
   const { width } = useWindowDimensions();
   const houseWidth = Math.min(width - SCREEN_GUTTER * 2 - 16, 340);
   // Android blurs only what is inside a BlurTargetView; on iOS this is a plain View.
@@ -40,7 +43,9 @@ export default function HomeScreen() {
               <HouseHero
                 width={houseWidth}
                 onPress={() => router.push('/(app)/house-entrance')}
-                onAvatarPress={() => router.push('/(app)/create-avatar')}
+                hasAvatar={hasAvatar}
+                // With an avatar, tapping it opens the avatar page; otherwise the "+" starts creation.
+                onAvatarPress={() => router.push(hasAvatar ? '/(app)/avatar' : '/(app)/create-avatar')}
               />
             </FadeInView>
           </ScrollView>

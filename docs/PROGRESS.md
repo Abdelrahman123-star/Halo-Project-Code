@@ -3,6 +3,10 @@
 _Last updated: 2026-11-06_
 
 ## Current state
+**Preview avatar (PROTOTYPE / MOCKED OUTPUT):** finishing Create Avatar assigns a fixed sample avatar image (`assets/avatar-preview.png`), shown on Home in place of the "+" silhouette and on the new avatar page (`app/(app)/avatar.tsx`) with a Delete option. It is not generated from the user's photos and is labelled "Preview avatar" in the UI. Stored as a per-user on-device flag only. tsc clean, Jest 66/66.
+
+**Create Your Avatar — camera capture implemented (PROTOTYPE: no avatar generation)**, device check pending. Guided front / back / face capture with live `expo-camera` preview, guides, timer, camera switch, retake, progress, review, and an honest "generation coming soon" screen. Photos are local/in-memory only. tsc clean, Jest 63/63, iOS + Android export OK. Next: test on device; consent screen + explicit cache cleanup before any upload work.
+
 **Home dashboard — UI PROTOTYPE with static sample data** (device visual check pending). Home has a frosted-glass bottom nav (`expo-blur`, new dep) (Wellness, Reminders, Weather, Calendar); each opens its own page (`app/(app)/wellness|reminders|weather|calendar.tsx`). Not real: wellness scores, skin progress, reminders, weather and events come from `src/features/home/dashboard/sampleData.ts` and each page is labelled "Preview · sample data". Next: wire real sources behind the same types. tsc clean, Jest 57/57.
 
 **House entrance → hallway hand-off made seamless; Home wardrobe card removed** (device check pending). Hallway background is now the entrance video's last frame (`assets/hallway-entrance-frame.jpg`); the video cross-fades into it and the hallway route opens without animation. tsc clean, Jest 53/53, Android export OK.

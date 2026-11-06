@@ -17,10 +17,10 @@ import Svg, { Defs, Ellipse, LinearGradient, Path, Stop } from 'react-native-svg
 import { PlusIcon } from './HomeIcons';
 
 // Original viewBox proportions: 100 wide × 240 high.
-const SILHOUETTE_ASPECT_RATIO = 100 / 240;
+export const SILHOUETTE_ASPECT_RATIO = 100 / 240;
 
 // Symmetric full-body human silhouette outline (head to toe).
-const HUMAN_SILHOUETTE_PATH = `
+export const HUMAN_SILHOUETTE_PATH = `
 M 50 10
 C 56.5 10, 61.5 15.5, 61.5 23.5
 C 61.5 30.5, 56.5 36.5, 53.5 42

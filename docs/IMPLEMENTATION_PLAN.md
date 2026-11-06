@@ -1,3 +1,13 @@
+# Active Implementation Plan — Create Your Avatar (camera capture)
+
+**Status:** Implemented — tsc, Jest, iOS/Android export pass; physical-device camera check pending.
+- Scope: guided capture of front, back, face photos with `expo-camera`; review; placeholder completion. No upload, no AI, no 3D.
+- State: one route, pure reducer (`src/features/avatar/avatarCaptureState.ts`); photos in memory only.
+- Camera lifecycle: `CameraView` mounted only on an active capture step while the screen is focused.
+- Exit safety: confirmation before discarding photos; swipe-back disabled; Android back steps backwards.
+
+---
+
 # Active Implementation Plan — Home dashboard (UI prototype)
 
 **Current task:** Add a static-data dashboard below the house on Home (where "Add to your wardrobe" used to be): Wellness & Skin (main), Today's reminders, Weather, Calendar.
