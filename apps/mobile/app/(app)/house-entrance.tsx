@@ -1,11 +1,17 @@
 /**
  * HouseEntranceScreen — Plays the interactive 3D house entrance video
  * and smoothly transitions to the Hallway screen upon completion.
+ *
+ * Hand-off: the hallway background is the video's exact last frame, and that
+ * same image sits under the video here. Fading the video out reveals an
+ * identical picture, and the hallway route opens with no animation (see
+ * app/(app)/_layout.tsx), so there is no visible cut, flash, or slide.
  */
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -15,6 +21,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { HALLWAY_IMAGE } from '@/features/home/components/DoorSelectionView';
 import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 
@@ -43,10 +50,11 @@ export default function HouseEntranceScreen() {
       // safe fallback
     }
 
-    // Smooth fade transition before opening hallway
+    // Cross-fade the video (and the Home/Skip pills) into the identical
+    // hallway frame underneath, then swap routes invisibly.
     Animated.timing(fadeAnim, {
       toValue: 0,
-      duration: 350,
+      duration: 300,
       useNativeDriver: true,
     }).start(() => {
       router.replace('/(app)/hallway');
@@ -92,16 +100,24 @@ export default function HouseEntranceScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Pastel background avoids any blank/black flash while buffering */}
-      <View style={StyleSheet.absoluteFill}>
-        <PastelBlobBackground />
-        {!isReady && (
+      {/* Hallway frame the video fades into (identical to its last frame).
+          Laid out exactly like DoorSelectionView (absolute container + 100%
+          image): with absoluteFill alone the Image fell back to its intrinsic
+          1080×1920 size and flashed a zoomed-in top-left crop. */}
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Image source={HALLWAY_IMAGE} style={styles.hallwayImage} resizeMode="cover" accessible={false} />
+      </View>
+
+      {/* Pastel loading state avoids a blank/black flash while buffering */}
+      {!isReady && (
+        <View style={StyleSheet.absoluteFill}>
+          <PastelBlobBackground />
           <View style={styles.loadingBackdrop}>
             <ActivityIndicator size="small" color="#7E5FA8" />
             <Text style={styles.loadingText}>Stepping inside...</Text>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {/* Full-screen entrance video */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: fadeAnim }]}>
@@ -113,27 +129,29 @@ export default function HouseEntranceScreen() {
         />
       </Animated.View>
 
-      {/* Overlaid safe area controls */}
-      <SafeAreaView style={styles.controlsOverlay} pointerEvents="box-none" edges={['top', 'left', 'right']}>
-        <Pressable
-          onPress={handleBack}
-          accessibilityRole="button"
-          accessibilityLabel="Go back to Home"
-          style={({ pressed }) => [styles.pillBtn, pressed && styles.pillPressed]}
-        >
-          <ChevronLeftIcon size={18} color="#FFFFFF" />
-          <Text style={styles.pillText}>Home</Text>
-        </Pressable>
+      {/* Overlaid safe area controls — fade out with the video */}
+      <Animated.View style={[styles.controlsLayer, { opacity: fadeAnim }]} pointerEvents="box-none">
+        <SafeAreaView style={styles.controlsOverlay} pointerEvents="box-none" edges={['top', 'left', 'right']}>
+          <Pressable
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Go back to Home"
+            style={({ pressed }) => [styles.pillBtn, pressed && styles.pillPressed]}
+          >
+            <ChevronLeftIcon size={18} color="#FFFFFF" />
+            <Text style={styles.pillText}>Home</Text>
+          </Pressable>
 
-        <Pressable
-          onPress={navigateToHallway}
-          accessibilityRole="button"
-          accessibilityLabel="Skip entrance video"
-          style={({ pressed }) => [styles.pillBtn, pressed && styles.pillPressed]}
-        >
-          <Text style={styles.pillText}>Skip</Text>
-        </Pressable>
-      </SafeAreaView>
+          <Pressable
+            onPress={navigateToHallway}
+            accessibilityRole="button"
+            accessibilityLabel="Skip entrance video"
+            style={({ pressed }) => [styles.pillBtn, pressed && styles.pillPressed]}
+          >
+            <Text style={styles.pillText}>Skip</Text>
+          </Pressable>
+        </SafeAreaView>
+      </Animated.View>
     </View>
   );
 }
@@ -154,6 +172,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B5299',
     letterSpacing: 0.2,
+  },
+  hallwayImage: {
+    width: '100%',
+    height: '100%',
+  },
+  controlsLayer: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 20,
   },
   controlsOverlay: {
     flexDirection: 'row',

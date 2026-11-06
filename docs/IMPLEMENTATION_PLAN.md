@@ -1,3 +1,15 @@
+# Active Implementation Plan — Home dashboard (UI prototype)
+
+**Current task:** Add a static-data dashboard below the house on Home (where "Add to your wardrobe" used to be): Wellness & Skin (main), Today's reminders, Weather, Calendar.
+**Status:** Implemented — tsc + Jest pass; visual check on device pending
+- UI only: sample data in `src/features/home/dashboard/sampleData.ts`, labelled "Preview · sample data" in the UI. No APIs, backend, DB, notifications, or analysis.
+- Calendar uses the device's real current date; sample events are offsets from today.
+- Reuse auth/home styling tokens (`authTheme`, pearl gradient, orb pastels, plum text). Header, house, avatar, Login/Register untouched. No new deps.
+- Layout (revised): Home shows a frosted bottom nav; each feature has its own page (`/(app)/wellness`, `/reminders`, `/weather`, `/calendar`) via a shared `FeaturePageShell`.
+- Verify: tsc, Jest (+ unit test for month-grid helper).
+
+---
+
 # Active Implementation Plan — Welcome intro video
 
 **Current task:** Replace the app-open welcome animation (`LaunchScreen`, shown by `app/_layout.tsx`) with the uploaded intro video.

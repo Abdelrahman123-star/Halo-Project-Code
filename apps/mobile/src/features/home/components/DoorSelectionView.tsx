@@ -18,7 +18,10 @@ import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeftIcon } from './HomeIcons';
 
-const HALLWAY_IMAGE = require('../../../../assets/hallway-doors.png');
+// The exact last frame of `house-entrance.mp4`. The entrance screen shows it
+// under the video, so the hand-off into this hallway is pixel-identical.
+// Door hit areas and portals below are positioned for this frame (1080×1920).
+export const HALLWAY_IMAGE = require('../../../../assets/hallway-entrance-frame.jpg');
 
 type DoorSelectionViewProps = {
   onSelectBedroom: () => void;
@@ -49,7 +52,16 @@ export function DoorSelectionView({
       zoomAnim.setValue(0);
       highlightAnim.setValue(0);
       doorLightAnim.setValue(0);
-      uiOpacity.setValue(1);
+      // Fade the HUD in rather than popping it over the hallway image.
+      uiOpacity.setValue(0);
+      const hudFadeIn = Animated.timing(uiOpacity, {
+        toValue: 1,
+        duration: 450,
+        delay: 150,
+        useNativeDriver: true,
+      });
+      hudFadeIn.start();
+      return () => hudFadeIn.stop();
     }, [doorLightAnim, highlightAnim, uiOpacity, zoomAnim])
   );
 
@@ -162,8 +174,8 @@ export function DoorSelectionView({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#16100D', overflow: 'hidden' },
   image: { width: '100%', height: '100%' },
-  bedroomTarget: { position: 'absolute', left: '18%', top: '20%', width: '31%', height: '54%', borderRadius: 4 },
-  bathroomTarget: { position: 'absolute', left: '54%', top: '20%', width: '31%', height: '54%', borderRadius: 4 },
+  bedroomTarget: { position: 'absolute', left: '18.5%', top: '20%', width: '30%', height: '69%', borderRadius: 4 },
+  bathroomTarget: { position: 'absolute', left: '54%', top: '20%', width: '30%', height: '69%', borderRadius: 4 },
   glow: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255, 235, 180, 0.22)',
@@ -177,10 +189,10 @@ const styles = StyleSheet.create({
   },
   bedroomPortal: {
     position: 'absolute',
-    left: '28%',
-    top: '24%',
+    left: '27.5%',
+    top: '32%',
     width: '11%',
-    height: '46%',
+    height: '56%',
     backgroundColor: '#FFF6E0',
     borderRadius: 8,
     shadowColor: '#FFE0A3',
@@ -189,10 +201,10 @@ const styles = StyleSheet.create({
   },
   bathroomPortal: {
     position: 'absolute',
-    left: '64%',
-    top: '24%',
+    left: '63.5%',
+    top: '32%',
     width: '11%',
-    height: '46%',
+    height: '56%',
     backgroundColor: '#FFF6E0',
     borderRadius: 8,
     shadowColor: '#FFE0A3',

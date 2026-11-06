@@ -1,12 +1,11 @@
 /**
  * Unit tests for HALO Home components and screens:
- * AvatarSilhouette, HouseHero, HomeShortcutsCard, HouseEntranceScreen,
+ * AvatarSilhouette, HouseHero, HouseEntranceScreen,
  * HallwayScreen, DoorSelectionView, BedroomScreen, and BathroomScreen.
  */
 import React from 'react';
 import { AvatarSilhouette } from '../components/AvatarSilhouette';
 import { HouseHero } from '../components/HouseHero';
-import { HomeShortcutsCard } from '../components/HomeShortcutsCard';
 import { DoorSelectionView } from '../components/DoorSelectionView';
 import HouseEntranceScreen from '../../../../app/(app)/house-entrance';
 import HallwayScreen from '../../../../app/(app)/hallway';
@@ -57,19 +56,6 @@ describe('Home Components & Screens', () => {
       expect(hero.props.width).toBe(320);
       expect(hero.props.onPress).toBe(onHousePress);
       expect(hero.props.onAvatarPress).toBe(onAvatarPress);
-    });
-  });
-
-  describe('HomeShortcutsCard', () => {
-    it('instantiates HomeShortcutsCard with wardrobe action handler', () => {
-      const onOpenWardrobe = jest.fn();
-
-      const card = React.createElement(HomeShortcutsCard, {
-        onOpenWardrobe,
-      });
-
-      expect(card).toBeDefined();
-      expect(card.props.onOpenWardrobe).toBe(onOpenWardrobe);
     });
   });
 

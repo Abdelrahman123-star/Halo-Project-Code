@@ -1,6 +1,33 @@
 # Changelog
 
 ## [Unreleased]
+### Changed — Home bottom nav is now real frosted glass
+- New dependency: `expo-blur` (~58.0.5, first-party Expo, MIT, supported in Expo Go; installed with `npx expo install`).
+- `HomeBottomNav`: `BlurView` (`systemUltraThinMaterialLight`; intensity tuned to 20 with a lighter tint for clearer glass) under a faint pearl tint gradient, white rim and top sheen, replacing the 78% white fill. Shadow moved to an outer layer so the blur can be clipped to the rounded shape.
+- `app/(app)/index.tsx`: page content wrapped in `BlurTargetView` and passed as `blurTarget`, required for real blur on Android (`blurMethod="dimezisBlurViewSdk31Plus"`: Android 12+ blurs, older Android shows the translucent tint only).
+- Checks: `tsc --noEmit` clean; Jest 57/57; `npx expo export --platform android` bundles. Not yet verified visually on a device.
+### Changed — Dashboard moved to a bottom navigation with one page per feature (UI prototype)
+- Home: the inline dashboard is replaced by `HomeBottomNav` (`src/features/home/components/HomeBottomNav.tsx`), a frosted bottom bar with Wellness, Reminders, Weather and Calendar. Home scroll padding leaves room for it. Header, house and avatar unchanged.
+- New routes: `app/(app)/wellness.tsx`, `reminders.tsx`, `weather.tsx`, `calendar.tsx`, sharing `FeaturePageShell` (pastel background, back button, title/subtitle, "Preview · sample data" label).
+- Weather page adds `HourlyForecastCard` (sample `SAMPLE_HOURLY`); Calendar page lists all sample events (`CalendarCard` gained `upcomingLimit`, default 2). New `CloudSunIcon`.
+- Removed `src/features/home/dashboard/HomeDashboard.tsx` (no longer used).
+- Still static sample data only; no APIs, backend, notifications or analysis. No new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 57/57. Not yet verified visually on a device.
+### Added — Home dashboard UI prototype (static sample data, frontend only)
+- New `src/features/home/dashboard/`: `HomeDashboard` (layout), `WellnessCard` (score ring, skin-progress sparkline, clarity/hydration/concerns bars, "View details" link — visual only), `RemindersCard` (timeline-style daily reminders with pending dots), `WeatherCard` (condition, temp, H/L, outfit tip), `CalendarCard` (real current month, pearl-highlighted today, event dots, next two events), shared `DashboardCard`/`CardHeader`, `MiniCharts` (ProgressRing, Sparkline, ThinBar), `DashboardIcons`, `dashboardTheme`, `calendarMath`, `sampleData`.
+- `app/(app)/index.tsx`: dashboard mounted under the house (where the wardrobe card was) with the existing staggered fade-in. Header, house and avatar unchanged.
+- All wellness/reminder/weather/event content is static sample data in `sampleData.ts`, labelled in-app as "Preview · sample data". No APIs, backend, DB, notifications or skin analysis. Calendar uses the device date; sample events are offsets from today.
+- Layout: Wellness (full) → Reminders (full) → Weather | Calendar side by side (stacked under 350 pt width). No new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 57/57 (4 new in `src/features/home/__tests__/calendarMath.test.ts`). Not yet verified visually on a device.
+### Changed — Home wardrobe card removed; seamless house-entrance → hallway hand-off
+- Home: removed the "Add to your wardrobe" card (wardrobe is reachable from the bedroom). Deleted the now-unused `HomeShortcutsCard.tsx` and its test case.
+- New asset `assets/hallway-entrance-frame.jpg`: the exact last frame of `house-entrance.mp4` (1080×1920). `DoorSelectionView` now uses it (exported as `HALLWAY_IMAGE`) instead of `hallway-doors.png`, which framed the hallway differently and caused a visible jump. Door hit areas and light portals re-positioned for the new framing.
+- `house-entrance.tsx`: the hallway frame sits under the video (pastel loader only while buffering), so the 300 ms fade at the end reveals an identical picture; Home/Skip pills fade out with it.
+- `app/(app)/_layout.tsx`: `hallway` route uses `animation: 'none'` so the route swap is invisible (no slide).
+- Hallway HUD ("Outside" pill, "Tap a door" hint) now fades in on focus instead of popping in.
+- `assets/hallway-doors.png` is no longer referenced (kept on disk).
+- Fixed: zoomed top-left hallway flash at the end of the entrance video. The under-video hallway `Image` used `absoluteFill` with no width/height and rendered at its intrinsic 1080×1920 size; it now uses the same layout as `DoorSelectionView` (absolute container + `width/height: '100%'`). Verified via AVAssetImageGenerator that `hallway-entrance-frame.jpg` matches the video's final presented frame (the file has a 0.083 s edit-list offset).
+- Checks: `tsc --noEmit` clean; Jest 53/53; `npx expo export --platform android` bundles and includes the new frame. Not yet verified on device.
 ### Changed — App-open welcome screen is now a full-screen intro video (`apps/mobile`, frontend only)
 - New `src/features/launch/components/WelcomeVideoScreen.tsx` (expo-video, already a dependency): plays `assets/videos/welcome-intro.mp4` full-screen (`contentFit="cover"`, no controls, status bar hidden) with sound, once (`loop = false`). On `playToEnd` it fades out (450 ms) and calls `onFinished`, which reveals the navigator exactly as before (Login, or Home with a session). Falls through to the app if the player reports `error` or is not ready within 8 s. Listeners removed on unmount; expo-video releases the player. A ref guards against double-finish, and the callback is held in a ref so re-renders never restart playback.
 - `app/_layout.tsx`: `LaunchScreen` swapped for `WelcomeVideoScreen` (same `onFinished` contract; no other changes). `src/features/launch/components/LaunchScreen.tsx` deleted (no longer used).

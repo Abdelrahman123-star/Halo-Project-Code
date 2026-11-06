@@ -3,6 +3,10 @@
 _Last updated: 2026-11-06_
 
 ## Current state
+**Home dashboard — UI PROTOTYPE with static sample data** (device visual check pending). Home has a frosted-glass bottom nav (`expo-blur`, new dep) (Wellness, Reminders, Weather, Calendar); each opens its own page (`app/(app)/wellness|reminders|weather|calendar.tsx`). Not real: wellness scores, skin progress, reminders, weather and events come from `src/features/home/dashboard/sampleData.ts` and each page is labelled "Preview · sample data". Next: wire real sources behind the same types. tsc clean, Jest 57/57.
+
+**House entrance → hallway hand-off made seamless; Home wardrobe card removed** (device check pending). Hallway background is now the entrance video's last frame (`assets/hallway-entrance-frame.jpg`); the video cross-fades into it and the hallway route opens without animation. tsc clean, Jest 53/53, Android export OK.
+
 **App-open intro video implemented — device check pending:** `WelcomeVideoScreen` (expo-video) replaces the old animated `LaunchScreen`; plays `assets/videos/welcome-intro.mp4` once, full-screen, with sound, then fades into Login/Home. Checks: tsc clean, Jest 54/54, iOS export bundles the video. Limitations: iOS silent switch mutes audio (default iOS behaviour); Android system navigation bar is not hidden (would need `expo-navigation-bar`, not added).
 
 **Two-Door Room Selection & Animated Room Transition implemented & verified:**
