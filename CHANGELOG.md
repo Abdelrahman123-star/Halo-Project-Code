@@ -1,6 +1,139 @@
 # Changelog
 
 ## [Unreleased]
+### Added — Preview avatar after capture + avatar page with delete (PROTOTYPE, no generation)
+- New asset `assets/avatar-preview.png` (user-provided sample character; white background removed by edge flood-fill and cropped to 179×610). It is a fixed sample, NOT generated from the user's photos; labelled "Preview avatar" wherever shown.
+- `src/features/avatar/previewAvatar.ts` + `hooks/usePreviewAvatar.ts`: per-user on-device flag (AsyncStorage key `halo.preview-avatar.v1.<userId>`), re-read on screen focus. No upload, no backend.
+- Create Avatar: "Create My Avatar" saves the flag (with loading/error handling), then the final screen shows the preview avatar ("Meet your HALO avatar", "Preview avatar" pill, honest copy that personalized generation is coming soon).
+- Home (`HouseHero` gained `hasAvatar`): with an avatar, the preview image stands in the silhouette's spot (no "+") and opens the new `app/(app)/avatar.tsx`; without one, the "+" silhouette opens Create Avatar as before. Nothing is drawn while the flag is loading.
+- New `app/(app)/avatar.tsx`: large preview avatar, Back to home, Delete avatar (confirmation) → returns Home showing the "+" silhouette. Empty state links to Create Avatar.
+- New `PreviewAvatarFigure` component. Bedroom's "3D Dressing Suite" link still opens Create Avatar (unchanged).
+- Checks: `tsc --noEmit` clean; Jest 66/66 (3 new in `src/features/avatar/__tests__/previewAvatar.test.ts`); `npx expo export --platform ios` includes the asset. Not yet verified on a device.
+### Added — Create Your Avatar: guided camera capture (UI + working camera; no avatar generation)
+- New dependency: `expo-camera` (~58.0.14, first-party Expo, MIT, Expo Go compatible; `npx expo install`). `app.json`: `expo-camera` plugin (camera permission text; microphone and Android audio recording disabled). The shared iOS camera permission string now covers avatar photos and clothing (also set on `expo-image-picker` so neither overrides the other).
+- `app/(app)/create-avatar.tsx` rewritten (still reached from the avatar "+" on Home and from the bedroom): intro → Front view → Back view → Face close-up → Review → "Your photos are ready!" placeholder. Single route + `useReducer`, so moving between steps never drops photos. Leaving with photos asks for confirmation; iOS swipe-back disabled on this screen; Android hardware back steps backwards through the flow.
+- New `src/features/avatar/`: `avatarSteps.ts` (step copy + default camera per step), `avatarCaptureState.ts` (pure reducer), components `CameraCapture` (permission states incl. Open Settings, live `CameraView`, positioning guide, shutter, front/rear switch, 0/3/10 s self-timer, mount/capture error + restart; camera unmounted when screen unfocused), `CaptureStepView`, `CaptureProgress` (tappable Front/Back/Face with done state), `CaptureGuides` (dashed body/back/face guides; pearly illustration variant), `AvatarIntroView`, `AvatarReviewView` (per-photo retake), `AvatarReadyView` (honest "coming soon", empty silhouette), `CaptureFrame`, `SoftButton`, `AvatarIcons`.
+- `AvatarSilhouette.tsx`: exported `HUMAN_SILHOUETTE_PATH` / `SILHOUETTE_ASPECT_RATIO` for reuse (no visual change). Deleted unused `ComingSoonScreen.tsx`.
+- Photos stay in memory/app cache only: no upload, no API, no avatar generation (see `docs/SECURITY_AND_PRIVACY.md`).
+- Checks: `tsc --noEmit` clean; Jest 63/63 (6 new in `src/features/avatar/__tests__/avatarCaptureState.test.ts`); `npx expo export` iOS + Android bundle; `npx expo config --type introspect` shows the camera permission text applied. Camera not yet verified on a physical device.
+- Note: `NSMicrophoneUsageDescription` / `RECORD_AUDIO` still appear in the generated config — they come from the existing `expo-image-picker` plugin defaults, not from `expo-camera`.
+### Changed — Home bottom nav is now real frosted glass
+- New dependency: `expo-blur` (~58.0.5, first-party Expo, MIT, supported in Expo Go; installed with `npx expo install`).
+- `HomeBottomNav`: `BlurView` (`systemUltraThinMaterialLight`; intensity tuned to 20 with a lighter tint for clearer glass) under a faint pearl tint gradient, white rim and top sheen, replacing the 78% white fill. Shadow moved to an outer layer so the blur can be clipped to the rounded shape.
+- `app/(app)/index.tsx`: page content wrapped in `BlurTargetView` and passed as `blurTarget`, required for real blur on Android (`blurMethod="dimezisBlurViewSdk31Plus"`: Android 12+ blurs, older Android shows the translucent tint only).
+- Checks: `tsc --noEmit` clean; Jest 57/57; `npx expo export --platform android` bundles. Not yet verified visually on a device.
+### Changed — Dashboard moved to a bottom navigation with one page per feature (UI prototype)
+- Home: the inline dashboard is replaced by `HomeBottomNav` (`src/features/home/components/HomeBottomNav.tsx`), a frosted bottom bar with Wellness, Reminders, Weather and Calendar. Home scroll padding leaves room for it. Header, house and avatar unchanged.
+- New routes: `app/(app)/wellness.tsx`, `reminders.tsx`, `weather.tsx`, `calendar.tsx`, sharing `FeaturePageShell` (pastel background, back button, title/subtitle, "Preview · sample data" label).
+- Weather page adds `HourlyForecastCard` (sample `SAMPLE_HOURLY`); Calendar page lists all sample events (`CalendarCard` gained `upcomingLimit`, default 2). New `CloudSunIcon`.
+- Removed `src/features/home/dashboard/HomeDashboard.tsx` (no longer used).
+- Still static sample data only; no APIs, backend, notifications or analysis. No new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 57/57. Not yet verified visually on a device.
+### Added — Home dashboard UI prototype (static sample data, frontend only)
+- New `src/features/home/dashboard/`: `HomeDashboard` (layout), `WellnessCard` (score ring, skin-progress sparkline, clarity/hydration/concerns bars, "View details" link — visual only), `RemindersCard` (timeline-style daily reminders with pending dots), `WeatherCard` (condition, temp, H/L, outfit tip), `CalendarCard` (real current month, pearl-highlighted today, event dots, next two events), shared `DashboardCard`/`CardHeader`, `MiniCharts` (ProgressRing, Sparkline, ThinBar), `DashboardIcons`, `dashboardTheme`, `calendarMath`, `sampleData`.
+- `app/(app)/index.tsx`: dashboard mounted under the house (where the wardrobe card was) with the existing staggered fade-in. Header, house and avatar unchanged.
+- All wellness/reminder/weather/event content is static sample data in `sampleData.ts`, labelled in-app as "Preview · sample data". No APIs, backend, DB, notifications or skin analysis. Calendar uses the device date; sample events are offsets from today.
+- Layout: Wellness (full) → Reminders (full) → Weather | Calendar side by side (stacked under 350 pt width). No new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 57/57 (4 new in `src/features/home/__tests__/calendarMath.test.ts`). Not yet verified visually on a device.
+### Changed — Home wardrobe card removed; seamless house-entrance → hallway hand-off
+- Home: removed the "Add to your wardrobe" card (wardrobe is reachable from the bedroom). Deleted the now-unused `HomeShortcutsCard.tsx` and its test case.
+- New asset `assets/hallway-entrance-frame.jpg`: the exact last frame of `house-entrance.mp4` (1080×1920). `DoorSelectionView` now uses it (exported as `HALLWAY_IMAGE`) instead of `hallway-doors.png`, which framed the hallway differently and caused a visible jump. Door hit areas and light portals re-positioned for the new framing.
+- `house-entrance.tsx`: the hallway frame sits under the video (pastel loader only while buffering), so the 300 ms fade at the end reveals an identical picture; Home/Skip pills fade out with it.
+- `app/(app)/_layout.tsx`: `hallway` route uses `animation: 'none'` so the route swap is invisible (no slide).
+- Hallway HUD ("Outside" pill, "Tap a door" hint) now fades in on focus instead of popping in.
+- `assets/hallway-doors.png` is no longer referenced (kept on disk).
+- Fixed: zoomed top-left hallway flash at the end of the entrance video. The under-video hallway `Image` used `absoluteFill` with no width/height and rendered at its intrinsic 1080×1920 size; it now uses the same layout as `DoorSelectionView` (absolute container + `width/height: '100%'`). Verified via AVAssetImageGenerator that `hallway-entrance-frame.jpg` matches the video's final presented frame (the file has a 0.083 s edit-list offset).
+- Checks: `tsc --noEmit` clean; Jest 53/53; `npx expo export --platform android` bundles and includes the new frame. Not yet verified on device.
+### Changed — App-open welcome screen is now a full-screen intro video (`apps/mobile`, frontend only)
+- New `src/features/launch/components/WelcomeVideoScreen.tsx` (expo-video, already a dependency): plays `assets/videos/welcome-intro.mp4` full-screen (`contentFit="cover"`, no controls, status bar hidden) with sound, once (`loop = false`). On `playToEnd` it fades out (450 ms) and calls `onFinished`, which reveals the navigator exactly as before (Login, or Home with a session). Falls through to the app if the player reports `error` or is not ready within 8 s. Listeners removed on unmount; expo-video releases the player. A ref guards against double-finish, and the callback is held in a ref so re-renders never restart playback.
+- `app/_layout.tsx`: `LaunchScreen` swapped for `WelcomeVideoScreen` (same `onFinished` contract; no other changes). `src/features/launch/components/LaunchScreen.tsx` deleted (no longer used).
+- Asset renamed `assets/videos/welcome page.mp4` → `welcome-intro.mp4` (spaces in bundled asset names are unsafe for Android resources).
+- Untouched: Login/Register, Home, room navigation, auth/session logic, AsyncStorage, and the unreachable legacy `app/(auth)/welcome.tsx`.
+- Checks: `tsc --noEmit` clean; Jest 54/54; `npx expo export --platform ios` bundles and includes `welcome-intro.mp4`. Not yet verified on a physical device (playback, audio, Android).
+### Added — Two-Door Room Selection & Animated Room Transition (`apps/mobile`, frontend only) (2026-11-06)
+- Assets: Integrated user-uploaded two-door hallway screenshot (`assets/hallway-doors.png`, 575×1024), preserving original wood doors ("BEDROOM" and "BATHROOM"), proportions, lighting, and ambient surroundings without stretching.
+- [`DoorSelectionView.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/src/features/home/components/DoorSelectionView.tsx) (new): Interactive hallway component with hit zones over Bedroom and Bathroom doors. Implements smooth camera approach zoom (`scale: 1.0 -> 2.7`), amber/gold illuminated door outline highlights, radiant door-opening light bloom, and fluid threshold fade without separate videos. Features `useFocusEffect` to automatically reset animations when returning from a room.
+- [`hallway.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/app/(app)/hallway.tsx): Updated to host `DoorSelectionView` with navigation to Bedroom, Bathroom, and Outside.
+- [`bedroom.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/app/(app)/bedroom.tsx) (new): Full-screen Bedroom & Dressing Suite with Digital Wardrobe (`/(app)/garment`) and 3D Avatar Dressing Suite (`/(app)/create-avatar`) access cards, and "← Hallway" return button.
+- [`bathroom.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/app/(app)/bathroom.tsx) (new): Full-screen Bathroom & Beauty Suite with Smart Vanity Mirror and Beauty Shelf preview cards, and "← Hallway" return button.
+- Unit tests: Added test suites in `src/features/home/__tests__/homeComponents.test.ts`. All 54 Jest tests pass (8 test suites); `tsc --noEmit` clean with 0 errors. All files under 250 lines.
+
+### Added — Interactive House Entrance Video & Hallway Screen (`apps/mobile`, frontend only) (2026-11-06)
+- Dependency: Installed `expo-video@~58.0.12` compatible with Expo SDK 58.
+- Assets: Linked `apps/mobile/assets/videos/house-entrance.mp4` / `house-video.mp4` to the existing 1080×1920 entrance video (`home-video.mp4`).
+- [`house-entrance.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/app/(app)/house-entrance.tsx): Implemented full-screen interactive entrance video player using `useVideoPlayer` and `VideoView`. Configured auto-play on mount, muted (`muted: true`), controls hidden (`nativeControls: false`), non-looping (`loop: false`), and scaled to fit without distortion (`contentFit="cover"`). Features a graceful pastel fallback backdrop during buffering, top safe area Home and Skip glass pills, and automatic smooth fade transition to `/(app)/hallway` on `playToEnd`. Full cleanup on unmount stops and releases playback with zero background leaks.
+- [`hallway.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/app/(app)/hallway.tsx) & [`house-interior.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/app/(app)/house-interior.tsx): House Interior / Hallway screen matching HALO's pastel aesthetic. Features room action cards for "Digital Wardrobe" (`/(app)/garment`), "Dressing Suite" (`/(app)/create-avatar`), and "Step Outside" back to the front of the house (`/(app)`).
+- [`jest.setup.js`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/jest.setup.js): Added mock for `expo-video` TurboModules.
+- Unit tests: Added test suites in `src/features/home/__tests__/homeComponents.test.ts`. 51/51 Jest tests passing; `tsc --noEmit` clean with 0 errors.
+
+### Changed — Home Header Styling & Avatar Sizing (`apps/mobile`, frontend only) (2026-11-06)
+- [`HomeHeader.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/src/features/home/components/HomeHeader.tsx): Removed the trailing heart (`♡`) from the greeting (`"Welcome, [Name]"` and `"Welcome back"`). Updated greeting text color from dark plum to HALO's signature luminous lilac/purple (`#6B5299`) and subtitle to `#8A76A6` for a soft, pastel glow rather than black.
+- [`HouseHero.tsx`](file:///Users/farahkhaled/Documents/GitHub/Halo-Project-Code/apps/mobile/src/features/home/components/HouseHero.tsx): Increased avatar silhouette default height from 42% (`height * 0.42`) to 52% (`height * 0.52`) and adjusted position (`left: width * 0.14`, `bottom: height * 0.03`) for a larger, more prominent full-body presence outside the house.
+- Checks: `tsc --noEmit` and all 49 Jest tests passing.
+
+### Changed — Full-body Avatar Silhouette standing in front of House (`apps/mobile`, frontend only) (2026-11-06)
+- `apps/mobile/src/features/home/components/AvatarSilhouette.tsx` (new): Full-body human silhouette outline showing head, shoulders, torso, arms, hips, legs, and feet visible from head to toe. Rendered with an SVG closed path, translucent pearlescent fill gradient (`rgba(255,255,255,0.78)` to `rgba(213,192,238,0.58)`), delicate dusty mauve outline (`#8E7AA6`), soft ground contact shadow, and a small floating frosted white `+` badge near the shoulder. Includes tactile spring press animation (`scale: 0.94` on touch) and navigates to `/(app)/create-avatar`.
+- `apps/mobile/src/features/home/components/HouseHero.tsx`: Positioned `AvatarSilhouette` directly in front of the house illustration near the entrance/porch pathway (`left: width * 0.17`, `bottom: height * 0.04`). Preserves house touch targeting ("Tap the house to step inside" → `/(app)/house-entrance`) while providing a dedicated, accessible touch target for the avatar.
+- `apps/mobile/src/features/home/components/HomeShortcutsCard.tsx`: Completely removed the circular avatar placeholder and its row from underneath the house. Streamlined to cleanly feature the wardrobe capture action ("Add to your wardrobe" → `/(app)/garment`).
+- `apps/mobile/app/(app)/index.tsx`: Wired `onAvatarPress={() => router.push('/(app)/create-avatar')}` to `HouseHero`.
+- Added unit tests in `src/features/home/__tests__/homeComponents.test.ts`. All 49 Jest tests pass (8 test suites); `tsc --noEmit` clean with 0 errors. Zero backend or auth changes. All touched files under 250 lines.
+
+### Added — Home Page with HALO house and avatar entry point (`apps/mobile`, frontend only)
+- `app/(app)/index.tsx` rewritten: pastel orb background (`PastelBlobBackground`), header with HALO logo + profile button, greeting "Welcome back, <first name> ♡" and subtitle, tappable house hero, and a frosted shortcuts card (Create your avatar, Add to your wardrobe). Staggered fade/scale entrance. The old demo home (status pill, account details, log-out button) and the dark `FloatingNavBar` are no longer on this screen; sign-out remains on Profile.
+- New temporary screens `app/(app)/house-entrance.tsx` and `app/(app)/create-avatar.tsx` (shared `ComingSoonScreen`) that state the feature is not built yet. No video transition or avatar generation implemented.
+- New `src/features/home/components/`: `HomeHeader`, `HouseHero` (uses `assets/halo-house.png` at its 477×523 aspect ratio with a soft ground glow and press feedback), `HomeShortcutsCard`, `ComingSoonScreen`, `GlassIconButton`, `FadeInView`, `HomeIcons`.
+- New `src/features/profile/displayName.ts` + `hooks/useDisplayName.ts`: name from `profiles.display_name`, else sign-up metadata `display_name`/`full_name`, else null (neutral greeting — no guessed name).
+- Reuses auth visuals (`AuthCard`, `AuthButton`, `HairlineDivider`, `authTheme`, `SoftGlow`); Login/Register screens unchanged. No backend, API, schema or auth-logic changes. No new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 46/46 pass (5 new in `src/features/profile/__tests__/displayName.test.ts`). ESLint not run (no ESLint config in the project). Not yet verified visually on a device.
+### Changed — Auth background blob replaced with animated iridescent orb (2026-11-06)
+- `apps/mobile/src/features/auth/components/IridescentOrb.tsx` (new): frosted orb drawn with `react-native-svg` radial gradients; five pastel colour lobes orbit the centre at different speeds/directions and pulse in scale under a white frost veil, (the breathing outer halo was later removed — it showed as an arc below the card).
+- `PastelBlobBackground.tsx`: now renders a pale lilac canvas, three slowly drifting corner glows (lavender, pink, blue) and the floating orb. No longer uses `assets/pearlescent-blob.png`. Same exports (`PastelBlobBackground`, `PastelBackground`), so login, register, welcome, transition overlay and success view pick it up automatically.
+- Native-driver transform/opacity animations only; reduce-motion still freezes all motion. No new dependencies.
+- Visibility pass: added an opaque lavender sphere body under the swirls, raised swirl opacity/saturation, shrank the white frost to a centre highlight, and raised the orb size cap to `min(screenWidth * 1.05, 520)` so the orb reads clearly through the translucent auth card.
+- Pearl pass: milky white-lilac body, soft pearl palette (blush, lilac, powder blue, mint, champagne), and a travelling white sheen lobe.
+- Removed the two bottom corner glows (pink bottom-right, blue bottom-left) from `PastelBlobBackground.tsx`; only the top-right lavender glow remains.
+- Fixed: removed the orb rim-lustre layer. It was not absolutely positioned, so it rendered one orb-height below the orb and showed as a pink ring under the login card.
+- `AuthButton` (`AuthComponents.tsx`) restyled to a pearl gradient (`authTheme.pearlBtnGradient`: `#F2C4E2 → #D5C6F6 → #BCD6F6`) with a white top sheen, white hairline border and dark plum label (`#3D3055`) for contrast on the light fill. `authTheme.btnGradient` is unchanged, so home/profile/onboarding buttons keep the old purple gradient.
+- Checks: `tsc --noEmit` clean; 41/41 Jest tests pass. Not yet verified visually on a device.
+### Added — Frosted Glass Auth Screens Redesign & Animated Pastel Blob Background (2026-11-06)
+- **Visual Identity Redesign (Reference 1 & Reference 2)**:
+  - Combined Reference 1's frosted glass card (translucent backdrop `rgba(255, 255, 255, 0.40)`, subtle white hairline border `rgba(255, 255, 255, 0.88)`, rounded corners `borderRadius: 32`, delicate top sheen highlight, and soft ambient shadow) with Reference 2's dreamy pastel palette (pastel lavender `#B392F8`, baby blue `#67BFFC`, cyan `#48E5DC`, pink `#FA7DB9`, and lilac `#C98CFA`).
+  - Implemented `PastelBlobBackground.tsx`: One large, soft, blurred organic multi-radial gradient blob positioned directly behind the glass card that animates continuously with slow, seamless floating, horizontal drifting, and breathing scale movements at different speeds. Specially tuned size and luminous opacity to ensure vibrant visibility blooming behind the card.
+  - Harmonized button colors to match the page palette with a periwinkle-to-lilac gradient (`['#686EE8', '#9475F5']`).
+  - Implemented smooth animated spring-like sliding indicator for Login/Register toggle (`AuthTabBar` in `AuthComponents.tsx`):
+    - Slides smoothly within the same toggle container using spring dynamics (`friction: 9, tension: 50`) without button unmounting or cross-fade flashes.
+    - Preserves solid white background, rounded corners (`borderRadius: 13`), and soft drop shadow.
+    - Unified into a single shared toggle container at the top of `AuthCard` in both `login.tsx` and `register.tsx`.
+  - Integrated user-provided 3D pearlescent iridescent liquid blob asset with orbital ring (`assets/pearlescent-blob.png`) into `PastelBlobBackground.tsx`:
+    - Dynamic multi-layered native animations: organic floating/drifting, breathing scale, microgravity orbital tilt, fluid liquid morphing via non-uniform scale pulsing, and underlying rotating chromatic aura refraction.
+    - 100% performant native driver animations (`useNativeDriver: true`) without React state re-render overhead.
+  - Added smooth sliding motion transition (`AuthSlideContainer.tsx`) with fluid cubic deceleration easing (`bezier(0.25, 1, 0.4, 1)`) and synchronized sliding pill indicator on the tab bar (`AuthTabBar`).
+  - Fixed `app/(auth)/index.tsx` entry redirect to route straight to `/(auth)/login`.
+  - Added reduced-motion accessibility support via `AccessibilityInfo.isReduceMotionEnabled()` and `reduceMotionChanged` listener to freeze animations if requested by the user.
+  - Updated brand logo across the app with the new shimmering script HALO logo asset (`assets/halo-logo.png`).
+- **Mobile Auth Screens (`apps/mobile`)**:
+  - Redesigned `app/(auth)/login.tsx` and `app/(auth)/register.tsx` with responsive `KeyboardAvoidingView` / `ScrollView` layouts, entrance animations, and cohesive glassmorphic styling.
+  - Created modular `AuthForms.tsx` and `AuthSuccessView.tsx` for clean architecture and strict file line size limits (<250 lines).
+  - Maintained 100% of existing authentication logic, handlers, validation rules, state management, and navigation routes.
+  - Zero modifications to backend services, APIs, database schemas, or business logic.
+  - All touched files strictly conform to the <250 lines rule; 41/41 mobile Jest unit tests and TypeScript check passing.
+
+### Added — Luxury Pearlescent Garment Studio UI (`apps/mobile`) (2026-11-05)
+- **Garment Studio Screen (`app/(app)/garment.tsx`)**:
+  - Full luxury beauty & fashion visual identity following HALO brand guidelines (Lavender mist `#D9CFF1`, Blush pink `#F1D9E5`, Pearl blue `#D4E9EC`, Soft mint `#D7EAE3`, Warm ivory `#F6EBDD`, Dusty mauve `#77708F`).
+  - Luminous pearlescent multi-radial pastel background (`PearlescentBackground.tsx`) with subtle light reflections and organic shapes.
+  - Safe-area header (`HaloHeader.tsx`) with back navigation and centered HALO logo mark.
+  - Refined heading "Add to Your Wardrobe" with subtitle and minimal clothing hanger decorative element (`WardrobeHangerDecor.tsx`).
+  - Interactive frosted-glass selection cards (`GarmentOptionCard.tsx`) for "Take a Photo" and "Choose from Gallery" with tactile spring scale-down press animations, ambient glows, and thin-line icons.
+  - Subtle frosted guidance card (`PhotoCaptureGuide.tsx`) with capture tips.
+  - Image review preview screen (`GarmentPreview.tsx`) inside a frosted glass panel with "Choose Another" and prominent "Continue" CTA.
+  - Progressive AI analysis view (`GarmentProcessingView.tsx`) with live stages ("Preparing image...", "Detecting garments with AI...", "Extracting colors & attributes...").
+  - Luxury detected garment card (`GarmentDetectedCard.tsx`) displaying isolated item crop on white background, category, color swatches with percentage pills, and fabric/pattern attributes.
+  - Honest 3D pipeline roadmap card (`GarmentRoadmapCard.tsx`) stating that 3D template fitting and avatar try-on are in development (per `AGENTS.md` §3).
+  - Preserves original image URI and connects seamlessly to native in-app pipeline via `useGarmentAnalysis.ts`.
+  - Developer route `/test-garment` and Home screen shortcut updated to route seamlessly to the new Garment screen.
+  - 41/41 mobile Jest unit tests passing across 6 test suites; all files strictly under 250 lines; zero backend modifications.
+
 ### Added — Local Cloned 3D Closet Build from HAR Archive (2026-11-06)
 - Extracted and cloned all 93 production assets from the user's DevTools HAR capture into `apps/mobile/public/closet/`: includes all high-res transparent side & front shirts, realistic 3D shoe models (`jordan-4.glb`, `derby.glb`, `samba-left.glb`, etc.), studio HDRI (`studio_small_03_512.hdr`), watch textures, and Next.js client bundles.
 - Configured Metro enhanced middleware in `apps/mobile/metro.config.js` to serve these assets locally to mobile devices and emulators with custom RSC route handlers for `/rack`, `/shoes`, and `/accessories`.

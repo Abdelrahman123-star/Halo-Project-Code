@@ -26,7 +26,15 @@
         "expo-image-picker",
         {
           "photosPermission": "HALO needs access to your photo library to let you upload clothing images for analysis.",
-          "cameraPermission": "HALO needs access to your camera to let you photograph clothing for analysis."
+          "cameraPermission": "HALO uses your camera to take the photos for your personal avatar and to photograph clothing for analysis."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "HALO uses your camera to take the photos for your personal avatar and to photograph clothing for analysis.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       "expo-asset"

@@ -16,6 +16,8 @@ import type { PhotoQualityReport } from "@/features/garment/types/quality";
 
 export interface UseGarmentAnalysisReturn {
   imageUri: string | null;
+  originalUri: string | null;
+  sourceType: "camera" | "gallery" | null;
   isLoading: boolean;
   statusText: string;
   error: string | null;
@@ -24,6 +26,7 @@ export interface UseGarmentAnalysisReturn {
   pickFromCamera: () => Promise<void>;
   pickFromGallery: () => Promise<void>;
   runAnalysis: () => Promise<void>;
+  clearError: () => void;
   reset: () => void;
 }
 
@@ -85,6 +88,8 @@ function assessQuality(base64: string): PhotoQualityReport | null {
 
 export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [originalUri, setOriginalUri] = useState<string | null>(null);
+  const [sourceType, setSourceType] = useState<"camera" | "gallery" | null>(null);
   const [imageMimeType, setImageMimeType] = useState<string>("image/jpeg");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -93,11 +98,15 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
   const [result, setResult] = useState<GarmentAnalysisResponse | null>(null);
   const [qualityReport, setQualityReport] = useState<PhotoQualityReport | null>(null);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
   const pickFromCamera = useCallback(async () => {
     setError(null);
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
-      setError("Camera permission is required to photograph a garment.");
+      setError("Camera permission is required to photograph a garment. Please enable it in Settings.");
       return;
     }
 
@@ -108,6 +117,9 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
     });
 
     if (!picked.canceled && picked.assets[0]) {
+      const rawUri = picked.assets[0].uri;
+      setOriginalUri(rawUri);
+      setSourceType("camera");
       try {
         const optimized = await optimizeSelectedAsset(picked.assets[0]);
         setImageUri(optimized.uri);
@@ -121,7 +133,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
         }
       } catch (err) {
         console.error("[HALO Garment] Failed to process camera image:", err);
-        setImageUri(picked.assets[0].uri);
+        setImageUri(rawUri);
       }
     }
   }, []);
@@ -131,7 +143,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       setError(
-        "Media library permission is required to select a garment photo.",
+        "Media library permission is required to select a garment photo. Please enable it in Settings.",
       );
       return;
     }
@@ -143,6 +155,9 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
     });
 
     if (!picked.canceled && picked.assets[0]) {
+      const rawUri = picked.assets[0].uri;
+      setOriginalUri(rawUri);
+      setSourceType("gallery");
       try {
         const optimized = await optimizeSelectedAsset(picked.assets[0]);
         setImageUri(optimized.uri);
@@ -156,7 +171,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
         }
       } catch (err) {
         console.error("[HALO Garment] Failed to process gallery image:", err);
-        setImageUri(picked.assets[0].uri);
+        setImageUri(rawUri);
       }
     }
   }, []);
@@ -192,6 +207,8 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
 
   const reset = useCallback(() => {
     setImageUri(null);
+    setOriginalUri(null);
+    setSourceType(null);
     setImageBase64(null);
     setResult(null);
     setQualityReport(null);
@@ -202,6 +219,8 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
 
   return {
     imageUri,
+    originalUri,
+    sourceType,
     isLoading,
     statusText,
     error,
@@ -210,6 +229,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
     pickFromCamera,
     pickFromGallery,
     runAnalysis,
+    clearError,
     reset,
   };
 }
