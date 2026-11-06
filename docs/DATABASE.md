@@ -1,6 +1,6 @@
 # Database, RLS & Storage
 
-> Status: **only `profiles` is implemented** (`supabase/migrations/0001_profiles.sql`);
+> Status: **`profiles` (0001) and `wardrobe_items` (0002) are implemented**;
 > all other tables below are design. Never edit schema only via the dashboard.
 
 ## Implemented: `profiles` (migration 0001)
@@ -13,8 +13,16 @@
 - **Apply:** paste the file into Supabase Dashboard → SQL Editor → Run (idempotent).
 - **Users created before the migration** have no profile row; backfill with:
   `insert into public.profiles (id) select id from auth.users on conflict do nothing;`
-- **Verified:** ⬜ not yet applied/tested against a real project by the agent. RLS
-  two-user test still to be written.
+
+## Implemented: `wardrobe_items` (migration 0002)
+- Columns: `id` (uuid PK default `gen_random_uuid()`), `user_id` (uuid FK → `auth.users` on delete cascade),
+  `name` (text default 'Garment'), `category` (text), `confidence` (float), `crop_base64` (text data URI),
+  `colors` (jsonb), `attributes` (jsonb), `created_at` (timestamptz), `updated_at` (timestamptz).
+- Index: `idx_wardrobe_items_user_created` on `(user_id, created_at desc)`.
+- RLS enabled. Policies: authenticated users may **select**, **insert**, **update**, and **delete** only their
+  own rows (`user_id = auth.uid()`).
+- Trigger: `wardrobe_items_set_updated_at` maintains `updated_at`.
+- **Apply:** paste `supabase/migrations/0002_wardrobe.sql` into Supabase Dashboard → SQL Editor → Run.
 
 ## Planned design
 

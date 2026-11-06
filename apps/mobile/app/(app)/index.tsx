@@ -105,6 +105,25 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* My 3D Closet Walk-in */}
+          <Pressable
+            onPress={() => router.push('/(app)/closet')}
+            style={styles.actionCard}
+            accessibilityRole="button"
+            accessibilityLabel="Open 3D Digital Closet"
+          >
+            <View style={styles.actionCardLeft}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.actionIconText}>✨</Text>
+              </View>
+              <View>
+                <Text style={styles.actionCardTitle}>My 3D Closet</Text>
+                <Text style={styles.actionCardDesc}>Walk into your 3D wardrobe & sliding clothes rails</Text>
+              </View>
+            </View>
+            <Text style={styles.actionArrow}>›</Text>
+          </Pressable>
+
           {/* Test Garment AI Page Shortcut */}
           <Pressable
             onPress={() => router.push('/(app)/test-garment')}
@@ -119,6 +138,25 @@ export default function HomeScreen() {
               <View>
                 <Text style={styles.actionCardTitle}>Garment Recognition Test</Text>
                 <Text style={styles.actionCardDesc}>Test camera & gallery AI garment analysis</Text>
+              </View>
+            </View>
+            <Text style={styles.actionArrow}>›</Text>
+          </Pressable>
+
+          {/* 3D Clothes Rail Test */}
+          <Pressable
+            onPress={() => router.push('/(app)/test-closet')}
+            style={styles.actionCard}
+            accessibilityRole="button"
+            accessibilityLabel="Open 3D Clothes Rail Test"
+          >
+            <View style={styles.actionCardLeft}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.actionIconText}>🚪</Text>
+              </View>
+              <View>
+                <Text style={styles.actionCardTitle}>3D Clothes Rail Test</Text>
+                <Text style={styles.actionCardDesc}>Local 3D rail · View saved wardrobe clothes</Text>
               </View>
             </View>
             <Text style={styles.actionArrow}>›</Text>
@@ -180,75 +218,20 @@ const styles = StyleSheet.create({
   brandTitle: { fontSize: 18, fontWeight: '800', letterSpacing: 2, color: authTheme.textMain },
   profileBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: authTheme.inputBg, borderWidth: 1.5, borderColor: authTheme.inputBorder, alignItems: 'center', justifyContent: 'center' },
   profileInitial: { fontSize: 15, fontWeight: '700', color: authTheme.textMain },
-  welcomeCard: {
-    backgroundColor: authTheme.inputBg,
-    borderRadius: 28,
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: authTheme.inputBorder,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(52, 168, 83, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 999,
-    marginBottom: 14,
-  },
+  welcomeCard: { backgroundColor: authTheme.inputBg, borderRadius: 28, padding: 24, borderWidth: 1.5, borderColor: authTheme.inputBorder, alignItems: 'center', marginTop: 8 },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(52, 168, 83, 0.12)', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, marginBottom: 14 },
   statusDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#34A853' },
   statusText: { fontSize: 11, fontWeight: '700', color: '#1e7b34', letterSpacing: 0.3 },
-  welcomeTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: authTheme.textMain,
-    textAlign: 'center',
-    marginBottom: 8,
-    letterSpacing: -0.3,
-  },
-  welcomeSubtitle: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: authTheme.textMuted,
-    textAlign: 'center',
-    marginBottom: 20,
-    maxWidth: 280,
-  },
-  infoCapsule: {
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(192, 132, 252, 0.25)',
-  },
+  welcomeTitle: { fontSize: 26, fontWeight: '800', color: authTheme.textMain, textAlign: 'center', marginBottom: 8, letterSpacing: -0.3 },
+  welcomeSubtitle: { fontSize: 13, lineHeight: 19, color: authTheme.textMuted, textAlign: 'center', marginBottom: 20, maxWidth: 280 },
+  infoCapsule: { width: '100%', backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: 'rgba(192, 132, 252, 0.25)' },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   infoLabel: { fontSize: 12, fontWeight: '600', color: authTheme.textMuted },
   infoValue: { fontSize: 12, fontWeight: '700', color: authTheme.textMain, maxWidth: '65%' },
   divider: { height: 1, backgroundColor: 'rgba(42, 11, 63, 0.08)', marginVertical: 4 },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: authTheme.inputBg,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: authTheme.inputBorder,
-  },
+  actionCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: authTheme.inputBg, borderRadius: 20, padding: 16, borderWidth: 1, borderColor: authTheme.inputBorder },
   actionCardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(192, 132, 252, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(192, 132, 252, 0.2)', alignItems: 'center', justifyContent: 'center' },
   actionIconText: { fontSize: 18 },
   actionCardTitle: { fontSize: 15, fontWeight: '700', color: authTheme.textMain },
   actionCardDesc: { fontSize: 11, color: authTheme.textMuted, marginTop: 2 },

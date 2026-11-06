@@ -1,10 +1,5 @@
-import { Buffer } from 'buffer';
+import '@/shared/lib/polyfills';
 import { useState } from 'react';
-
-const globalScope = globalThis as unknown as { Buffer?: typeof Buffer };
-if (!globalScope.Buffer) {
-  globalScope.Buffer = Buffer;
-}
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
