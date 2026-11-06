@@ -1,4 +1,5 @@
-import { Stack } from 'expo-router';
+import "@/shared/lib/polyfills";
+import { Stack } from "expo-router";
 
 export default function AppLayout() {
   return (

@@ -1,14 +1,18 @@
 /**
  * State and orchestration hook for the native Garment Recognition flow.
- * Captures or selects an image, resizes to max 1024px natively, and runs the analysis pipeline.
+ * Captures or selects an image, resizes to max 1024px, inspects photo quality
+ * (lighting, contrast, edge clipping), and runs the analysis pipeline.
  */
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 
 import { analyzeGarment } from "@/features/garment/api/garmentApi";
+import { decodeJpegBase64 } from "@/features/garment/api/imageProcessor";
+import { inspectPhotoQuality } from "@/features/garment/api/qualityInspector";
 import type { GarmentAnalysisResponse } from "@/features/garment/types/garment";
+import type { PhotoQualityReport } from "@/features/garment/types/quality";
 
 export interface UseGarmentAnalysisReturn {
   imageUri: string | null;
@@ -18,6 +22,7 @@ export interface UseGarmentAnalysisReturn {
   statusText: string;
   error: string | null;
   result: GarmentAnalysisResponse | null;
+  qualityReport: PhotoQualityReport | null;
   pickFromCamera: () => Promise<void>;
   pickFromGallery: () => Promise<void>;
   runAnalysis: () => Promise<void>;
@@ -62,6 +67,25 @@ async function optimizeSelectedAsset(
   };
 }
 
+function assessQuality(base64: string): PhotoQualityReport | null {
+  try {
+    const decoded = decodeJpegBase64(base64);
+    const report = inspectPhotoQuality(decoded.data, decoded.width, decoded.height);
+    console.log(
+      `[HALO Garment] 🔍 Quality Check: Score ${report.score}% · Lighting: ${report.lighting.status}`,
+    );
+    if (report.issues.length > 0) {
+      console.warn(
+        `[HALO Garment] ⚠️ Quality Notice: ${report.issues.map((i) => i.title).join(", ")}`,
+      );
+    }
+    return report;
+  } catch (err) {
+    console.warn("[HALO Garment] Quality inspection skipped:", err);
+    return null;
+  }
+}
+
 export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [originalUri, setOriginalUri] = useState<string | null>(null);
@@ -72,6 +96,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
   const [statusText, setStatusText] = useState<string>("Analyzing...");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GarmentAnalysisResponse | null>(null);
+  const [qualityReport, setQualityReport] = useState<PhotoQualityReport | null>(null);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -101,6 +126,11 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
         setImageMimeType(picked.assets[0].mimeType ?? "image/jpeg");
         setImageBase64(optimized.base64);
         setResult(null);
+
+        if (optimized.base64) {
+          const report = assessQuality(optimized.base64);
+          setQualityReport(report);
+        }
       } catch (err) {
         console.error("[HALO Garment] Failed to process camera image:", err);
         setImageUri(rawUri);
@@ -134,6 +164,11 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
         setImageMimeType(picked.assets[0].mimeType ?? "image/jpeg");
         setImageBase64(optimized.base64);
         setResult(null);
+
+        if (optimized.base64) {
+          const report = assessQuality(optimized.base64);
+          setQualityReport(report);
+        }
       } catch (err) {
         console.error("[HALO Garment] Failed to process gallery image:", err);
         setImageUri(rawUri);
@@ -176,6 +211,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
     setSourceType(null);
     setImageBase64(null);
     setResult(null);
+    setQualityReport(null);
     setError(null);
     setIsLoading(false);
     setStatusText("Analyzing...");
@@ -189,6 +225,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
     statusText,
     error,
     result,
+    qualityReport,
     pickFromCamera,
     pickFromGallery,
     runAnalysis,
