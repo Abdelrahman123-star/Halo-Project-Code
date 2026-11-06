@@ -3,6 +3,17 @@
 _Last updated: 2026-11-06_
 
 ## Current state
+**App-open intro video implemented — device check pending:** `WelcomeVideoScreen` (expo-video) replaces the old animated `LaunchScreen`; plays `assets/videos/welcome-intro.mp4` once, full-screen, with sound, then fades into Login/Home. Checks: tsc clean, Jest 54/54, iOS export bundles the video. Limitations: iOS silent switch mutes audio (default iOS behaviour); Android system navigation bar is not hidden (would need `expo-navigation-bar`, not added).
+
+**Two-Door Room Selection & Animated Room Transition implemented & verified:**
+- `app/(app)/hallway.tsx` & `DoorSelectionView.tsx`: Displays the uploaded two-door hallway image (`assets/hallway-doors.png`) with original proportions, warm lighting, and wood doors ("BEDROOM" on left, "BATHROOM" on right). Each door is individually clickable with soft amber/gold glowing outline. Tapping a door triggers a smooth React Native animated camera approach zoom (`scale: 1.0 -> 2.7`), subtle door-opening radiant light emergence, and fluid bloom transition into the selected room without separate videos. `useFocusEffect` seamlessly resets the camera when returning.
+- `app/(app)/bedroom.tsx`: Full-screen Bedroom & Dressing Suite with pastel aesthetic, access to Digital Wardrobe (`/(app)/garment`) and 3D Avatar Dressing Suite (`/(app)/create-avatar`), and "← Hallway" return navigation.
+- `app/(app)/bathroom.tsx`: Full-screen Bathroom & Beauty Suite with vanity mirror and beauty shelf cards and "← Hallway" return navigation.
+- Checks run: `tsc --noEmit` clean (0 errors), Jest 54/54 passing across 8 suites. Zero backend/API/database modifications. All touched files strictly <250 lines.
+
+Interactive House Entrance Video:
+- `app/(app)/house-entrance.tsx`: Full-screen entrance video player using `expo-video` (`home-video.mp4`) that seamlessly transitions into the hallway upon completion.
+
 Phase 0 docs done. Auth smoke test & HALO Futuristic Peaceful UI/UX Design System fully implemented and verified.
 **Auth Screens Redesign (Login & Register) completed and verified:**
 - Frosted glass card inspired by Reference 1 with translucent backdrop blur simulation (`rgba(255, 255, 255, 0.40)`), subtle white borders (`rgba(255, 255, 255, 0.88)`), rounded corners (`borderRadius: 32`), and soft ambient shadow (`shadowRadius: 28`).

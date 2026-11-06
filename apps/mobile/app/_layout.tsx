@@ -13,7 +13,7 @@ import { SessionProvider, useSession } from '@/features/auth/hooks/useSession';
 import { isSupabaseConfigured } from '@/shared/lib/supabase';
 import { Screen } from '@/shared/ui/Screen';
 import { colors, fontSize, spacing } from '@/shared/theme/tokens';
-import { LaunchScreen } from '@/features/launch/components/LaunchScreen';
+import { WelcomeVideoScreen } from '@/features/launch/components/WelcomeVideoScreen';
 
 function RootStack() {
   const { session, loading } = useSession();
@@ -56,7 +56,7 @@ function MissingConfig() {
 }
 
 export default function RootLayout() {
-  // Render ONLY the launch screen until the animation finishes, then
+  // Render ONLY the welcome intro video until it finishes, then
   // swap to the real navigator. This avoids all z-index / stacking-context
   // fights between the absolute-positioned launch screen and the navigator.
   const [showLaunch, setShowLaunch] = useState(true);
@@ -65,7 +65,7 @@ export default function RootLayout() {
     return (
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <LaunchScreen onFinished={() => setShowLaunch(false)} />
+        <WelcomeVideoScreen onFinished={() => setShowLaunch(false)} />
       </SafeAreaProvider>
     );
   }

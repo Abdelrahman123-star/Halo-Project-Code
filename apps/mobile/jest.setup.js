@@ -16,3 +16,14 @@ jest.mock('expo-image-manipulator', () => ({
     WEBP: 'webp',
   },
 }));
+
+jest.mock('expo-video', () => ({
+  useVideoPlayer: jest.fn(() => ({
+    play: jest.fn(),
+    pause: jest.fn(),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    loop: false,
+    muted: true,
+  })),
+  VideoView: 'VideoView',
+}));

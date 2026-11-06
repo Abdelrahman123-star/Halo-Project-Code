@@ -1,7 +1,197 @@
-# Active Implementation Plan — Garment Recognition Pipeline Integration & Auth Screen Redesign
+# Active Implementation Plan — Welcome intro video
 
-**Current task:** Redesign Mobile Login and Register screens using Reference 1 for frosted glass card and Reference 2 for pastel lavender, baby blue, cyan, pink, and lilac palette, animated continuous floating/drifting/scaling background blob behind the glass card, and new HALO brand logo.  
+**Current task:** Replace the app-open welcome animation (`LaunchScreen`, shown by `app/_layout.tsx`) with the uploaded intro video.
+**Status:** Implemented — tsc + Jest + iOS export pass; device check pending.
+Files: new `src/features/launch/components/WelcomeVideoScreen.tsx`; `app/_layout.tsx` (one-component swap); delete `LaunchScreen.tsx`; rename video asset. No auth/session/AsyncStorage/Login/Register/Home changes; no new deps.
+
+---
+
+# Active Implementation Plan — Two-Door Room Selection & Animated Room Transition
+
+**Current task:** Implement the interactive two-door room selection experience using the uploaded screenshot (`assets/hallway-doors.png`), interactive touch targets for Bedroom and Bathroom doors, smooth camera approach zoom, door highlight glow, opening radiant light bloom, and transition into separate full-screen room environments (Bedroom and Bathroom).  
 **Status:** Completed & Verified ✅
+
+---
+
+## 1. Objectives & Constraints
+
+1. **Room Selection Visuals (Uploaded Screenshot)**:
+   - Preserves the uploaded hallway image (`assets/hallway-doors.png`) with two wooden doors side by side ("BEDROOM" on left, "BATHROOM" on right), warm lighting, wood floors, and plants.
+   - Original design, proportions, colors, and lighting kept without stretching or distortion (`resizeMode="cover"`).
+2. **Interactive Door Selection**:
+   - Each door is individually clickable with soft glowing amber/gold highlight matching the illuminated door signs.
+   - Guarded against double-tapping (`isNavigating` ref).
+3. **Approaching & Entering a Room (No Videos)**:
+   - Smooth React Native animation camera zoom approaching the selected door (`scale: 1.0 -> 2.7`, `translateX`, `translateY`).
+   - Door-opening radiant light emergence as the camera reaches the door threshold.
+   - Fluid fade bloom into the selected full-screen room environment.
+4. **Room Screens & Reusable Architecture**:
+   - `apps/mobile/app/(app)/bedroom.tsx`: Bedroom & Dressing Suite (Wardrobe link to `/(app)/garment`, Avatar Suite to `/(app)/create-avatar`, return to Hallway).
+   - `apps/mobile/app/(app)/bathroom.tsx`: Bathroom & Beauty Suite (Glow mirror preview, beauty shelf, return to Hallway).
+   - Both screens provide an intuitive return button ("← Hallway") that resets the door selection camera for fluid repeat exploration.
+5. **Strict Constraints & Aesthetic Integrity**:
+   - Zero changes to Login or Register screens.
+   - Zero redesign of the homepage.
+   - Strictly no video rendering for rooms (100% smooth native-driver animations).
+   - Strict TypeScript, all files under 250 lines.
+
+---
+
+## 2. Technical Architecture & File Layout
+
+### Mobile: `apps/mobile`
+- `apps/mobile/assets/hallway-doors.png`: Original uploaded screenshot asset preserved at 575×1024 resolution.
+- `apps/mobile/src/features/home/components/DoorSelectionView.tsx`:
+  - Full-screen interactive hallway component with Bedroom and Bathroom hit zones.
+  - Native driver camera zoom animations (`scale`, `translateX`, `translateY`).
+  - Pulsing door highlight and door-opening radiant light bloom.
+  - `useFocusEffect` reset logic ensuring instant re-usability when returning from a room.
+- `apps/mobile/app/(app)/hallway.tsx`:
+  - Hallway screen hosting `DoorSelectionView` with navigation to `bedroom`, `bathroom`, and outside.
+- `apps/mobile/app/(app)/bedroom.tsx`:
+  - Full-screen Bedroom & Dressing Suite with wardrobe and avatar try-on options.
+- `apps/mobile/app/(app)/bathroom.tsx`:
+  - Full-screen Bathroom & Beauty Suite with vanity mirror and beauty shelf options.
+- `apps/mobile/src/features/home/__tests__/homeComponents.test.ts`:
+  - Unit tests verifying `DoorSelectionView`, `BedroomScreen`, and `BathroomScreen`.
+
+---
+
+## 3. Step-by-Step Implementation Plan
+
+| # | Step | Description | Status |
+|---|---|---|---|
+| 1 | **Asset Integration** | Copied uploaded two-door screenshot to `apps/mobile/assets/hallway-doors.png` and verified coordinates. | ✅ Verified |
+| 2 | **DoorSelectionView Component** | Created `DoorSelectionView.tsx` with smooth camera approach zoom, highlight, and light-bloom door opening. | ✅ Verified |
+| 3 | **Hallway Screen Update** | Wired `hallway.tsx` to host `DoorSelectionView` and route to `/(app)/bedroom` and `/(app)/bathroom`. | ✅ Verified |
+| 4 | **Bedroom & Bathroom Screens** | Built full-screen `bedroom.tsx` and `bathroom.tsx` matching HALO's dreamy pastel aesthetic with return navigation. | ✅ Verified |
+| 5 | **Verification & Automated Tests** | `tsc --noEmit` clean, 54/54 Jest tests pass. All files under 250 lines. | ✅ Verified |
+
+---
+
+# Previous Implementation Plan — Interactive House Entrance Video & Hallway
+
+**Current task:** Implement the interactive house entrance video playback (`assets/videos/house-entrance.mp4` / `home-video.mp4`) with `expo-video`, full-screen presentation, auto-play, muted, controls hidden, aspect-ratio preservation (`contentFit="cover"`), seamless finish transition to the House Interior / Hallway screen, safe lifecycle release, and clean frosted styling.  
+**Status:** Completed & Verified ✅
+
+---
+
+## 1. Objectives & Constraints
+
+1. **Interactive House Tap**:
+   - Keep current HALO logo, personalized "Welcome, [Name]" header, and existing house image.
+   - House remains clickable with subtle spring press animation (`springTo(0.96)`) navigating to `/(app)/house-entrance`.
+2. **Entrance Video Playback (`expo-video`)**:
+   - Installed official Expo package: `expo-video@~58.0.12`.
+   - Full-screen presentation (`contentFit="cover"`, no stretching or distortion of 1080×1920 video).
+   - Auto-play on screen mount, muted (`muted: true`), controls hidden (`nativeControls: false`), plays once without looping (`loop: false`).
+   - Prevents blank screen while buffering via underlying pastel ambient backdrop and "Stepping inside..." indicator.
+   - Elegant frosted glass Home and Skip buttons in top safe area for user agency.
+3. **Smooth Transition to Interior / Hallway**:
+   - Automatically navigates to `/(app)/hallway` (aliased to `/(app)/house-interior`) when `playToEnd` fires.
+   - Guarded against double-navigation (`hasNavigated` ref).
+   - Video properly paused and released on screen unmount; zero background playback leaks.
+4. **House Interior / Hallway Screen**:
+   - Implemented in `apps/mobile/app/(app)/hallway.tsx` with HALO's dreamy pastel aesthetic.
+   - Frosted cards for "Digital Wardrobe" (links to `/(app)/garment`), "Dressing Suite" (preview), and "Step Outside" (navigates back to home).
+5. **Strict Preservation of Existing Work**:
+   - No modifications to Login or Register screens.
+   - No changes to backend, APIs, database, or auth logic.
+   - Strict TypeScript, all files under 250 lines.
+
+---
+
+## 2. Technical Architecture & File Layout
+
+### Mobile: `apps/mobile`
+- `apps/mobile/assets/videos/`: Video assets linked (`home-video.mp4`, `house-entrance.mp4`, `house-video.mp4`).
+- `apps/mobile/app/(app)/house-entrance.tsx`:
+  - Full-screen `expo-video` player using `useVideoPlayer` and `VideoView`.
+  - Muted, auto-play, non-looping, `playToEnd` listener with smooth fade transition to hallway.
+  - Safe lifecycle release on unmount, Home / Skip action pills.
+- `apps/mobile/app/(app)/hallway.tsx` & `house-interior.tsx`:
+  - Frosted glass interior hallway screen with pastel blob background, room shortcut cards, and return button.
+- `apps/mobile/jest.setup.js`:
+  - Mocked `expo-video` for native TurboModule compatibility in automated unit tests.
+- `apps/mobile/src/features/home/__tests__/homeComponents.test.ts`:
+  - Unit tests for `HouseEntranceScreen` and `HallwayScreen`.
+
+---
+
+## 3. Step-by-Step Implementation Plan
+
+| # | Step | Description | Status |
+|---|---|---|---|
+| 1 | **Inspect Project & Assets** | Verified Expo SDK 58, Expo Router, existing house image, and localized `home-video.mp4` / `house-entrance.mp4`. | ✅ Verified |
+| 2 | **Install `expo-video`** | Installed `expo-video@~58.0.12` compatible with Expo SDK 58. | ✅ Verified |
+| 3 | **Implement `house-entrance.tsx`** | Built full-screen video player with auto-play, muted, controls hidden, loading fallback, and safe unmount cleanup. | ✅ Verified |
+| 4 | **Implement `hallway.tsx`** | Created Hallway / House Interior screen matching HALO pastel visual identity. | ✅ Verified |
+| 5 | **Automated Tests & Quality Checks** | `tsc --noEmit` clean, 51/51 Jest tests pass. All files under 250 lines. | ✅ Verified |
+
+---
+
+# Previous Implementation Plan — Homepage Avatar Silhouette in Front of House
+
+**Current task:** Redesign the HALO homepage avatar placement: remove the circular avatar placeholder underneath the house and integrate a full-body human avatar outline/silhouette standing in front of the house with an interactive `+` create button, pastel aesthetic, and head-to-toe visibility.  
+**Status:** Completed & Verified ✅
+
+---
+
+## 1. Objectives & Constraints
+
+1. **Avatar Placement & Design (In Front of House)**:
+   - Full-body human silhouette/outline showing head, shoulders, torso, arms, and legs (visible from head to toe).
+   - Positioned standing naturally in front of the house near the entrance/pathway.
+   - Styled with HALO's refined pastel aesthetic: delicate dusty mauve / lavender outline (`#8E7AA6`) with soft translucent pearlescent fill and subtle grounded contact shadow.
+   - Elegant interactive `+` badge near the avatar signaling creation/upload capability.
+   - Clickable avatar area with smooth spring press animation navigating to `/(app)/create-avatar`.
+   - Remove the circular avatar placeholder completely from underneath the house.
+2. **Visual & Architectural Harmony**:
+   - Integrated directly into the house illustration scene (`HouseHero.tsx`), not as a disconnected card or circular icon.
+   - Does not obscure key architectural features of the house.
+   - Preserves house image (`halo-house.png`), welcome message ("Welcome back, [Name]"), logo, palette, typography, and background (`PastelBlobBackground`).
+   - Zero changes to Login or Register screens.
+   - Zero changes to backend, APIs, database, or auth logic.
+3. **Responsive & Strictly Typed**:
+   - Scaled proportionally based on screen width and house dimensions.
+   - Strict TypeScript, all files under 250 lines.
+
+---
+
+## 2. Technical Architecture & File Layout
+
+### Mobile: `apps/mobile`
+- `apps/mobile/src/features/home/components/AvatarSilhouette.tsx`:
+  - Full-body human vector silhouette outline (`react-native-svg`) with elegant fashion proportions (head, shoulders, torso, arms, hips, legs, feet).
+  - Translucent pearlescent fill (`#FFFFFF` to `#D5C0EE`), dusty mauve / lavender outline (`#8E7AA6`), subtle ambient floor shadow.
+  - Small frosted glass `+` button badge positioned near the avatar shoulder.
+  - Tactile spring press feedback with hit slop for effortless tapping.
+- `apps/mobile/src/features/home/components/HouseHero.tsx`:
+  - Integrates `AvatarSilhouette` directly in front of the house illustration near the entrance/porch.
+  - Retains house tap behavior ("Enter your HALO house") while providing distinct, accessible tap targeting for the avatar ("Create your avatar").
+- `apps/mobile/src/features/home/components/HomeShortcutsCard.tsx`:
+  - Completely removes the circular avatar placeholder (`AvatarPlaceholder`) as requested.
+  - Streamlines the frosted shortcuts card to feature the wardrobe capture action with clean typography and luxury iconography.
+- `apps/mobile/app/(app)/index.tsx`:
+  - Connects `onAvatarPress` to navigate to `/(app)/create-avatar`.
+- `apps/mobile/src/features/home/__tests__/homeComponents.test.ts`:
+  - Unit tests for `AvatarSilhouette`, `HouseHero`, and `HomeShortcutsCard`.
+
+---
+
+## 3. Step-by-Step Implementation Plan
+
+| # | Step | Description | Status |
+|---|---|---|---|
+| 1 | **Create `AvatarSilhouette.tsx`** | Design full-body human vector outline with head-to-toe anatomy, soft dusty mauve/lavender outline, subtle pearlescent fill, contact shadow, and `+` badge. | ✅ Verified |
+| 2 | **Integrate into `HouseHero.tsx`** | Position avatar in front of house near the entrance/pathway, configure touch targets with spring animations, and preserve house entrance tap. | ✅ Verified |
+| 3 | **Update `HomeShortcutsCard.tsx`** | Remove the circular avatar placeholder completely. | ✅ Verified |
+| 4 | **Update `HomeScreen` (`index.tsx`)** | Wire `onAvatarPress` to navigate to `/(app)/create-avatar`. | ✅ Verified |
+| 5 | **Verification & Tests** | Run `npm run typecheck` and `npm test` across mobile suite. Verify <250 lines per file and zero backend touches. | ✅ 49/49 Jest tests pass; 0 TS errors |
+
+---
+
+## 4. Historical Reference
 
 ---
 
