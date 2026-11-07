@@ -7,6 +7,9 @@ import React from 'react';
 import { AvatarSilhouette } from '../components/AvatarSilhouette';
 import { HouseHero } from '../components/HouseHero';
 import { DoorSelectionView } from '../components/DoorSelectionView';
+import { BedroomPortalCard, RoomPortalCard } from '../components/BedroomPortalCard';
+import { MirrorIcon, SparkleBeautyIcon } from '../components/HomeIcons';
+import { WelcomeVideoScreen } from '@/features/launch/components/WelcomeVideoScreen';
 import HouseEntranceScreen from '../../../../app/(app)/house-entrance';
 import HallwayScreen from '../../../../app/(app)/hallway';
 import BedroomScreen from '../../../../app/(app)/bedroom';
@@ -75,6 +78,46 @@ describe('Home Components & Screens', () => {
     });
   });
 
+  describe('BedroomPortalCard', () => {
+    it('instantiates BedroomPortalCard with props', () => {
+      const onPress = jest.fn();
+      const card = React.createElement(BedroomPortalCard, {
+        title: 'Digital Wardrobe',
+        description: 'Scan clothes with CV.',
+        badgeText: 'AI CURATION',
+        badgeVariant: 'lilac',
+        tags: ['CV Scan', 'Catalogue'],
+        icon: null,
+        gradientColors: ['rgba(255, 255, 255, 0.94)', 'rgba(247, 243, 255, 0.85)'] as const,
+        iconGradientColors: ['#EFE9FD', '#E2D7FC'] as const,
+        onPress,
+        accessibilityLabel: 'Open Wardrobe',
+      });
+
+      expect(card).toBeDefined();
+      expect(card.props.title).toBe('Digital Wardrobe');
+      expect(card.props.badgeText).toBe('AI CURATION');
+
+      const vanityCard = React.createElement(RoomPortalCard, {
+        title: 'Smart Vanity Mirror',
+        description: 'Adaptive studio lighting.',
+        badgeText: 'SMART MIRROR',
+        badgeVariant: 'rose',
+        tags: ['Studio Lighting', 'Shade Match'],
+        icon: React.createElement(MirrorIcon, { size: 24 }),
+        gradientColors: ['rgba(255, 255, 255, 0.94)', 'rgba(255, 243, 248, 0.85)'] as const,
+        iconGradientColors: ['#FDEEF5', '#FADCEB'] as const,
+        onPress,
+        accessibilityLabel: 'Open Smart Vanity Mirror',
+      });
+      expect(vanityCard).toBeDefined();
+      expect(vanityCard.props.badgeVariant).toBe('rose');
+
+      const sparkle = React.createElement(SparkleBeautyIcon, { size: 24 });
+      expect(sparkle).toBeDefined();
+    });
+  });
+
   describe('Screens', () => {
     it('instantiates HouseEntranceScreen successfully', () => {
       const screen = React.createElement(HouseEntranceScreen);
@@ -93,6 +136,12 @@ describe('Home Components & Screens', () => {
 
     it('instantiates BathroomScreen successfully', () => {
       const screen = React.createElement(BathroomScreen);
+      expect(screen).toBeDefined();
+    });
+
+    it('instantiates WelcomeVideoScreen successfully with skip capability', () => {
+      const onFinished = jest.fn();
+      const screen = React.createElement(WelcomeVideoScreen, { onFinished });
       expect(screen).toBeDefined();
     });
   });

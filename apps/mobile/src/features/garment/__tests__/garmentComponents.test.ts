@@ -9,6 +9,9 @@ import { WardrobeHangerDecor } from '@/features/garment/components/WardrobeHange
 import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { HaloHeader } from '@/features/garment/components/HaloHeader';
+import { SavedWardrobeSection } from '@/features/wardrobe/components/SavedWardrobeSection';
+import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
+import { WardrobeDropdownField } from '@/features/wardrobe/components/WardrobeDropdownField';
 
 describe('HALO Garment Studio Visual Identity & Tokens', () => {
   it('defines the correct primary luxury pastel color palette', () => {
@@ -58,6 +61,16 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
 
     expect(cameraCard.props.title).toBe('Take a Photo');
     expect(galleryCard.props.title).toBe('Choose from Gallery');
+
+    const compactBentoCard = React.createElement(GarmentOptionCard, {
+      type: 'camera',
+      title: 'Take a Photo',
+      subtitle: 'Live camera capture',
+      layout: 'vertical',
+      onPress: onCameraPress,
+    });
+    expect(compactBentoCard.props.layout).toBe('vertical');
+    expect(compactBentoCard.props.subtitle).toBe('Live camera capture');
   });
 
   it('instantiates GarmentPreview with retake and continue actions', () => {
@@ -84,5 +97,60 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
 
     expect(header.props.title).toBe('Garment Studio');
     expect(header.props.onBack).toBe(onBack);
+  });
+
+  it('instantiates SavedWardrobeSection in empty and populated states', () => {
+    const emptySection = React.createElement(SavedWardrobeSection, {
+      items: [],
+      isLoading: false,
+      onRefresh: jest.fn(),
+      onSelectItem: jest.fn(),
+    });
+
+    const sampleItem = {
+      id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      user_id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+      name: 'Denim Jeans',
+      category: 'trousers',
+      confidence: 0.94,
+      crop_base64: 'data:image/jpeg;base64,abc',
+      colors: [],
+      attributes: {
+        fabric: { predicted: 'denim', confidence: 88, top_candidates: [] },
+        pattern: { predicted: 'solid plain', confidence: 90, top_candidates: [] },
+        subtype: { predicted: 'Straight-leg Denim Jeans', confidence: 85, top_candidates: [] },
+      },
+      created_at: '2026-11-07T12:00:00Z',
+      updated_at: '2026-11-07T12:00:00Z',
+    };
+
+    const populatedSection = React.createElement(SavedWardrobeSection, {
+      items: [sampleItem],
+      isLoading: false,
+      onRefresh: jest.fn(),
+      onSelectItem: jest.fn(),
+    });
+
+    const modal = React.createElement(WardrobeDetailModal, {
+      visible: true,
+      item: sampleItem,
+      onClose: jest.fn(),
+      onSave: jest.fn(),
+      onDelete: jest.fn(),
+    });
+
+    const dropdown = React.createElement(WardrobeDropdownField, {
+      label: 'Category',
+      selectedValue: 'trousers',
+      options: [{ value: 'trousers', label: 'Pants & Trousers' }],
+      isOpen: true,
+      onToggle: jest.fn(),
+      onSelect: jest.fn(),
+    });
+
+    expect(emptySection.props.items).toHaveLength(0);
+    expect(populatedSection.props.items).toHaveLength(1);
+    expect(modal.props.visible).toBe(true);
+    expect(dropdown.props.selectedValue).toBe('trousers');
   });
 });

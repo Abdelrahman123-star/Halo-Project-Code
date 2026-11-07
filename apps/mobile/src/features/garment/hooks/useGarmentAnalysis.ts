@@ -16,6 +16,7 @@ import type { PhotoQualityReport } from "@/features/garment/types/quality";
 
 export interface UseGarmentAnalysisReturn {
   imageUri: string | null;
+  imageBase64: string | null;
   originalUri: string | null;
   sourceType: "camera" | "gallery" | null;
   isLoading: boolean;
@@ -219,6 +220,7 @@ export function useGarmentAnalysis(): UseGarmentAnalysisReturn {
 
   return {
     imageUri,
+    imageBase64,
     originalUri,
     sourceType,
     isLoading,

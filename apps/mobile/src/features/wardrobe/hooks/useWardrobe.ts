@@ -1,6 +1,7 @@
 /**
  * Hook for managing the user's personal Digital Wardrobe state.
- * Orchestrates fetching, saving, and deleting wardrobe items with terminal logging.
+ * Orchestrates fetching, auto-saving analyzed garments, manual additions,
+ * editing metadata, and deleting items.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -11,14 +12,16 @@ import {
   insertWardrobeItem,
   updateWardrobeItem,
 } from "@/features/wardrobe/api/wardrobeApi";
-import type {
-  UpdateWardrobeItemInput,
-  WardrobeItem,
+import {
+  getCategoryLabel,
+  type UpdateWardrobeItemInput,
+  type WardrobeItem,
 } from "@/features/wardrobe/types/wardrobe";
 
 export function useWardrobe() {
   const [items, setItems] = useState<WardrobeItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSavingBatch, setIsSavingBatch] = useState<boolean>(false);
   const [savingItemNumber, setSavingItemNumber] = useState<number | null>(null);
   const [savedItemNumbers, setSavedItemNumbers] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +50,10 @@ export function useWardrobe() {
     async (garment: DetectedGarment): Promise<WardrobeItem | null> => {
       setSavingItemNumber(garment.item_number);
       setError(null);
-      console.log(`[HALO Wardrobe] ⏳ Processing save for garment #${garment.item_number}...`);
 
       try {
         const subtype = garment.attributes.subtype.predicted;
-        const itemName = subtype || garment.category.replace(/_/g, " ");
+        const itemName = subtype || getCategoryLabel(garment.category);
 
         const saved = await insertWardrobeItem({
           name: itemName.charAt(0).toUpperCase() + itemName.slice(1),
@@ -62,7 +64,7 @@ export function useWardrobe() {
           attributes: garment.attributes,
         });
 
-        setItems((prev) => [saved, ...prev]);
+        setItems((prev) => [saved, ...prev.filter((i) => i.id !== saved.id)]);
         setSavedItemNumbers((prev) => new Set([...prev, garment.item_number]));
         return saved;
       } catch (err: unknown) {
@@ -79,13 +81,56 @@ export function useWardrobe() {
   );
 
   const saveAllGarments = useCallback(
-    async (garments: DetectedGarment[]): Promise<void> => {
-      console.log(`[HALO Wardrobe] ⚡ Auto-saving ${garments.length} detected garment(s)...`);
-      for (const garment of garments) {
-        await saveGarment(garment);
+    async (garments: DetectedGarment[]): Promise<WardrobeItem[]> => {
+      if (garments.length === 0) return [];
+      setIsSavingBatch(true);
+      const savedBatch: WardrobeItem[] = [];
+      try {
+        for (const garment of garments) {
+          const saved = await saveGarment(garment);
+          if (saved) savedBatch.push(saved);
+        }
+        return savedBatch;
+      } finally {
+        setIsSavingBatch(false);
       }
     },
     [saveGarment],
+  );
+
+  const saveManualPhoto = useCallback(
+    async (
+      cropBase64: string,
+      category: string = "short_sleeved_shirt",
+      name: string = "New Wardrobe Piece",
+    ): Promise<WardrobeItem | null> => {
+      setIsSavingBatch(true);
+      setError(null);
+      try {
+        const saved = await insertWardrobeItem({
+          name,
+          category,
+          confidence: null,
+          crop_base64: cropBase64,
+          colors: [],
+          attributes: {
+            fabric: { predicted: null, confidence: null, top_candidates: [] },
+            pattern: { predicted: null, confidence: null, top_candidates: [] },
+            subtype: { predicted: null, confidence: null, top_candidates: [] },
+          },
+        });
+        setItems((prev) => [saved, ...prev.filter((i) => i.id !== saved.id)]);
+        return saved;
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Failed to save garment photo.";
+        setError(message);
+        return null;
+      } finally {
+        setIsSavingBatch(false);
+      }
+    },
+    [],
   );
 
   const editItem = useCallback(
@@ -129,12 +174,14 @@ export function useWardrobe() {
   return {
     items,
     isLoading,
+    isSavingBatch,
     savingItemNumber,
     savedItemNumbers,
     error,
     refreshWardrobe: loadWardrobe,
     saveGarment,
     saveAllGarments,
+    saveManualPhoto,
     editItem,
     removeItem,
   };

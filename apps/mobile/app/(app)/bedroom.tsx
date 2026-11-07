@@ -1,15 +1,17 @@
 /**
- * BedroomScreen — Full-screen Bedroom & Dressing Suite.
+ * BedroomScreen — Bedroom & Dressing Suite.
  * Reached by entering the "BEDROOM" door in the hallway.
+ * Redesigned with ui-ux-pro-max: frosted glass cards, tactile micro-interactions,
+ * clear action affordance, and HALO's dreamy pastel aesthetic.
  */
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
-import { AuthCard, authTheme } from '@/features/auth/components/AuthComponents';
 import { FadeInView } from '@/features/home/components/FadeInView';
-import { ChevronLeftIcon, ChevronRightIcon, HangerIcon, ProfileIcon } from '@/features/home/components/HomeIcons';
+import { BedroomPortalCard } from '@/features/home/components/BedroomPortalCard';
+import { ChevronLeftIcon, HangerIcon, ProfileIcon } from '@/features/home/components/HomeIcons';
 
 export default function BedroomScreen() {
   const router = useRouter();
@@ -21,13 +23,14 @@ export default function BedroomScreen() {
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Header with back navigation to hallway */}
+          {/* Header with back navigation to hallway & logo */}
           <FadeInView fromTranslateY={-10}>
             <View style={styles.header}>
               <Pressable
                 onPress={() => router.back()}
                 accessibilityRole="button"
                 accessibilityLabel="Return to Hallway"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
               >
                 <ChevronLeftIcon size={18} color="#6B5299" />
@@ -41,61 +44,52 @@ export default function BedroomScreen() {
                 accessibilityLabel="HALO Logo"
               />
 
-              <View style={styles.headerSlot} />
+              <View style={styles.headerSpacer} />
             </View>
 
             <View style={styles.titleWrap}>
+              <View style={styles.suiteBadge}>
+                <View style={styles.suiteBadgeDot} />
+                <Text style={styles.suiteBadgeText}>SUITE 01 · DRESSING ROOM</Text>
+              </View>
               <Text style={styles.title}>The Bedroom</Text>
               <Text style={styles.subtitle}>
-                Your private dressing suite. Curate garments for your digital closet and style your 3D avatar.
+                Your private styling sanctuary. Organize real clothing with CV curation or step into the 3D dressing suite.
               </Text>
             </View>
           </FadeInView>
 
           {/* Interactive room feature cards */}
-          <FadeInView delayMs={150} fromTranslateY={14}>
-            <AuthCard style={styles.card}>
-              <Pressable
-                onPress={() => router.push('/(app)/garment')}
-                accessibilityRole="button"
-                accessibilityLabel="Open Digital Wardrobe"
-                style={({ pressed }) => [styles.roomRow, pressed && styles.btnPressed]}
-              >
-                <View style={styles.iconCircle}>
-                  <HangerIcon size={24} color="#6B5299" />
-                </View>
-                <View style={styles.roomText}>
-                  <Text style={styles.roomTitle}>Digital Wardrobe</Text>
-                  <Text style={styles.roomSubtitle}>Scan and categorize real clothing items with CV analysis.</Text>
-                </View>
-                <ChevronRightIcon color="#7E5FA8" />
-              </Pressable>
-            </AuthCard>
+          <FadeInView delayMs={140} fromTranslateY={14}>
+            <BedroomPortalCard
+              title="Digital Wardrobe"
+              description="Scan and catalogue your real clothes with automated CV tagging, color palette matching, and smart categorization."
+              badgeText="AI CURATION"
+              badgeVariant="lilac"
+              tags={['CV Scan', 'Catalogue', 'Hangers']}
+              icon={<HangerIcon size={24} color="#644498" />}
+              gradientColors={['rgba(255, 255, 255, 0.94)', 'rgba(247, 243, 255, 0.85)']}
+              iconGradientColors={['#EFE9FD', '#E2D7FC']}
+              arrowColor="#6B5299"
+              onPress={() => router.push('/(app)/garment')}
+              accessibilityLabel="Open Digital Wardrobe"
+            />
           </FadeInView>
 
-          <FadeInView delayMs={250} fromTranslateY={14}>
-            <AuthCard style={styles.card}>
-              <Pressable
-                onPress={() => router.push('/(app)/create-avatar')}
-                accessibilityRole="button"
-                accessibilityLabel="Open 3D Avatar Dressing Suite"
-                style={({ pressed }) => [styles.roomRow, pressed && styles.btnPressed]}
-              >
-                <View style={styles.iconCircle}>
-                  <ProfileIcon size={24} color="#6B5299" />
-                </View>
-                <View style={styles.roomText}>
-                  <View style={styles.titleBadgeRow}>
-                    <Text style={styles.roomTitle}>3D Dressing Suite</Text>
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>Preview</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.roomSubtitle}>Full-body stylized avatar fitting and virtual garment try-on.</Text>
-                </View>
-                <ChevronRightIcon color="#7E5FA8" />
-              </Pressable>
-            </AuthCard>
+          <FadeInView delayMs={240} fromTranslateY={14}>
+            <BedroomPortalCard
+              title="3D Dressing Suite"
+              description="Personalized 3D avatar fitting room. Try on digital garments, test outfit drape, and view from any 360° angle."
+              badgeText="3D VIRTUAL FIT"
+              badgeVariant="periwinkle"
+              tags={['Stylized Avatar', 'Virtual Try-On']}
+              icon={<ProfileIcon size={24} color="#4865B8" />}
+              gradientColors={['rgba(255, 255, 255, 0.94)', 'rgba(242, 247, 255, 0.85)']}
+              iconGradientColors={['#E9F0FE', '#D7E5FC']}
+              arrowColor="#4865B8"
+              onPress={() => router.push('/(app)/create-avatar')}
+              accessibilityLabel="Open 3D Dressing Suite"
+            />
           </FadeInView>
         </ScrollView>
       </SafeAreaView>
@@ -104,13 +98,18 @@ export default function BedroomScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF2FB' },
-  safeArea: { flex: 1 },
+  root: {
+    flex: 1,
+    backgroundColor: '#EEF2FB',
+  },
+  safeArea: {
+    flex: 1,
+  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 40,
-    gap: 18,
+    gap: 16,
   },
   header: {
     flexDirection: 'row',
@@ -121,79 +120,76 @@ const styles = StyleSheet.create({
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: authTheme.socialBtnBg,
-    borderWidth: 1,
-    borderColor: authTheme.socialBtnBorder,
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 255, 255, 0.95)',
+    shadowColor: '#8C78B3',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   backBtnText: {
     fontSize: 13,
     fontWeight: '600',
     color: '#6B5299',
-    marginLeft: 2,
   },
-  btnPressed: { opacity: 0.7 },
-  logo: { width: 100, height: 44 },
-  headerSlot: { width: 80 },
+  btnPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.97 }],
+  },
+  logo: {
+    width: 96,
+    height: 40,
+  },
+  headerSpacer: {
+    width: 80,
+  },
   titleWrap: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 12,
+    marginBottom: 6,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#6B5299',
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    marginTop: 6,
-    maxWidth: 310,
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#8A76A6',
-    textAlign: 'center',
-  },
-  card: {
-    marginHorizontal: 0,
-    padding: 16,
-  },
-  roomRow: {
+  suiteBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-  },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: authTheme.socialBtnBg,
-    borderWidth: 1.2,
-    borderColor: authTheme.socialBtnBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roomText: { flex: 1 },
-  titleBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  roomTitle: { fontSize: 16, fontWeight: '700', color: '#3D3055' },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 4.5,
+    borderRadius: 14,
     backgroundColor: 'rgba(217, 207, 241, 0.55)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.85)',
+    marginBottom: 8,
   },
-  badgeText: {
+  suiteBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#8B7BEF',
+    marginRight: 6,
+  },
+  suiteBadgeText: {
     fontSize: 10,
     fontWeight: '700',
     color: '#6B5299',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    letterSpacing: 0.7,
   },
-  roomSubtitle: {
-    marginTop: 3,
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#8A76A6',
+  title: {
+    fontSize: 27,
+    fontWeight: '800',
+    color: '#34264C',
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    marginTop: 6,
+    maxWidth: 320,
+    fontSize: 13.5,
+    lineHeight: 19.5,
+    color: '#76648E',
+    textAlign: 'center',
   },
 });

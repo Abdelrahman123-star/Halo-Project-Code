@@ -3,11 +3,12 @@
  *
  * Plays the bundled intro video full-screen with sound, exactly once, then
  * fades out and calls onFinished so the root layout can reveal the navigator
- * (Login, or Home if a session exists). If the video errors or never becomes
- * ready, we finish anyway so the user is never stuck on the intro.
+ * (Login, or Home if a session exists). Includes a top-right Skip button matching
+ * the house entrance video styling so users can skip directly to the app.
  */
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
 
@@ -38,18 +39,23 @@ export function WelcomeVideoScreen({ onFinished }: WelcomeVideoScreenProps) {
     p.play();
   });
 
-  useEffect(() => {
-    function finish() {
-      if (hasFinished.current) return;
-      hasFinished.current = true;
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: FADE_OUT_MS,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }).start(() => onFinishedRef.current());
+  const finish = useCallback(() => {
+    if (hasFinished.current) return;
+    hasFinished.current = true;
+    try {
+      player.pause();
+    } catch {
+      // player might already be finished/unmounted
     }
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: FADE_OUT_MS,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => onFinishedRef.current());
+  }, [player, opacity]);
 
+  useEffect(() => {
     let isReady = false;
     const loadTimeout = setTimeout(() => {
       if (!isReady) finish();
@@ -66,7 +72,7 @@ export function WelcomeVideoScreen({ onFinished }: WelcomeVideoScreenProps) {
       endSubscription.remove();
       statusSubscription.remove();
     };
-  }, [player, opacity]);
+  }, [player, finish]);
 
   return (
     <Animated.View style={[styles.root, { opacity }]}>
@@ -78,10 +84,53 @@ export function WelcomeVideoScreen({ onFinished }: WelcomeVideoScreenProps) {
         contentFit="cover"
         allowsPictureInPicture={false}
       />
+
+      {/* Top bar with Skip button matching house entrance video */}
+      <SafeAreaView style={styles.controlsOverlay} pointerEvents="box-none" edges={['top', 'right']}>
+        <View style={styles.headerSpacer} />
+        <Pressable
+          onPress={finish}
+          accessibilityRole="button"
+          accessibilityLabel="Skip intro video"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={({ pressed }) => [styles.pillBtn, pressed && styles.pillPressed]}
+        >
+          <Text style={styles.pillText}>Skip</Text>
+        </Pressable>
+      </SafeAreaView>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: BACKDROP_COLOR },
+  controlsOverlay: {
+    ...StyleSheet.absoluteFill,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    zIndex: 20,
+  },
+  headerSpacer: { flex: 1 },
+  pillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(25, 18, 40, 0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+  },
+  pillPressed: {
+    opacity: 0.7,
+  },
+  pillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
+  },
 });

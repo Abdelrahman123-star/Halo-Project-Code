@@ -54,3 +54,27 @@ export function HangerIcon({ size = 22, color = authTheme.textMain }: IconProps)
     </Svg>
   );
 }
+
+export function MirrorIcon({ size = 22, color = authTheme.textMain }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={9.5} r={6.5} stroke={color} strokeWidth={1.8} />
+      <Path d="M12 16v5M8.5 21h7" stroke={color} strokeWidth={1.8} {...STROKE} />
+      <Path d="M9.5 7.5a3.5 3.5 0 0 1 3.5-1" stroke={color} strokeWidth={1.3} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function SparkleBeautyIcon({ size = 22, color = authTheme.textMain }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3c0 4.5-3.5 8-8 8 4.5 0 8 3.5 8 8 0-4.5 3.5-8 8-8-4.5 0-8-3.5-8-8z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <Circle cx={18.5} cy={6.5} r={1.5} fill={color} />
+    </Svg>
+  );
+}

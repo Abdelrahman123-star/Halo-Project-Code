@@ -1,5 +1,7 @@
 import {
   CreateWardrobeItemInputSchema,
+  getCategoryGroup,
+  getCategoryLabel,
   UpdateWardrobeItemInputSchema,
   WardrobeItemSchema,
 } from "@/features/wardrobe/types/wardrobe";
@@ -228,5 +230,13 @@ describe("wardrobeApi", () => {
     });
 
     await expect(deleteWardrobeItem("item-123")).resolves.toBeUndefined();
+  });
+
+  it("maps category labels and filter groups accurately", () => {
+    expect(getCategoryLabel("trousers")).toBe("Pants & Trousers");
+    expect(getCategoryLabel("long_sleeved_outwear")).toBe("Jacket & Coat");
+    expect(getCategoryGroup("trousers")).toBe("bottoms");
+    expect(getCategoryGroup("long_sleeved_dress")).toBe("dresses");
+    expect(getCategoryGroup("short_sleeved_shirt")).toBe("tops");
   });
 });

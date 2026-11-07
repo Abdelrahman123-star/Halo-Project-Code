@@ -85,7 +85,7 @@ export default function ClosetScreen(): React.JSX.Element {
             <Text style={styles.emptyTitle}>This rail is currently empty</Text>
             <Pressable
               style={styles.scanBtn}
-              onPress={() => router.push("/(app)/test-garment")}
+              onPress={() => router.push("/(app)/garment")}
             >
               <Text style={styles.scanBtnText}>+ Scan Clothes to Hang Here</Text>
             </Pressable>

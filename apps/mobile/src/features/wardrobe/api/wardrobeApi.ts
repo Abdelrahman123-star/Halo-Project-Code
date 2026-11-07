@@ -1,8 +1,8 @@
 /**
  * Data access layer for user's personal Digital Wardrobe.
- * Primary: Supabase Postgres with Row Level Security (RLS).
- * Fallback: Local device storage (AsyncStorage) when ISP / SSL handshake fails.
- * Includes step-by-step console logging for terminal debugging.
+ * Primary: Supabase Postgres (`wardrobe_items`) with Row Level Security (`user_id = auth.uid()`).
+ * Fallback: Per-user local device storage (AsyncStorage) when offline or network/SSL fails.
+ * Preserves immutable AI predictions (`ai_original`) separately from user edits (AGENTS.md §3).
  */
 
 import { supabase } from "@/shared/lib/supabase";
@@ -19,15 +19,34 @@ import {
   WardrobeItemSchema,
   type CreateWardrobeItemInput,
   type UpdateWardrobeItemInput,
+  type WardrobeAttributes,
   type WardrobeItem,
 } from "@/features/wardrobe/types/wardrobe";
 
-/**
- * Fetches all wardrobe items belonging to the user.
- * Tries Supabase first; gracefully falls back to local cache if network/SSL fails.
- */
+const ANON_FALLBACK_UUID = "00000000-0000-4000-8000-000000000000";
+const LOCAL_ID_PREFIX = "a0eebc99-9c0b-4ef8-a000-";
+
+function hasSupabaseClient(): boolean {
+  return Boolean(supabase && typeof supabase.from === "function");
+}
+
+async function resolveActiveUserId(): Promise<string> {
+  if (!hasSupabaseClient()) return ANON_FALLBACK_UUID;
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const sessionUser = sessionData?.session?.user;
+    if (sessionUser?.id) return sessionUser.id;
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user?.id) return userData.user.id;
+  } catch {
+    console.warn("[HALO Wardrobe] Auth session lookup unavailable; using offline scope.");
+  }
+  return ANON_FALLBACK_UUID;
+}
+
 export async function fetchWardrobeItems(): Promise<WardrobeItem[]> {
-  console.log("[HALO Wardrobe] 📥 Fetching wardrobe items from Supabase...");
+  const activeUserId = await resolveActiveUserId();
+  if (!hasSupabaseClient()) return getLocalItems();
 
   try {
     const { data, error } = await supabase
@@ -37,68 +56,61 @@ export async function fetchWardrobeItems(): Promise<WardrobeItem[]> {
 
     if (error) throw error;
 
-    const items = Array.isArray(data)
+    const remoteItems = Array.isArray(data)
       ? data.map((item) => WardrobeItemSchema.parse(item))
       : [];
 
-    console.log(`[HALO Wardrobe] ✅ Loaded ${items.length} wardrobe item(s) from Supabase.`);
-    await setLocalItems(items);
-    return items;
+    const cached = await getLocalItems();
+    const remoteIds = new Set(remoteItems.map((i) => i.id));
+    const unsyncedLocal = cached.filter(
+      (item) =>
+        item.id.startsWith(LOCAL_ID_PREFIX) &&
+        !remoteIds.has(item.id) &&
+        (activeUserId === ANON_FALLBACK_UUID ||
+          item.user_id === activeUserId ||
+          item.user_id === ANON_FALLBACK_UUID),
+    );
+
+    const merged = [...unsyncedLocal, ...remoteItems];
+    await setLocalItems(merged);
+    return merged;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[HALO Wardrobe] ⚠️ Supabase fetch failed (${msg}).`);
-
-    if (msg.includes("SSLHandshakeException") || msg.includes("CertPathValidatorException")) {
-      console.warn(
-        "[HALO Wardrobe] 🛡️ ISP/Network SSL Block detected (*.supabase.co).\n" +
-          "👉 Quick Phone Fix: In Android Settings -> Network -> Private DNS -> enter 'dns.google' or use Cloudflare WARP (1.1.1.1).\n" +
-          "📱 Activating local storage fallback...",
-      );
-    }
+    console.warn(`[HALO Wardrobe] ⚠️ Supabase fetch failed (${msg}). Falling back to local cache.`);
 
     const localItems = await getLocalItems();
-    console.log(`[HALO Wardrobe] 📱 Loaded ${localItems.length} wardrobe item(s) from local cache.`);
-    return localItems;
+    return activeUserId === ANON_FALLBACK_UUID
+      ? localItems
+      : localItems.filter(
+          (item) => item.user_id === activeUserId || item.user_id === ANON_FALLBACK_UUID,
+        );
   }
 }
 
-/**
- * Saves a new detected garment.
- * Tries Supabase; if blocked by SSL/ISP, persists to local storage so testing never breaks.
- */
 export async function insertWardrobeItem(
   input: CreateWardrobeItemInput,
 ): Promise<WardrobeItem> {
-  console.log("============================================================");
-  console.log("[HALO Wardrobe] 💾 Starting Save to Digital Wardrobe...");
-  console.log(`[HALO Wardrobe] [1/4] Validating input: ${input.name} (${input.category})...`);
-
   const parsedInput = CreateWardrobeItemInputSchema.parse(input);
+  const userId = await resolveActiveUserId();
 
-  // [2/4] Check user session
-  console.log("[HALO Wardrobe] [2/4] Checking authenticated user session...");
-  let userId = "00000000-0000-4000-8000-000000000000";
-  try {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const sessionUser = sessionData?.session?.user;
-    if (sessionUser) {
-      userId = sessionUser.id;
-      console.log(`[HALO Wardrobe] [2/4] Active session for User: ${userId}`);
-    } else {
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user) {
-        userId = userData.user.id;
-        console.log(`[HALO Wardrobe] [2/4] Active user: ${userId}`);
-      }
-    }
-  } catch {
-    console.warn("[HALO Wardrobe] Auth check skipped or offline.");
-  }
+  const baseAttrs: WardrobeAttributes = parsedInput.attributes ?? {
+    fabric: { predicted: null, confidence: null, top_candidates: [] },
+    pattern: { predicted: null, confidence: null, top_candidates: [] },
+    subtype: { predicted: null, confidence: null, top_candidates: [] },
+  };
 
-  // [3/4] Prepare payload
-  const cropLength = parsedInput.crop_base64?.length ?? 0;
-  const cropKb = Math.round((cropLength * 0.75) / 1024);
-  console.log(`[HALO Wardrobe] [3/4] Prepared payload: crop image size ~${cropKb} KB, ${parsedInput.colors.length} colors`);
+  const enrichedAttributes: WardrobeAttributes =
+    parsedInput.confidence != null && !baseAttrs.ai_original
+      ? {
+          ...baseAttrs,
+          ai_original: {
+            category: parsedInput.category,
+            subtype: baseAttrs.subtype.predicted,
+            fabric: baseAttrs.fabric.predicted,
+            pattern: baseAttrs.pattern.predicted,
+          },
+        }
+      : baseAttrs;
 
   const payload = {
     user_id: userId,
@@ -107,12 +119,11 @@ export async function insertWardrobeItem(
     confidence: parsedInput.confidence ?? null,
     crop_base64: parsedInput.crop_base64 ?? null,
     colors: parsedInput.colors,
-    attributes: parsedInput.attributes ?? {},
+    attributes: enrichedAttributes,
   };
 
-  // [4/4] Try Supabase insert
   try {
-    console.log("[HALO Wardrobe] [4/4] Inserting into 'wardrobe_items' table...");
+    if (!hasSupabaseClient()) throw new Error("Supabase client not configured");
     const { data, error } = await supabase
       .from("wardrobe_items")
       .insert(payload)
@@ -122,62 +133,50 @@ export async function insertWardrobeItem(
     if (error) throw error;
 
     const savedItem = WardrobeItemSchema.parse(data);
-    console.log(`[HALO Wardrobe] ✅ Saved successfully to Supabase! Item ID: ${savedItem.id}`);
-    console.log("============================================================");
-
     await upsertLocalItem(savedItem);
     return savedItem;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[HALO Wardrobe] ⚠️ Supabase save failed: ${msg}`);
+    console.warn(`[HALO Wardrobe] ⚠️ Supabase save fallback (${msg}). Saving locally.`);
 
-    // Generate valid RFC 4122 v4 UUID for local storage
-    const hexTime = Date.now().toString(16).padStart(12, "0").slice(-12);
-    const localId = `a0eebc99-9c0b-4ef8-a000-${hexTime}`;
+    const uniqueSuffix = (Date.now() * 1000 + Math.floor(Math.random() * 1000))
+      .toString(16)
+      .padStart(12, "0")
+      .slice(-12);
 
     const localSavedItem: WardrobeItem = {
-      id: localId,
+      id: `${LOCAL_ID_PREFIX}${uniqueSuffix}`,
       user_id: userId,
       name: parsedInput.name,
       category: parsedInput.category,
       confidence: parsedInput.confidence ?? null,
       crop_base64: parsedInput.crop_base64 ?? null,
       colors: parsedInput.colors,
-      attributes: parsedInput.attributes ?? {
-        fabric: { predicted: null, confidence: null, top_candidates: [] },
-        pattern: { predicted: null, confidence: null, top_candidates: [] },
-        subtype: { predicted: null, confidence: null, top_candidates: [] },
-      },
+      attributes: enrichedAttributes,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
     await upsertLocalItem(localSavedItem);
-    console.log(`[HALO Wardrobe] 📱 Saved successfully to local wardrobe storage! Item ID: ${localSavedItem.id}`);
-    console.log("============================================================");
     return localSavedItem;
   }
 }
 
-/**
- * Updates an existing wardrobe item (e.g. edited category, name, or attributes).
- */
 export async function updateWardrobeItem(
   itemId: string,
   updates: UpdateWardrobeItemInput,
 ): Promise<WardrobeItem> {
-  console.log(`[HALO Wardrobe] ✏️ Updating wardrobe item ${itemId}...`, updates);
   const parsedUpdates = UpdateWardrobeItemInputSchema.parse(updates);
-
-  const payload: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (parsedUpdates.name !== undefined) payload.name = parsedUpdates.name;
   if (parsedUpdates.category !== undefined) payload.category = parsedUpdates.category;
   if (parsedUpdates.attributes !== undefined) payload.attributes = parsedUpdates.attributes;
   if (parsedUpdates.colors !== undefined) payload.colors = parsedUpdates.colors;
 
   try {
+    if (!hasSupabaseClient() || itemId.startsWith(LOCAL_ID_PREFIX)) {
+      throw new Error("Local-only wardrobe item");
+    }
     const { data, error } = await supabase
       .from("wardrobe_items")
       .update(payload)
@@ -188,30 +187,24 @@ export async function updateWardrobeItem(
     if (error) throw error;
 
     const updatedItem = WardrobeItemSchema.parse(data);
-    console.log(`[HALO Wardrobe] ✅ Updated in Supabase! Item ID: ${updatedItem.id}`);
     await upsertLocalItem(updatedItem);
     return updatedItem;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[HALO Wardrobe] ⚠️ Supabase update failed (${msg}). Updating in local storage...`);
-    const localUpdated = await updateLocalItem(itemId, parsedUpdates);
-    console.log(`[HALO Wardrobe] 📱 Updated in local storage! Item ID: ${localUpdated.id}`);
-    return localUpdated;
+    console.warn(`[HALO Wardrobe] ⚠️ Supabase update fallback (${msg}).`);
+    return updateLocalItem(itemId, parsedUpdates);
   }
 }
 
-/**
- * Deletes a wardrobe item by its ID.
- */
 export async function deleteWardrobeItem(itemId: string): Promise<void> {
-  console.log(`[HALO Wardrobe] 🗑️ Deleting wardrobe item: ${itemId}...`);
-
-  try {
-    await supabase.from("wardrobe_items").delete().eq("id", itemId);
-  } catch {
-    // ignore remote error on deletion
+  if (hasSupabaseClient() && !itemId.startsWith(LOCAL_ID_PREFIX)) {
+    try {
+      const { error } = await supabase.from("wardrobe_items").delete().eq("id", itemId);
+      if (error) console.warn(`[HALO Wardrobe] ⚠️ Remote delete warning: ${error.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[HALO Wardrobe] ⚠️ Remote delete skipped (${msg}).`);
+    }
   }
-
   await deleteLocalItem(itemId);
-  console.log(`[HALO Wardrobe] ✅ Item ${itemId} deleted successfully.`);
 }

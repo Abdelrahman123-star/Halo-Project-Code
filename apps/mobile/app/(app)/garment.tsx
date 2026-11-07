@@ -1,59 +1,62 @@
 /**
- * GarmentStudioScreen (`/(app)/garment`).
- * Luxury pearlescent garment capture, preview, and AI recognition flow.
- * Combines HALO's refined pastel visual identity with in-memory garment analysis.
+ * Digital Wardrobe Screen (`/(app)/garment`) — Reached from Bedroom.
+ * Redesigned with `ui-ux-pro-max`: frosted pastel capture cards, capture tip banner,
+ * inline Saved Garments Bento grid + empty state, Garment Detail & Dropdown Edit Modal,
+ * and automatic backend persistence via `useWardrobe` (Supabase RLS + local cache).
  */
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Animated,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FrostedGlassCard } from '@/features/garment/components/FrostedGlassCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { GarmentProcessingView } from '@/features/garment/components/GarmentProcessingView';
-import { HaloHeader } from '@/features/garment/components/HaloHeader';
-import { PearlescentBackground } from '@/features/garment/components/PearlescentBackground';
 import { PhotoCaptureGuide } from '@/features/garment/components/PhotoCaptureGuide';
-import { WardrobeHangerDecor } from '@/features/garment/components/WardrobeHangerDecor';
 import { useGarmentAnalysis } from '@/features/garment/hooks/useGarmentAnalysis';
+import type { GarmentAnalysisResponse } from '@/features/garment/types/garment';
+import { FadeInView } from '@/features/home/components/FadeInView';
+import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
+import { SavedWardrobeSection } from '@/features/wardrobe/components/SavedWardrobeSection';
+import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
+import { useWardrobe } from '@/features/wardrobe/hooks/useWardrobe';
+import type { WardrobeItem } from '@/features/wardrobe/types/wardrobe';
 import { Banner } from '@/shared/ui/Banner';
-import { luxuryPastel } from '@/shared/theme/tokens';
 
 export default function GarmentScreen(): React.JSX.Element {
   const router = useRouter();
   const [hasConfirmed, setHasConfirmed] = useState(false);
-  const screenFadeAnim = useRef(new Animated.Value(0)).current;
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [savedBatch, setSavedBatch] = useState<WardrobeItem[]>([]);
+  const lastSavedResultRef = useRef<GarmentAnalysisResponse | null>(null);
 
   const {
-    imageUri,
-    sourceType,
-    isLoading,
-    statusText,
-    error,
-    result,
-    pickFromCamera,
-    pickFromGallery,
-    runAnalysis,
-    clearError,
-    reset,
+    imageUri, imageBase64, sourceType, isLoading: isAnalyzing, statusText,
+    error: analysisError, result, pickFromCamera, pickFromGallery, runAnalysis, reset,
   } = useGarmentAnalysis();
 
+  const {
+    items: wardrobeItems, isLoading: isLoadingWardrobe, isSavingBatch,
+    error: wardrobeError, refreshWardrobe, saveAllGarments, saveManualPhoto, editItem, removeItem,
+  } = useWardrobe();
+
   useEffect(() => {
-    Animated.timing(screenFadeAnim, {
-      toValue: 1,
-      duration: 350,
-      useNativeDriver: true,
-    }).start();
-  }, [screenFadeAnim]);
+    if (result && result !== lastSavedResultRef.current && result.garments.length > 0) {
+      lastSavedResultRef.current = result;
+      void saveAllGarments(result.garments).then(setSavedBatch);
+    }
+  }, [result, saveAllGarments]);
+
+  const activeModalItem = selectedItemId
+    ? wardrobeItems.find((i) => i.id === selectedItemId) ?? null
+    : null;
+
+  const isPreviewMode = Boolean(imageUri && !hasConfirmed);
+  const isProcessingMode = Boolean(hasConfirmed);
 
   function handleBack() {
-    if (hasConfirmed && !isLoading) {
+    if (hasConfirmed && !isAnalyzing) {
       setHasConfirmed(false);
       return;
     }
@@ -65,154 +68,171 @@ export default function GarmentScreen(): React.JSX.Element {
     router.back();
   }
 
-  function handleChooseAnother() {
+  function handleFullReset() {
     reset();
     setHasConfirmed(false);
+    setSavedBatch([]);
   }
 
   async function handleConfirmAndAnalyze() {
+    setSavedBatch([]);
     setHasConfirmed(true);
     await runAnalysis();
   }
 
-  function handleFullReset() {
-    reset();
-    setHasConfirmed(false);
+  async function handleManualSave() {
+    const dataUri = imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : imageUri ?? '';
+    if (!dataUri) return;
+    const saved = await saveManualPhoto(dataUri);
+    handleFullReset();
+    if (saved) setSelectedItemId(saved.id);
   }
 
-  // Determine active view mode
-  const isPreviewMode = Boolean(imageUri && !hasConfirmed);
-  const isProcessingMode = Boolean(hasConfirmed);
+  const combinedError = !isProcessingMode ? analysisError || wardrobeError : null;
 
   return (
-    <View style={styles.container}>
-      <PearlescentBackground />
+    <View style={styles.root}>
+      <StatusBar style="dark" />
+      <PastelBlobBackground />
 
-      <HaloHeader onBack={handleBack} />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.header}>
+          <Pressable
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
+          >
+            <ChevronLeftIcon size={18} color="#6B5299" />
+            <Text style={styles.backBtnText}>
+              {isPreviewMode || isProcessingMode ? 'Back' : 'Bedroom'}
+            </Text>
+          </Pressable>
 
-      <Animated.View style={[{ opacity: screenFadeAnim }, styles.screenContent]}>
-        {error && !isProcessingMode ? (
-          <View style={styles.bannerWrapper}>
-            <Banner
-              tone="error"
-              message={error}
-            />
+          <Image
+            source={require('../../assets/halo-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityLabel="HALO Logo"
+          />
+
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {combinedError ? (
+          <View style={styles.bannerWrap}>
+            <Banner tone="error" message={combinedError} />
           </View>
         ) : null}
 
-        {/* View 1: Main Selection Mode */}
         {!isPreviewMode && !isProcessingMode ? (
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Main Heading */}
-            <View style={styles.headingBox}>
-              <Text style={styles.mainTitle}>Add to Your Wardrobe</Text>
-              <Text style={styles.mainSubtitle}>
-                Let's bring your favorite pieces into your digital closet.
-              </Text>
-              <WardrobeHangerDecor />
-            </View>
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <FadeInView fromTranslateY={-6}>
+              <View style={styles.titleWrap}>
+                <View style={styles.suiteBadge}>
+                  <View style={styles.suiteBadgeDot} />
+                  <Text style={styles.suiteBadgeText}>AI CURATION · DIGITAL WARDROBE</Text>
+                </View>
+                <Text style={styles.mainTitle}>Add to Your Wardrobe</Text>
+                <Text style={styles.mainSubtitle}>
+                  Scan or upload clothing to build your 3D digital closet.
+                </Text>
+              </View>
+            </FadeInView>
 
-            {/* Selection Cards */}
-            <View style={styles.cardsContainer}>
-              <GarmentOptionCard
-                type="camera"
-                title="Take a Photo"
-                subtitle="Capture your clothing item directly using your camera."
-                onPress={pickFromCamera}
+            <FadeInView delayMs={80} fromTranslateY={8}>
+              <View style={styles.cardsRow}>
+                <GarmentOptionCard
+                  type="camera"
+                  title="Take a Photo"
+                  subtitle="Live camera capture"
+                  onPress={pickFromCamera}
+                />
+                <GarmentOptionCard
+                  type="gallery"
+                  title="From Gallery"
+                  subtitle="Select saved photo"
+                  onPress={pickFromGallery}
+                />
+              </View>
+            </FadeInView>
+
+            <FadeInView delayMs={140} fromTranslateY={8}>
+              <PhotoCaptureGuide />
+            </FadeInView>
+
+            <View style={styles.divider} />
+
+            <FadeInView delayMs={200} fromTranslateY={10}>
+              <SavedWardrobeSection
+                items={wardrobeItems}
+                isLoading={isLoadingWardrobe}
+                onRefresh={refreshWardrobe}
+                onSelectItem={(item) => setSelectedItemId(item.id)}
+                onTakeFirstPhoto={pickFromCamera}
               />
-
-              <GarmentOptionCard
-                type="gallery"
-                title="Choose from Gallery"
-                subtitle="Select a clothing photo already saved on your device."
-                onPress={pickFromGallery}
-              />
-            </View>
-
-            {/* Garment Capture Guide */}
-            <PhotoCaptureGuide />
+            </FadeInView>
           </ScrollView>
         ) : null}
 
-        {/* View 2: Image Preview Mode */}
-        {isPreviewMode ? (
-          <ScrollView
-            contentContainerStyle={styles.previewScroll}
-            showsVerticalScrollIndicator={false}
-          >
+        {isPreviewMode && imageUri ? (
+          <ScrollView contentContainerStyle={styles.previewScroll} showsVerticalScrollIndicator={false}>
             <GarmentPreview
-              imageUri={imageUri!}
+              imageUri={imageUri}
               sourceType={sourceType}
-              onRetakeOrChooseAnother={handleChooseAnother}
+              onRetakeOrChooseAnother={handleFullReset}
               onConfirm={handleConfirmAndAnalyze}
-              isLoading={isLoading}
+              isLoading={isAnalyzing}
             />
           </ScrollView>
         ) : null}
 
-        {/* View 3: Processing & Results Mode */}
         {isProcessingMode ? (
           <GarmentProcessingView
-            isLoading={isLoading}
+            isLoading={isAnalyzing}
+            isSaving={isSavingBatch}
             statusText={statusText}
-            error={error}
+            error={analysisError}
             result={result}
+            savedBatch={savedBatch}
             onRetry={runAnalysis}
             onReset={handleFullReset}
+            onEditSavedItem={(item) => setSelectedItemId(item.id)}
+            onManualSave={handleManualSave}
           />
         ) : null}
-      </Animated.View>
+
+        <WardrobeDetailModal
+          visible={Boolean(activeModalItem)}
+          item={activeModalItem}
+          onClose={() => setSelectedItemId(null)}
+          onSave={editItem}
+          onDelete={removeItem}
+        />
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9F6F0',
-  },
-  screenContent: {
-    flex: 1,
-  },
-  bannerWrapper: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 40,
-  },
-  previewScroll: {
-    paddingTop: 10,
-    paddingBottom: 40,
-  },
-  headingBox: {
-    alignItems: 'center',
-    marginTop: 6,
-    marginBottom: 12,
-  },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: luxuryPastel.textMauve,
-    letterSpacing: 0.4,
-    textAlign: 'center',
-  },
-  mainSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: luxuryPastel.textSecondary,
-    textAlign: 'center',
-    marginTop: 6,
-    paddingHorizontal: 16,
-  },
-  cardsContainer: {
-    width: '100%',
-    marginVertical: 4,
-    gap: 8,
-  },
+  root: { flex: 1, backgroundColor: '#EEF2FB' },
+  safeArea: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 8 },
+  backBtn: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.76)', borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.95)', shadowColor: '#8C78B3', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
+  backBtnText: { fontSize: 13, fontWeight: '600', color: '#6B5299' },
+  btnPressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
+  logo: { width: 92, height: 38 },
+  headerSpacer: { width: 84 },
+  bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 2, paddingBottom: 40, gap: 10 },
+  previewScroll: { paddingTop: 10, paddingBottom: 40 },
+  titleWrap: { alignItems: 'center', marginTop: 2, marginBottom: 2 },
+  suiteBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 3.5, borderRadius: 12, backgroundColor: 'rgba(217, 207, 241, 0.55)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.85)', marginBottom: 6 },
+  suiteBadgeDot: { width: 5.5, height: 5.5, borderRadius: 3, backgroundColor: '#8B7BEF', marginRight: 5 },
+  suiteBadgeText: { fontSize: 9.5, fontWeight: '700', color: '#6B5299', letterSpacing: 0.6 },
+  mainTitle: { fontSize: 22, fontWeight: '800', color: '#34264C', letterSpacing: -0.3, textAlign: 'center' },
+  mainSubtitle: { marginTop: 3, maxWidth: 320, fontSize: 12.5, lineHeight: 17, color: '#76648E', textAlign: 'center' },
+  cardsRow: { flexDirection: 'row', gap: 10 },
+  divider: { height: 1, backgroundColor: 'rgba(165, 148, 195, 0.20)', marginVertical: 2 },
 });
