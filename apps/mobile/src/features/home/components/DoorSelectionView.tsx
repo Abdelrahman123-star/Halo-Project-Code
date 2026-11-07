@@ -70,20 +70,20 @@ export function DoorSelectionView({
     isNavigating.current = true;
     setActiveDoor(door);
 
-    Animated.timing(uiOpacity, { toValue: 0, duration: 250, useNativeDriver: true }).start();
-    Animated.timing(highlightAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+    Animated.timing(uiOpacity, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    Animated.timing(highlightAnim, { toValue: 1, duration: 240, useNativeDriver: true }).start();
     Animated.timing(zoomAnim, {
       toValue: 1,
-      duration: 850,
-      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      duration: 420,
+      easing: Easing.bezier(0.2, 0.8, 0.25, 1),
       useNativeDriver: true,
     }).start();
 
     Animated.sequence([
-      Animated.delay(420),
+      Animated.delay(180),
       Animated.timing(doorLightAnim, {
         toValue: 1,
-        duration: 480,
+        duration: 240,
         easing: Easing.out(Easing.quad),
         useNativeDriver: true,
       }),
@@ -93,10 +93,10 @@ export function DoorSelectionView({
     });
   };
 
-  const targetTranslateX = activeDoor === 'bedroom' ? width * 0.42 : -width * 0.48;
-  const scale = zoomAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 2.7] });
+  const targetTranslateX = activeDoor === 'bedroom' ? width * 0.16 : -width * 0.18;
+  const scale = zoomAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.38] });
   const translateX = zoomAnim.interpolate({ inputRange: [0, 1], outputRange: [0, targetTranslateX] });
-  const translateY = zoomAnim.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.08] });
+  const translateY = zoomAnim.interpolate({ inputRange: [0, 1], outputRange: [0, height * 0.04] });
 
   return (
     <View style={styles.container}>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     shadowRadius: 28,
   },
   bloom: { ...StyleSheet.absoluteFill, backgroundColor: '#FFF8F2' },
-  hud: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24 },
+  hud: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 10, paddingBottom: 96 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' },
   pillBtn: {
     flexDirection: 'row',

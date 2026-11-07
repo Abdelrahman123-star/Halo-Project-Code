@@ -15,7 +15,6 @@ import { authTheme, HaloMark } from '@/features/auth/components/AuthComponents';
 import { useSession } from '@/features/auth/hooks/useSession';
 import { useMyProfile } from '@/features/profile/hooks/useMyProfile';
 import { Banner } from '@/shared/ui/Banner';
-import { FloatingNavBar, type NavTab } from '@/shared/ui/FloatingNavBar';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -36,10 +35,6 @@ export default function ProfileScreen() {
       setSignOutError('Could not sign out. Check your connection and try again.');
       setSigningOut(false);
     }
-  }
-
-  function handleSelectTab(tab: NavTab) {
-    if (tab === 'home') router.push('/(app)');
   }
 
   const name =
@@ -149,8 +144,6 @@ export default function ProfileScreen() {
             </LinearGradient>
           </Pressable>
         </ScrollView>
-
-        <FloatingNavBar currentTab="profile" onSelectTab={handleSelectTab} />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -159,124 +152,24 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safeArea: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 110,
-    gap: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: authTheme.inputBg,
-    borderWidth: 1,
-    borderColor: authTheme.inputBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backArrow: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: authTheme.textMain,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    color: authTheme.textMain,
-  },
-  userCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: authTheme.inputBg,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: authTheme.inputBorder,
-  },
-  avatarOrb: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(147, 51, 234, 0.15)',
-    borderWidth: 2,
-    borderColor: '#9333ea',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: authTheme.textMain,
-  },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 110, gap: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
+  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: authTheme.inputBg, borderWidth: 1, borderColor: authTheme.inputBorder, alignItems: 'center', justifyContent: 'center' },
+  backArrow: { fontSize: 18, fontWeight: '700', color: authTheme.textMain },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: 0.5, color: authTheme.textMain },
+  userCard: { flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: authTheme.inputBg, borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: authTheme.inputBorder },
+  avatarOrb: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(147, 51, 234, 0.15)', borderWidth: 2, borderColor: '#9333ea', alignItems: 'center', justifyContent: 'center' },
+  avatarInitial: { fontSize: 22, fontWeight: '700', color: authTheme.textMain },
   userInfo: { flex: 1, gap: 2 },
-  userName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: authTheme.textMain,
-  },
-  userEmail: {
-    fontSize: 12,
-    color: authTheme.textMuted,
-  },
-  sectionCard: {
-    backgroundColor: authTheme.inputBg,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: authTheme.inputBorder,
-    padding: 18,
-    gap: 6,
-  },
-  sectionHeader: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    color: authTheme.textMuted,
-    marginBottom: 4,
-    textTransform: 'uppercase',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(42, 11, 63, 0.08)',
-  },
-  noBorder: {
-    borderBottomWidth: 0,
-  },
-  settingLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: authTheme.textMain,
-  },
-  settingValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#9333ea',
-  },
-  signOutBtn: {
-    marginTop: 8,
-  },
-  signOutGradient: {
-    height: 52,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  signOutBtnText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
+  userName: { fontSize: 17, fontWeight: '700', color: authTheme.textMain },
+  userEmail: { fontSize: 12, color: authTheme.textMuted },
+  sectionCard: { backgroundColor: authTheme.inputBg, borderRadius: 20, borderWidth: 1, borderColor: authTheme.inputBorder, padding: 18, gap: 6 },
+  sectionHeader: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, color: authTheme.textMuted, marginBottom: 4, textTransform: 'uppercase' },
+  settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(42, 11, 63, 0.08)' },
+  noBorder: { borderBottomWidth: 0 },
+  settingLabel: { fontSize: 13, fontWeight: '600', color: authTheme.textMain },
+  settingValue: { fontSize: 13, fontWeight: '600', color: '#9333ea' },
+  signOutBtn: { marginTop: 8 },
+  signOutGradient: { height: 52, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  signOutBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
 });

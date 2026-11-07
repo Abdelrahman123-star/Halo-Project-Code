@@ -19,7 +19,7 @@ export default function BedroomScreen() {
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
-      <PastelBlobBackground />
+      <PastelBlobBackground animated={false} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -60,7 +60,7 @@ export default function BedroomScreen() {
           </FadeInView>
 
           {/* Interactive room feature cards */}
-          <FadeInView delayMs={140} fromTranslateY={14}>
+          <FadeInView delayMs={30} fromTranslateY={8}>
             <BedroomPortalCard
               title="Digital Wardrobe"
               description="Scan and catalogue your real clothes with automated CV tagging, color palette matching, and smart categorization."
@@ -76,7 +76,7 @@ export default function BedroomScreen() {
             />
           </FadeInView>
 
-          <FadeInView delayMs={240} fromTranslateY={14}>
+          <FadeInView delayMs={70} fromTranslateY={8}>
             <BedroomPortalCard
               title="3D Dressing Suite"
               description="Personalized 3D avatar fitting room. Try on digital garments, test outfit drape, and view from any 360° angle."
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 40,
+    paddingBottom: 110,
     gap: 16,
   },
   header: {

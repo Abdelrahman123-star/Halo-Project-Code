@@ -9,6 +9,8 @@ import { HouseHero } from '../components/HouseHero';
 import { DoorSelectionView } from '../components/DoorSelectionView';
 import { BedroomPortalCard, RoomPortalCard } from '../components/BedroomPortalCard';
 import { MirrorIcon, SparkleBeautyIcon } from '../components/HomeIcons';
+import { AppBottomNav, HomeBottomNav } from '../components/HomeBottomNav';
+import { HomeIcon } from '../dashboard/DashboardIcons';
 import { WelcomeVideoScreen } from '@/features/launch/components/WelcomeVideoScreen';
 import HouseEntranceScreen from '../../../../app/(app)/house-entrance';
 import HallwayScreen from '../../../../app/(app)/hallway';
@@ -20,8 +22,14 @@ jest.mock('expo-router', () => ({
     push: jest.fn(),
     replace: jest.fn(),
     back: jest.fn(),
+    navigate: jest.fn(),
   }),
+  usePathname: () => '/',
   useFocusEffect: jest.fn((callback) => callback()),
+  Stack: Object.assign(
+    ({ children }: { children: React.ReactNode }) => children,
+    { Screen: () => null }
+  ),
 }));
 
 describe('Home Components & Screens', () => {
@@ -143,6 +151,22 @@ describe('Home Components & Screens', () => {
       const onFinished = jest.fn();
       const screen = React.createElement(WelcomeVideoScreen, { onFinished });
       expect(screen).toBeDefined();
+    });
+  });
+
+  describe('AppBottomNav & HomeIcon', () => {
+    it('instantiates HomeIcon with default and custom props', () => {
+      const icon = React.createElement(HomeIcon, { size: 24, color: '#8B7BEF' });
+      expect(icon).toBeDefined();
+      expect(icon.props.size).toBe(24);
+      expect(icon.props.color).toBe('#8B7BEF');
+    });
+
+    it('instantiates AppBottomNav and HomeBottomNav successfully', () => {
+      const nav1 = React.createElement(AppBottomNav);
+      const nav2 = React.createElement(HomeBottomNav);
+      expect(nav1).toBeDefined();
+      expect(nav2).toBeDefined();
     });
   });
 });

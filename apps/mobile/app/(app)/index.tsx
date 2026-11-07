@@ -12,7 +12,7 @@ import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackg
 import { usePreviewAvatar } from '@/features/avatar/hooks/usePreviewAvatar';
 import { FadeInView } from '@/features/home/components/FadeInView';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
-import { HOME_BOTTOM_NAV_HEIGHT, HomeBottomNav } from '@/features/home/components/HomeBottomNav';
+import { HOME_BOTTOM_NAV_HEIGHT } from '@/features/home/components/HomeBottomNav';
 import { HouseHero } from '@/features/home/components/HouseHero';
 import { useDisplayName } from '@/features/profile/hooks/useDisplayName';
 
@@ -31,15 +31,15 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <BlurTargetView ref={blurTargetRef} style={styles.blurTarget}>
-        <PastelBlobBackground />
+        <PastelBlobBackground animated={false} />
 
         <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <FadeInView fromTranslateY={-10}>
+            <FadeInView fromTranslateY={-6}>
               <HomeHeader displayName={displayName} onProfilePress={() => router.push('/(app)/profile')} />
             </FadeInView>
 
-            <FadeInView delayMs={150} fromTranslateY={0} fromScale={0.92}>
+            <FadeInView delayMs={40} fromTranslateY={0} fromScale={0.98}>
               <HouseHero
                 width={houseWidth}
                 onPress={() => router.push('/(app)/house-entrance')}
@@ -51,8 +51,6 @@ export default function HomeScreen() {
           </ScrollView>
         </SafeAreaView>
       </BlurTargetView>
-
-      <HomeBottomNav blurTarget={blurTargetRef} />
     </View>
   );
 }

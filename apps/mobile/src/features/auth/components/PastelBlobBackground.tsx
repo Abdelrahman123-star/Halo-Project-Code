@@ -38,8 +38,14 @@ function useReduceMotion() {
   return reduceMotion;
 }
 
-export function PastelBlobBackground() {
+type PastelBlobBackgroundProps = {
+  animated?: boolean;
+  showOrb?: boolean;
+};
+
+export function PastelBlobBackground({ animated = true, showOrb = true }: PastelBlobBackgroundProps = {}) {
   const reduceMotion = useReduceMotion();
+  const shouldAnimate = animated && !reduceMotion;
 
   const floatX = useRef(new Animated.Value(0)).current;
   const floatY = useRef(new Animated.Value(0)).current;
@@ -48,19 +54,18 @@ export function PastelBlobBackground() {
 
   useEffect(() => {
     const values = [floatX, floatY, cornerDriftA, cornerDriftB];
-    if (reduceMotion) {
+    if (!shouldAnimate) {
       values.forEach((value) => value.setValue(0));
       return;
     }
     const loops = [
-      loopOscillate(floatY, -16, 16, 10400),
-      loopOscillate(floatX, -10, 12, 14200),
+      ...(showOrb ? [loopOscillate(floatY, -16, 16, 10400), loopOscillate(floatX, -10, 12, 14200)] : []),
       loopOscillate(cornerDriftA, -1, 1, 16000),
       loopOscillate(cornerDriftB, -1, 1, 19000),
     ];
     loops.forEach((loop) => loop.start());
     return () => loops.forEach((loop) => loop.stop());
-  }, [reduceMotion, floatX, floatY, cornerDriftA, cornerDriftB]);
+  }, [shouldAnimate, showOrb, floatX, floatY, cornerDriftA, cornerDriftB]);
 
   const driftA = cornerDriftA.interpolate({ inputRange: [-1, 1], outputRange: [-24, 24] });
   const driftB = cornerDriftB.interpolate({ inputRange: [-1, 1], outputRange: [-28, 28] });
@@ -73,9 +78,11 @@ export function PastelBlobBackground() {
         <SoftGlow id="corner-top-right" size={CORNER_SIZE} stops={cornerStops('#C9B6F6', 0.7)} />
       </Animated.View>
 
-      <Animated.View style={[styles.orbAnchor, { transform: [{ translateX: floatX }, { translateY: floatY }] }]}>
-        <IridescentOrb size={ORB_SIZE} animated={!reduceMotion} />
-      </Animated.View>
+      {showOrb && (
+        <Animated.View style={[styles.orbAnchor, { transform: [{ translateX: floatX }, { translateY: floatY }] }]}>
+          <IridescentOrb size={ORB_SIZE} animated={shouldAnimate} />
+        </Animated.View>
+      )}
     </View>
   );
 }

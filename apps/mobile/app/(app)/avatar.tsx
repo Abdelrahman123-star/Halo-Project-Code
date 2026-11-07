@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#EEF2FB' },
   safeArea: { flex: 1 },
   topBar: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 8 },
-  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
+  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 110 },
   loader: { marginTop: 120 },
   hero: { height: FIGURE_HEIGHT, alignItems: 'center', justifyContent: 'center' },
   glow: { position: 'absolute' },

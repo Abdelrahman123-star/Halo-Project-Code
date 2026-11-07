@@ -32,7 +32,7 @@ export function FeaturePageShell({ title, subtitle, children }: FeaturePageShell
 
   return (
     <View style={styles.root}>
-      <PastelBlobBackground />
+      <PastelBlobBackground animated={false} showOrb={false} />
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.topBar}>
@@ -41,14 +41,16 @@ export function FeaturePageShell({ title, subtitle, children }: FeaturePageShell
             </GlassIconButton>
           </View>
 
-          <FadeInView fromTranslateY={-8}>
-            <Text style={styles.title} accessibilityRole="header">
-              {title}
-            </Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
+          <FadeInView fromTranslateY={-6}>
+            <View style={styles.headerWrap}>
+              <Text style={styles.title} accessibilityRole="header">
+                {title}
+              </Text>
+              <Text style={styles.subtitle}>{subtitle}</Text>
+            </View>
           </FadeInView>
 
-          <FadeInView delayMs={120} fromTranslateY={20} style={styles.body}>
+          <FadeInView delayMs={40} fromTranslateY={8} style={styles.body}>
             {children}
           </FadeInView>
 
@@ -62,8 +64,9 @@ export function FeaturePageShell({ title, subtitle, children }: FeaturePageShell
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#EEF2FB' },
   safeArea: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40, gap: 18 },
+  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 110, gap: 18 },
   topBar: { flexDirection: 'row' },
+  headerWrap: { gap: 2 },
   title: { fontSize: 26, fontWeight: '700', color: dashboardTheme.plum, letterSpacing: -0.3 },
   subtitle: { marginTop: 6, fontSize: 15, lineHeight: 22, color: dashboardTheme.muted },
   body: { gap: 14 },

@@ -93,7 +93,7 @@ export default function GarmentScreen(): React.JSX.Element {
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
-      <PastelBlobBackground />
+      <PastelBlobBackground animated={false} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
   logo: { width: 92, height: 38 },
   headerSpacer: { width: 84 },
   bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 2, paddingBottom: 40, gap: 10 },
-  previewScroll: { paddingTop: 10, paddingBottom: 40 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 2, paddingBottom: 110, gap: 10 },
+  previewScroll: { paddingTop: 10, paddingBottom: 110 },
   titleWrap: { alignItems: 'center', marginTop: 2, marginBottom: 2 },
   suiteBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 3.5, borderRadius: 12, backgroundColor: 'rgba(217, 207, 241, 0.55)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.85)', marginBottom: 6 },
   suiteBadgeDot: { width: 5.5, height: 5.5, borderRadius: 3, backgroundColor: '#8B7BEF', marginRight: 5 },

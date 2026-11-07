@@ -22,7 +22,7 @@ export default function BathroomScreen(): React.JSX.Element {
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
-      <PastelBlobBackground />
+      <PastelBlobBackground animated={false} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -63,7 +63,7 @@ export default function BathroomScreen(): React.JSX.Element {
           </FadeInView>
 
           {/* Interactive room feature cards */}
-          <FadeInView delayMs={140} fromTranslateY={14}>
+          <FadeInView delayMs={30} fromTranslateY={8}>
             <RoomPortalCard
               title="Smart Vanity Mirror"
               description="Adaptive studio lighting and virtual cosmetic shade previews. Test makeup hues and analyze skin radiance under studio illumination."
@@ -79,7 +79,7 @@ export default function BathroomScreen(): React.JSX.Element {
             />
           </FadeInView>
 
-          <FadeInView delayMs={240} fromTranslateY={14}>
+          <FadeInView delayMs={70} fromTranslateY={8}>
             <RoomPortalCard
               title="Beauty Shelf"
               description="Curate your skincare shelf and daily beauty rituals. Track cosmetic formulas, monitor skin wellness trends, and plan routines."
@@ -156,7 +156,7 @@ export default function BathroomScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#EEF2FB' },
   safeArea: { flex: 1 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40, gap: 16 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 110, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
   backBtn: {
     flexDirection: 'row',

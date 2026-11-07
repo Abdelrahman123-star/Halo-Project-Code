@@ -70,6 +70,23 @@ export function CloudSunIcon({ size = 16, color = dashboardTheme.accent }: IconP
   );
 }
 
+export function HomeIcon({ size = 20, color = dashboardTheme.accent }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3.5 10.8L12 4l8.5 6.8V19.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V10.8z"
+        stroke={color}
+        {...STROKE}
+      />
+      <Path
+        d="M9.5 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6"
+        stroke={color}
+        {...STROKE}
+      />
+    </Svg>
+  );
+}
+
 /** Filled, pastel "partly cloudy" illustration for the weather card. */
 export function PartlyCloudyIllustration({ size = 52 }: { size?: number }) {
   return (
