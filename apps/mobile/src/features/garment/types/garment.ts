@@ -35,6 +35,8 @@ export const DetectedGarmentSchema = z.object({
   confidence: z.number(),
   // base64 data URI string or null
   crop_base64: z.string().nullable(),
+  // Cleaned crop of the same garment from the optional back photo.
+  back_crop_base64: z.string().nullable().optional(),
   colors: z.array(ColorResultSchema),
   attributes: GarmentAttributesSchema,
 });

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { BackPhotoStep } from '@/features/garment/components/BackPhotoStep';
 import { FrostedGlassCard } from '@/features/garment/components/FrostedGlassCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -22,6 +23,9 @@ const PREVIEW_WIDTH = Math.min(SCREEN_WIDTH - 40, 380);
 interface GarmentPreviewProps {
   imageUri: string;
   sourceType: 'camera' | 'gallery' | null;
+  backImageUri: string | null;
+  onPickBack: (source: 'camera' | 'gallery') => void;
+  onRemoveBack: () => void;
   onRetakeOrChooseAnother: () => void;
   onConfirm: () => void;
   isLoading?: boolean;
@@ -30,6 +34,9 @@ interface GarmentPreviewProps {
 export function GarmentPreview({
   imageUri,
   sourceType,
+  backImageUri,
+  onPickBack,
+  onRemoveBack,
   onRetakeOrChooseAnother,
   onConfirm,
   isLoading = false,
@@ -64,9 +71,9 @@ export function GarmentPreview({
       ]}
     >
       <View style={styles.headerBox}>
-        <Text style={styles.title}>Review Your Garment</Text>
+        <Text style={styles.title}>Front & Back</Text>
         <Text style={styles.subtitle}>
-          Confirm this photo to run CV analysis and save it to your digital wardrobe.
+          Step 1 is the front below — whole garment visible, flat and sharp. Add the back in step 2 for a full 3D model.
         </Text>
       </View>
 
@@ -99,11 +106,15 @@ export function GarmentPreview({
               </Svg>
             )}
             <Text style={styles.badgeText}>
-              {isCamera ? 'Captured Photo' : 'Gallery Selection'}
+              STEP 1 · Front · {isCamera ? 'Captured Photo' : 'Gallery Selection'}
             </Text>
           </View>
         </View>
       </FrostedGlassCard>
+
+      <View style={styles.backStepBox}>
+        <BackPhotoStep backImageUri={backImageUri} disabled={isLoading} onPick={onPickBack} onRemove={onRemoveBack} />
+      </View>
 
       <View style={styles.actionsBox}>
         <Pressable
@@ -119,7 +130,9 @@ export function GarmentPreview({
             end={{ x: 1, y: 0 }}
             style={styles.continueGradient}
           >
-            <Text style={styles.continueText}>Analyze & Save to Wardrobe</Text>
+            <Text style={styles.continueText}>
+              {backImageUri ? 'Create 3D Item (Front + Back)' : 'Create 3D Item (Front Only)'}
+            </Text>
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M5 12h14M12 5l7 7-7 7"
@@ -151,8 +164,9 @@ const styles = StyleSheet.create({
   headerBox: { alignItems: 'center', marginBottom: 16, gap: 5 },
   title: { fontSize: 24, fontWeight: '800', color: '#2E2242', letterSpacing: -0.3 },
   subtitle: { fontSize: 13.5, color: '#6D5B85', textAlign: 'center', lineHeight: 19, maxWidth: 310 },
-  previewCard: { width: PREVIEW_WIDTH, padding: 14, alignItems: 'center', marginBottom: 20 },
-  imageHolder: { width: '100%', height: PREVIEW_WIDTH * 1.05, borderRadius: 18, overflow: 'hidden', backgroundColor: '#FFFFFF', position: 'relative' },
+  previewCard: { width: PREVIEW_WIDTH, padding: 14, alignItems: 'center', marginBottom: 12 },
+  backStepBox: { width: PREVIEW_WIDTH, marginBottom: 16 },
+  imageHolder: { width: '100%', height: PREVIEW_WIDTH * 0.9, borderRadius: 18, overflow: 'hidden', backgroundColor: '#FFFFFF', position: 'relative' },
   image: { width: '100%', height: '100%' },
   imageBorderOverlay: { ...StyleSheet.absoluteFill, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(217, 207, 241, 0.5)' },
   badgeRow: { width: '100%', flexDirection: 'row', justifyContent: 'center', marginTop: 12 },

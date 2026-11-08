@@ -80,12 +80,16 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
     const preview = React.createElement(GarmentPreview, {
       imageUri: 'file:///data/garment.jpg',
       sourceType: 'camera',
+      backImageUri: 'file:///data/garment-back.jpg',
+      onPickBack: jest.fn(),
+      onRemoveBack: jest.fn(),
       onRetakeOrChooseAnother: onChooseAnother,
       onConfirm: onConfirm,
     });
 
     expect(preview.props.imageUri).toBe('file:///data/garment.jpg');
     expect(preview.props.sourceType).toBe('camera');
+    expect(preview.props.backImageUri).toBe('file:///data/garment-back.jpg');
   });
 
   it('instantiates HaloHeader with onBack callback', () => {
@@ -148,9 +152,9 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
       onSelect: jest.fn(),
     });
 
-    expect(emptySection.props.items).toHaveLength(0);
-    expect(populatedSection.props.items).toHaveLength(1);
-    expect(modal.props.visible).toBe(true);
-    expect(dropdown.props.selectedValue).toBe('trousers');
+    expect((emptySection.props as any).items).toHaveLength(0);
+    expect((populatedSection.props as any).items).toHaveLength(1);
+    expect((modal.props as any).visible).toBe(true);
+    expect((dropdown.props as any).selectedValue).toBe('trousers');
   });
 });

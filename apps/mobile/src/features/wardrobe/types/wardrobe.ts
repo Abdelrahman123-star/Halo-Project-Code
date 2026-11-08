@@ -40,6 +40,8 @@ export const WardrobeItemSchema = z.object({
   category: z.string(),
   confidence: z.number().nullable().optional(),
   crop_base64: z.string().nullable().optional(),
+  // Back view of the garment (migration 0003). Used to texture the back of the 3D model.
+  back_crop_base64: z.string().nullable().optional(),
   colors: z.array(ColorResultSchema).default([]),
   attributes: WardrobeAttributesSchema.optional().default({
     fabric: EmptyAttrGroup,
@@ -57,6 +59,7 @@ export const CreateWardrobeItemInputSchema = z.object({
   category: z.string().min(1),
   confidence: z.number().nullable().optional(),
   crop_base64: z.string().nullable().optional(),
+  back_crop_base64: z.string().nullable().optional(),
   colors: z.array(ColorResultSchema).default([]),
   attributes: WardrobeAttributesSchema.optional(),
 });

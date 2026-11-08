@@ -65,7 +65,7 @@ export function GarmentProcessingView({
             </View>
             <View style={styles.stepRow}>
               <View style={styles.stepDotPulse} />
-              <Text style={styles.stepText}>Saving to Digital Wardrobe</Text>
+              <Text style={styles.stepText}>Saving & Starting 3D Conversion</Text>
             </View>
           </View>
         </FrostedGlassCard>
@@ -92,7 +92,7 @@ export function GarmentProcessingView({
             <FrostedGlassCard variant="card" style={styles.emptyCard}>
               <Text style={styles.emptyTitle}>No Garment Automatically Detected</Text>
               <Text style={styles.emptySubtitle}>
-                CV could not isolate a clear garment shape. You can retake with flat lighting, or save this photo manually and pick its category from the dropdown.
+                CV could not isolate a clear garment shape. Retake it laid flat on a plain background with the whole piece in frame, or save this photo manually and pick its category.
               </Text>
               {onManualSave ? (
                 <Pressable onPress={onManualSave} disabled={isSaving} style={styles.primaryPill} accessibilityRole="button">
@@ -140,7 +140,7 @@ export function GarmentProcessingView({
                         accessibilityRole="button"
                         style={styles.editInlineBtn}
                       >
-                        <Text style={styles.editInlineText}>Edit Category, Style & Fabric</Text>
+                        <Text style={styles.editInlineText}>✦ View 3D Model & Details</Text>
                       </Pressable>
                     ) : null}
                   </View>
