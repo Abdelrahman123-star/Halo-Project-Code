@@ -5,7 +5,10 @@ import {
   extractGarmentColorsFromPixels,
   matchColorName,
 } from "@/features/garment/api/colorExtractor";
-import { analyzeGarment } from "@/features/garment/api/garmentApi";
+import {
+  analyzeGarment,
+  ROBOFLOW_NOT_CONFIGURED_MESSAGE,
+} from "@/features/garment/api/garmentApi";
 import {
   base64ToUint8Array,
   cropAndCleanGarment,
@@ -32,6 +35,35 @@ function createTestJpegBase64(
 }
 
 describe("Garment native in-app pipeline", () => {
+  const originalKey = process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY;
+
+  beforeEach(() => {
+    // Test-only placeholder; real keys come from the developer's untracked .env.
+    process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY = "test-roboflow-key";
+  });
+
+  afterAll(() => {
+    process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY = originalKey;
+  });
+
+  it("fails fast with a clear message when the Roboflow key is missing", async () => {
+    delete process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY;
+    const fetchMock = jest.fn();
+    globalThis.fetch = fetchMock;
+
+    await expect(
+      analyzeGarment("file:///memory/shirt.jpg", "image/jpeg", "abc"),
+    ).rejects.toThrow(ROBOFLOW_NOT_CONFIGURED_MESSAGE);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("treats the .env.example placeholder as a missing key", async () => {
+    process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY = "your_roboflow_api_key_here";
+    await expect(
+      analyzeGarment("file:///memory/shirt.jpg", "image/jpeg", "abc"),
+    ).rejects.toThrow(ROBOFLOW_NOT_CONFIGURED_MESSAGE);
+  });
+
   const originalFetch = globalThis.fetch;
 
   afterEach(() => {

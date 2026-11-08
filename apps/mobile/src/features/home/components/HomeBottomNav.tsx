@@ -28,21 +28,35 @@ const NAV_ITEMS: readonly NavItem[] = [
   { key: 'calendar', label: 'Calendar', href: '/(app)/calendar', tone: 'champagne', icon: (c) => <CalendarIcon size={19} color={c} /> },
 ];
 
-/** Height the scroll views must leave free above the safe-area inset. */
-export const HOME_BOTTOM_NAV_HEIGHT = 84;
+/**
+ * Routes that hide the bar:
+ * - house-entrance / hallway: full-screen scenes (video, door hotspots laid over a cover image)
+ *   that need the whole screen and have their own controls;
+ * - create-avatar: a guarded flow — the bar would skip its "discard photos?" confirmation
+ *   and could leave mid-upload.
+ */
+const HIDDEN_ON_ROUTES = ['house-entrance', 'hallway', 'create-avatar'] as const;
+
+export function shouldShowBottomNav(pathname: string | null | undefined): boolean {
+  return !HIDDEN_ON_ROUTES.some((route) => pathname?.includes(route));
+}
 
 type HomeBottomNavProps = {
   /** Optional backwards-compatibility ref. */
   blurTarget?: RefObject<ComponentRef<typeof View> | null>;
 };
 
+/**
+ * Rendered by app/(app)/_layout.tsx *below* the screen stack (in normal layout flow, not
+ * floating over it), so it can never cover a screen's content or buttons. It owns the
+ * bottom safe-area inset; screens should not add their own bottom inset.
+ */
 export function HomeBottomNav({ blurTarget: _blurTarget }: HomeBottomNavProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
 
-  // Hidden strictly on the house entrance video
-  if (pathname?.includes('house-entrance')) {
+  if (!shouldShowBottomNav(pathname)) {
     return null;
   }
 
@@ -59,7 +73,7 @@ export function HomeBottomNav({ blurTarget: _blurTarget }: HomeBottomNavProps = 
   }
 
   return (
-    <View style={[styles.wrapper, { bottom: Math.max(insets.bottom, 12) }]} pointerEvents="box-none">
+    <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       <View style={styles.shadow}>
         <View style={styles.glass} accessibilityRole="tablist">
           {/* Frosted liquid-glass surface: hardware-accelerated, zero GPU blur stall */}
@@ -124,7 +138,8 @@ export const AppBottomNav = HomeBottomNav;
 const RADIUS = 28;
 
 const styles = StyleSheet.create({
-  wrapper: { position: 'absolute', left: 14, right: 14, zIndex: 99 },
+  // Same pastel as the app screens, so the strip reads as part of the page.
+  wrapper: { paddingHorizontal: 14, paddingTop: 8, backgroundColor: '#EEF2FB' },
   shadow: {
     borderRadius: RADIUS,
     shadowColor: '#78689E',
