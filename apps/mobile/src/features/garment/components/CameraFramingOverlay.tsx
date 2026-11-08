@@ -22,7 +22,7 @@ export function CameraFramingOverlay(): React.JSX.Element {
 
       {/* Floating Guidance Badge */}
       <View style={styles.guideBadge}>
-        <Text style={styles.guideText}>📐 Fit garment inside the brackets</Text>
+        <Text style={styles.guideText}>📐 Whole garment inside the brackets, laid flat</Text>
       </View>
     </View>
   );

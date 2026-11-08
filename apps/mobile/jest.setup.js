@@ -27,3 +27,13 @@ jest.mock('expo-video', () => ({
   })),
   VideoView: 'VideoView',
 }));
+
+// The native GL garment view cannot render under Jest (no GL context, ESM three.js);
+// its geometry logic is tested directly in src/three/garment/__tests__.
+jest.mock('@/three/garment/Garment3DView', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    Garment3DView: (props) => React.createElement(View, { testID: 'garment-3d-view', ...props }),
+  };
+});

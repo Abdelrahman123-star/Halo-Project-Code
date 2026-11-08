@@ -52,6 +52,12 @@ function SavedGarmentTileBase({
               <Text style={styles.confText}>{confPct}%</Text>
             </View>
           ) : null}
+
+          {item.crop_base64 ? (
+            <View style={styles.badge3dPos} accessibilityLabel="3D model available">
+              <Text style={styles.badge3dText}>3D</Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.infoBox}>
@@ -141,6 +147,18 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 8,
   },
+  badge3dPos: {
+    position: 'absolute',
+    top: 7,
+    left: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+    backgroundColor: 'rgba(104, 110, 232, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(104, 110, 232, 0.3)',
+  },
+  badge3dText: { fontSize: 9.5, fontWeight: '800', color: '#5A3E91', letterSpacing: 0.4 },
   confText: { fontSize: 10, fontWeight: '700', color: '#644498' },
   infoBox: { gap: 2 },
   name: { fontSize: 14, fontWeight: '700', color: '#2E2242', letterSpacing: -0.1 },

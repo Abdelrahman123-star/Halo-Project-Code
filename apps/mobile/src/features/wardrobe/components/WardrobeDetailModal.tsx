@@ -1,6 +1,6 @@
 /**
  * WardrobeDetailModal — Frosted luxury garment detail & dropdown editor sheet.
- * Displays garment hero summary, editable name, dropdown selectors
+ * Displays the automatic 3D model, garment hero summary, editable name, dropdown selectors
  * (Category, Subtype, Fabric, Pattern), Save, and two-step Delete.
  */
 import React, { useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { WardrobeDropdownField } from '@/features/wardrobe/components/WardrobeDropdownField';
 import { WardrobeModalHero } from '@/features/wardrobe/components/WardrobeModalHero';
+import { Wardrobe3DSection } from '@/features/garment3d/components/Wardrobe3DSection';
 import {
   COMMON_FABRICS, COMMON_PATTERNS, getCategoryOption, WARDROBE_CATEGORIES,
   type UpdateWardrobeItemInput, type WardrobeItem,
@@ -124,6 +125,7 @@ export function WardrobeDetailModal({
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <Wardrobe3DSection key={item.id} item={item} />
             <WardrobeModalHero item={item} />
 
             <View style={styles.fieldGroup}>

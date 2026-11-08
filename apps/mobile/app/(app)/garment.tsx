@@ -34,6 +34,7 @@ export default function GarmentScreen(): React.JSX.Element {
   const {
     imageUri, imageBase64, sourceType, isLoading: isAnalyzing, statusText,
     error: analysisError, result, pickFromCamera, pickFromGallery, runAnalysis, reset,
+    backImageUri, pickBackPhoto, clearBackPhoto,
   } = useGarmentAnalysis();
 
   const {
@@ -181,6 +182,9 @@ export default function GarmentScreen(): React.JSX.Element {
             <GarmentPreview
               imageUri={imageUri}
               sourceType={sourceType}
+              backImageUri={backImageUri}
+              onPickBack={(source) => void pickBackPhoto(source)}
+              onRemoveBack={clearBackPhoto}
               onRetakeOrChooseAnother={handleFullReset}
               onConfirm={handleConfirmAndAnalyze}
               isLoading={isAnalyzing}
