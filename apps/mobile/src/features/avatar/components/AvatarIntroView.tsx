@@ -52,7 +52,7 @@ export function AvatarIntroView({ hasPhotos, onStart }: AvatarIntroViewProps) {
             </View>
           </View>
         ))}
-        <Text style={styles.note}>Takes about two minutes · Your photos stay on this device</Text>
+        <Text style={styles.note}>Takes about two minutes · Photos are analysed, never stored</Text>
       </DashboardCard>
 
       <AuthButton label={hasPhotos ? 'Continue' : "Let's begin"} onPress={onStart} />

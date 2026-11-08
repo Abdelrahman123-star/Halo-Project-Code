@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthButton } from '@/features/auth/components/AuthComponents';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 import { SoftGlow, type GlowStop } from '@/features/auth/components/IridescentOrb';
+import { AnnotatedAvatar } from '@/features/avatar/components/AnnotatedAvatar';
 import { CloseIcon } from '@/features/avatar/components/AvatarIcons';
 import { PreviewAvatarFigure } from '@/features/avatar/components/PreviewAvatarFigure';
 import { SoftButton } from '@/features/avatar/components/SoftButton';
@@ -19,6 +20,7 @@ import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
 import { dashboardTheme } from '@/features/home/dashboard/dashboardTheme';
 
 const FIGURE_HEIGHT = 380;
+const ANNOTATED_HEIGHT = 460;
 
 const GLOW_STOPS: readonly GlowStop[] = [
   { offset: 0, color: '#E4D6FA', opacity: 0.85 },
@@ -37,10 +39,14 @@ export default function AvatarScreen() {
   }
 
   function confirmDelete() {
-    Alert.alert('Delete your avatar?', 'You can create a new one any time from the + on your home page.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => void deleteAvatar() },
-    ]);
+    Alert.alert(
+      'Delete your avatar?',
+      'This also deletes your saved body and face measurements. You can create a new avatar any time from the + on your home page.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => void deleteAvatar() },
+      ],
+    );
   }
 
   async function deleteAvatar() {
@@ -70,14 +76,19 @@ export default function AvatarScreen() {
       );
     }
 
+    const { measurements } = state;
     return (
       <>
-        <View style={styles.hero}>
-          <View style={styles.glow} pointerEvents="none">
-            <SoftGlow id="avatar-page-glow" size={FIGURE_HEIGHT} stops={GLOW_STOPS} />
+        {measurements ? (
+          <AnnotatedAvatar measurements={measurements} height={ANNOTATED_HEIGHT} />
+        ) : (
+          <View style={styles.hero}>
+            <View style={styles.glow} pointerEvents="none">
+              <SoftGlow id="avatar-page-glow" size={FIGURE_HEIGHT} stops={GLOW_STOPS} />
+            </View>
+            <PreviewAvatarFigure height={FIGURE_HEIGHT - 20} />
           </View>
-          <PreviewAvatarFigure height={FIGURE_HEIGHT - 20} />
-        </View>
+        )}
 
         <View style={styles.copy}>
           <View style={styles.pill}>
@@ -87,7 +98,11 @@ export default function AvatarScreen() {
             Your avatar
           </Text>
           <Text style={styles.message}>
-            This is your preview avatar. Your personalized avatar, built from your photos, is coming soon.
+            {measurements
+              ? `Measured ${new Date(measurements.createdAt).toLocaleDateString()} · ${
+                  measurements.savedToAccount ? 'saved to your account' : 'kept on this phone'
+                }. Approximate proportions from 2D photos; "% of height" = share of nose-to-ankle height.`
+              : 'This is your preview avatar. Your personalized avatar, built from your photos, is coming soon.'}
           </Text>
         </View>
 

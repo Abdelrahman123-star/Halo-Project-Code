@@ -22,11 +22,20 @@ import {
 } from "@/features/garment/types/garment";
 
 const DEFAULT_ROBOFLOW_MODEL = "deepfashion2-m-10k/2";
-const DEFAULT_ROBOFLOW_KEY = "XBqZQsAczrUNBCIhIlNu";
 
-function getRoboflowConfig(): { apiKey: string; modelId: string } {
-  const apiKey =
-    process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY?.trim() || DEFAULT_ROBOFLOW_KEY;
+export const ROBOFLOW_NOT_CONFIGURED_MESSAGE =
+  "Garment recognition isn't set up in this app build (missing Roboflow API key).";
+
+/**
+ * Reads the Roboflow config from the environment. There is deliberately no built-in
+ * fallback key: a missing key fails fast with a clear message instead of silently
+ * using a shared secret.
+ */
+export function getRoboflowConfig(): { apiKey: string; modelId: string } {
+  const apiKey = process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY?.trim() ?? "";
+  if (!apiKey || apiKey.startsWith("your_")) {
+    throw new Error(ROBOFLOW_NOT_CONFIGURED_MESSAGE);
+  }
   const modelId =
     process.env.EXPO_PUBLIC_ROBOFLOW_MODEL_ID?.trim() || DEFAULT_ROBOFLOW_MODEL;
   return { apiKey, modelId };
@@ -87,6 +96,9 @@ export async function analyzeGarment(
   console.log("[HALO Garment] 🚀 Garment Analysis Pipeline Started");
   console.log(`[HALO Garment] Input URI: ${imageUri.slice(0, 60)}...`);
 
+  // Check configuration before any image work so a missing key fails immediately.
+  const { apiKey, modelId } = getRoboflowConfig();
+
   onProgress?.("Preparing image...");
   const cleanBase64 = await resolveBase64(imageUri, imageBase64);
   if (!cleanBase64) {
@@ -98,7 +110,6 @@ export async function analyzeGarment(
   console.log(`[HALO Garment] Image Payload Size: ~${payloadKb} KB`);
 
   // [1/4] Roboflow Detection
-  const { apiKey, modelId } = getRoboflowConfig();
   const endpoint = `https://serverless.roboflow.com/${modelId}?api_key=${encodeURIComponent(apiKey)}`;
   console.log(`[HALO Garment] [1/4] Calling Roboflow (${modelId})...`);
   onProgress?.("Detecting garments with AI...");

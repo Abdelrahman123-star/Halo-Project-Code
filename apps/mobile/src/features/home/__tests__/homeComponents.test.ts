@@ -9,7 +9,7 @@ import { HouseHero } from '../components/HouseHero';
 import { DoorSelectionView } from '../components/DoorSelectionView';
 import { BedroomPortalCard, RoomPortalCard } from '../components/BedroomPortalCard';
 import { MirrorIcon, SparkleBeautyIcon } from '../components/HomeIcons';
-import { AppBottomNav, HomeBottomNav } from '../components/HomeBottomNav';
+import { AppBottomNav, HomeBottomNav, shouldShowBottomNav } from '../components/HomeBottomNav';
 import { HomeIcon } from '../dashboard/DashboardIcons';
 import { WelcomeVideoScreen } from '@/features/launch/components/WelcomeVideoScreen';
 import HouseEntranceScreen from '../../../../app/(app)/house-entrance';
@@ -167,6 +167,16 @@ describe('Home Components & Screens', () => {
       const nav2 = React.createElement(HomeBottomNav);
       expect(nav1).toBeDefined();
       expect(nav2).toBeDefined();
+    });
+
+    it('shows the bar on regular screens and hides it on immersive / guarded flows', () => {
+      for (const path of ['/', '/wellness', '/bedroom', '/avatar', '/garment']) {
+        expect(shouldShowBottomNav(path)).toBe(true);
+      }
+      for (const path of ['/house-entrance', '/hallway', '/create-avatar']) {
+        expect(shouldShowBottomNav(path)).toBe(false);
+      }
+      expect(shouldShowBottomNav(null)).toBe(true);
     });
   });
 });

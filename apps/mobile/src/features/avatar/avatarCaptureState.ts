@@ -1,7 +1,8 @@
 /**
- * Pure state machine for the avatar capture flow.
- * Photos live only in memory (temporary prototype state) and are never
- * cleared by moving between stages — only an explicit retake removes one.
+ * Pure state machine for the avatar capture flow:
+ * intro → capture (front/back/face) → review → consent → processing → results → complete.
+ * Photos live only in memory and are never cleared by moving between stages —
+ * only an explicit retake removes one. Processing results live in the hook, not here.
  */
 import { CAPTURE_STEP_ORDER, type CaptureStepId } from './avatarSteps';
 
@@ -11,6 +12,9 @@ export type CaptureStage =
   | { kind: 'intro' }
   | { kind: 'capture'; step: CaptureStepId }
   | { kind: 'review' }
+  | { kind: 'consent' }
+  | { kind: 'processing' }
+  | { kind: 'results' }
   | { kind: 'complete' };
 
 export type AvatarCaptureState = {
@@ -25,6 +29,10 @@ export type AvatarCaptureAction =
   | { type: 'retake'; step: CaptureStepId }
   | { type: 'confirmStep'; step: CaptureStepId }
   | { type: 'openReview' }
+  | { type: 'requestCreate' }
+  | { type: 'consentAccepted' }
+  | { type: 'retryProcessing' }
+  | { type: 'processingFinished' }
   | { type: 'finish' }
   | { type: 'back' };
 
@@ -32,6 +40,12 @@ export const initialAvatarCaptureState: AvatarCaptureState = { stage: { kind: 'i
 
 export function allPhotosCaptured(photos: AvatarCaptureState['photos']): boolean {
   return CAPTURE_STEP_ORDER.every((step) => photos[step] !== undefined);
+}
+
+/** The three photos as a complete record, or null while any is missing. */
+export function completePhotos(photos: AvatarCaptureState['photos']): Record<CaptureStepId, CapturedPhoto> | null {
+  const { front, back, face } = photos;
+  return front && back && face ? { front, back, face } : null;
 }
 
 export function capturedCount(photos: AvatarCaptureState['photos']): number {
@@ -67,6 +81,16 @@ export function avatarCaptureReducer(state: AvatarCaptureState, action: AvatarCa
       return state.photos[action.step] ? { ...state, stage: stageAfter(state.photos, action.step) } : state;
     case 'openReview':
       return allPhotosCaptured(state.photos) ? { ...state, stage: { kind: 'review' } } : state;
+    case 'requestCreate':
+      return allPhotosCaptured(state.photos) ? { ...state, stage: { kind: 'consent' } } : state;
+    case 'consentAccepted':
+      return state.stage.kind === 'consent' ? { ...state, stage: { kind: 'processing' } } : state;
+    case 'retryProcessing':
+      return state.stage.kind === 'results' && allPhotosCaptured(state.photos)
+        ? { ...state, stage: { kind: 'processing' } }
+        : state;
+    case 'processingFinished':
+      return state.stage.kind === 'processing' ? { ...state, stage: { kind: 'results' } } : state;
     case 'finish':
       return allPhotosCaptured(state.photos) ? { ...state, stage: { kind: 'complete' } } : state;
     case 'back':
@@ -84,7 +108,12 @@ function previousStage(stage: CaptureStage): CaptureStage {
     }
     case 'review':
       return { kind: 'capture', step: CAPTURE_STEP_ORDER[CAPTURE_STEP_ORDER.length - 1] };
+    case 'consent':
+    case 'results':
     case 'complete':
       return { kind: 'review' };
+    case 'processing':
+      // The upload is in flight; going back is not offered until it finishes.
+      return stage;
   }
 }

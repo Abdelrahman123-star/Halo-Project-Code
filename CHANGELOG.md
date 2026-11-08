@@ -1,6 +1,52 @@
 # Changelog
 
 ## [Unreleased]
+### Added — Measurements pinned on the preview avatar
+- `src/features/avatar/avatarAnchors.ts` (body-part anchor points on `avatar-preview.png`, annotation builder,
+  label layout), `components/AnnotatedAvatar.tsx` (SVG dots/segments/callouts + label columns),
+  `avatarProfileStore.ts` (ratios only, per user, AsyncStorage; deleted with the avatar).
+- Shown on the Create Avatar final screen and on the avatar page; plain preview when no measurements exist.
+- `services/api/scripts/compute_avatar_anchors.py`: derives the anchors with MediaPipe (`--preview` draws them).
+### Changed — Backend works without the service-role key
+- New `SUPABASE_ANON_KEY` (public) lets the backend verify logins; without `SUPABASE_SERVICE_ROLE_KEY` the
+  endpoint returns the profile with `saved: false`, `avatar_id`/`scan_id` null and writes nothing.
+- Tests: backend 69 passed (+2), mobile Jest 133 passed (+5 annotation/store tests).
+### Fixed — Bottom navigation overlapped buttons on every screen
+- `app/(app)/_layout.tsx`: screens now render in a `flex: 1` container above `AppBottomNav`, so the bar sits
+  in normal layout flow at the bottom and can't cover content (it used to be `position: absolute` over all screens,
+  while only Home reserved space for it).
+- `HomeBottomNav`: no longer absolutely positioned; pads by the bottom safe-area inset on a `#EEF2FB` strip.
+  New `shouldShowBottomNav()` hides it on `house-entrance` (as before), `hallway` (door hotspots depend on the
+  full-screen image) and `create-avatar` (the bar bypassed the discard-photos confirmation and mid-upload state).
+- Home: removed the extra bottom padding that compensated for the floating bar; `HOME_BOTTOM_NAV_HEIGHT` removed.
+- Checks: `tsc --noEmit` clean; Jest 128/128 (+1 visibility test); Android export bundles. Not yet checked on a device.
+### Added — Avatar preprocessing: photos → saved body + face profile (backend + app)
+- Backend `services/api/app/ai/avatar/` (no FastAPI/DB imports): `schemas`, `image_io` (magic bytes,
+  EXIF orientation, 50 MP cap), `quality` (resolution/aspect/brightness/blur heuristics), `preprocess`
+  (resize-with-padding), `landmarkers` (MediaPipe Pose + Face Landmarker, loaded once, lock-guarded),
+  `body_features`, `silhouette`, `face_features`, `pipeline`. Ported from the Colab notebook
+  (reference copy in `services/api/notebooks/`); hardcoded test values removed, low-confidence → `null`.
+- `POST /v1/avatar/preprocess` (`app/routers/avatar.py`): Supabase token verification (`app/auth.py`),
+  `{ "error": {...} }` shape (`app/errors.py`), saves via PostgREST with the service role
+  (`app/supabase_rest.py`, `app/avatar_store.py`). Synchronous (ADR-0006). Photos stay in memory
+  (`MultiPartParser.spool_max_size` raised in `main.py`) and are not stored.
+- Migration `supabase/migrations/0003_avatars.sql`: `avatars`, `body_scans` with RLS (owner select/delete,
+  no client insert, only editable params updatable). **Not applied yet — run manually.**
+- Scripts: `scripts/download_models.py` (MediaPipe `.task` → `models/`, git-ignored),
+  `scripts/benchmark_avatar.py`. `ruff.toml` added. `services/api/README.md` with setup/run steps.
+- New deps: `mediapipe>=1.2.0` (Apache-2.0). `inference-sdk` now has `python_version < "3.14"` (no 3.14
+  wheels; only the dev garment endpoint imports it). Dev-only: `ruff` in the venv.
+- New backend env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (backend only), optional `AVATAR_MODELS_DIR`.
+- App: `features/avatar/api/avatarApi.ts` (resize ≤ 1600 px, multipart upload with bearer token, zod
+  validation, typed errors, cache cleanup, RLS delete), `types/avatarProfile.ts`, `hooks/useAvatarPreprocessing.ts`,
+  `avatarSummary.ts`; reducer stages `consent` / `processing` / `results`; new `AvatarConsentView`,
+  `AvatarProcessingView`, `AvatarResultsView`, `AvatarIssuesList`; "Choose from library" on capture steps;
+  intro/ready/delete copy updated; deleting the avatar also deletes server rows. Uses `EXPO_PUBLIC_API_URL`.
+- Tests: backend 67 passed (avatar features/pipeline/router + existing); mobile Jest 127 passed (new
+  `avatarApi`, `avatarSummary`, reducer-stage tests); `tsc` clean; Android export bundles.
+### Security — Roboflow key fallback removed
+- `garmentApi.ts` no longer contains a hardcoded Roboflow key; a missing or placeholder key fails fast with
+  a clear message before any image work (2 new tests). The old key is in git history and must be rotated.
 ### Added — Preview avatar after capture + avatar page with delete (PROTOTYPE, no generation)
 - New asset `assets/avatar-preview.png` (user-provided sample character; white background removed by edge flood-fill and cropped to 179×610). It is a fixed sample, NOT generated from the user's photos; labelled "Preview avatar" wherever shown.
 - `src/features/avatar/previewAvatar.ts` + `hooks/usePreviewAvatar.ts`: per-user on-device flag (AsyncStorage key `halo.preview-avatar.v1.<userId>`), re-read on screen focus. No upload, no backend.

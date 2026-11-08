@@ -1,5 +1,5 @@
 /**
- * Shown after "Create My Avatar". PROTOTYPE: displays the fixed sample
+ * Shown after the profile is saved. PROTOTYPE: still displays the fixed sample
  * preview avatar (not generated from the user's photos) and says so plainly.
  */
 import { useEffect, useRef } from 'react';
@@ -8,10 +8,13 @@ import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { AuthButton } from '@/features/auth/components/AuthComponents';
 import { SoftGlow, type GlowStop } from '@/features/auth/components/IridescentOrb';
 import { dashboardTheme } from '@/features/home/dashboard/dashboardTheme';
+import type { AvatarMeasurements } from '../avatarProfileStore';
+import { AnnotatedAvatar } from './AnnotatedAvatar';
 import { PreviewAvatarFigure } from './PreviewAvatarFigure';
 import { SoftButton } from './SoftButton';
 
 const RING_SIZE = 300;
+const ANNOTATED_HEIGHT = 460;
 
 const GLOW_STOPS: readonly GlowStop[] = [
   { offset: 0, color: '#E4D6FA', opacity: 0.8 },
@@ -20,11 +23,13 @@ const GLOW_STOPS: readonly GlowStop[] = [
 ];
 
 type AvatarReadyViewProps = {
+  /** The user's measurements; when present they are pinned onto the avatar. */
+  measurements?: AvatarMeasurements | null;
   onGoHome: () => void;
   onReviewPhotos: () => void;
 };
 
-export function AvatarReadyView({ onGoHome, onReviewPhotos }: AvatarReadyViewProps) {
+export function AvatarReadyView({ measurements = null, onGoHome, onReviewPhotos }: AvatarReadyViewProps) {
   const spin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -41,33 +46,37 @@ export function AvatarReadyView({ onGoHome, onReviewPhotos }: AvatarReadyViewPro
 
   return (
     <View style={styles.container}>
-      <View style={styles.hero}>
-        <View style={styles.layer} pointerEvents="none">
-          <SoftGlow id="ready-glow" size={RING_SIZE} stops={GLOW_STOPS} />
+      {measurements ? (
+        <AnnotatedAvatar measurements={measurements} height={ANNOTATED_HEIGHT} />
+      ) : (
+        <View style={styles.hero}>
+          <View style={styles.layer} pointerEvents="none">
+            <SoftGlow id="ready-glow" size={RING_SIZE} stops={GLOW_STOPS} />
+          </View>
+          <Animated.View style={[styles.layer, { transform: [{ rotate }] }]} pointerEvents="none">
+            <Svg width={RING_SIZE} height={RING_SIZE}>
+              <Defs>
+                <LinearGradient id="ready-ring" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0" stopColor="#F2C4E2" />
+                  <Stop offset="0.5" stopColor="#B9A8F3" />
+                  <Stop offset="1" stopColor="#BCD6F6" stopOpacity={0.2} />
+                </LinearGradient>
+              </Defs>
+              <Circle
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_SIZE / 2 - 4}
+                stroke="url(#ready-ring)"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeDasharray="260 800"
+                fill="none"
+              />
+            </Svg>
+          </Animated.View>
+          <PreviewAvatarFigure height={RING_SIZE - 30} />
         </View>
-        <Animated.View style={[styles.layer, { transform: [{ rotate }] }]} pointerEvents="none">
-          <Svg width={RING_SIZE} height={RING_SIZE}>
-            <Defs>
-              <LinearGradient id="ready-ring" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor="#F2C4E2" />
-                <Stop offset="0.5" stopColor="#B9A8F3" />
-                <Stop offset="1" stopColor="#BCD6F6" stopOpacity={0.2} />
-              </LinearGradient>
-            </Defs>
-            <Circle
-              cx={RING_SIZE / 2}
-              cy={RING_SIZE / 2}
-              r={RING_SIZE / 2 - 4}
-              stroke="url(#ready-ring)"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeDasharray="260 800"
-              fill="none"
-            />
-          </Svg>
-        </Animated.View>
-        <PreviewAvatarFigure height={RING_SIZE - 30} />
-      </View>
+      )}
 
       <View style={styles.copy}>
         <View style={styles.pill}>
@@ -77,9 +86,17 @@ export function AvatarReadyView({ onGoHome, onReviewPhotos }: AvatarReadyViewPro
           Meet your HALO avatar
         </Text>
         <Text style={styles.message}>
-          Your photos are ready! For now you get this preview avatar. Your personalized avatar, built from your
-          photos, is coming soon.
+          {measurements
+            ? measurements.savedToAccount
+              ? 'Your measurements are pinned to the matching body parts and saved to your account.'
+              : 'Your measurements are pinned to the matching body parts. They are kept on this phone for now.'
+            : 'Your photos are ready. Your personalized avatar will be shaped from your measurements in a coming update.'}
         </Text>
+        {measurements ? (
+          <Text style={styles.footnote}>
+            Approximate proportions from 2D photos. "% of height" = share of nose-to-ankle height.
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.actions}>
@@ -103,6 +120,7 @@ const styles = StyleSheet.create({
   },
   pillText: { fontSize: 12, fontWeight: '700', color: dashboardTheme.accent, letterSpacing: 0.3 },
   title: { fontSize: 28, fontWeight: '700', color: dashboardTheme.plum, letterSpacing: -0.4, textAlign: 'center' },
+  footnote: { fontSize: 11, lineHeight: 16, color: dashboardTheme.muted, textAlign: 'center', maxWidth: 320 },
   message: { fontSize: 15, lineHeight: 22, color: dashboardTheme.muted, textAlign: 'center', maxWidth: 320 },
   actions: { gap: 12 },
 });
