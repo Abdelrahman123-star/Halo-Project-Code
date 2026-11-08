@@ -10,14 +10,13 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
-import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { GarmentProcessingView } from '@/features/garment/components/GarmentProcessingView';
-import { PhotoCaptureGuide } from '@/features/garment/components/PhotoCaptureGuide';
 import { useGarmentAnalysis } from '@/features/garment/hooks/useGarmentAnalysis';
 import type { GarmentAnalysisResponse } from '@/features/garment/types/garment';
 import { FadeInView } from '@/features/home/components/FadeInView';
 import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
+import { AddPieceSheet } from '@/features/wardrobe/components/AddPieceSheet';
 import { SavedWardrobeSection } from '@/features/wardrobe/components/SavedWardrobeSection';
 import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
 import { useWardrobe } from '@/features/wardrobe/hooks/useWardrobe';
@@ -29,6 +28,7 @@ export default function GarmentScreen(): React.JSX.Element {
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [savedBatch, setSavedBatch] = useState<WardrobeItem[]>([]);
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const lastSavedResultRef = useRef<GarmentAnalysisResponse | null>(null);
 
   const {
@@ -129,49 +129,15 @@ export default function GarmentScreen(): React.JSX.Element {
 
         {!isPreviewMode && !isProcessingMode ? (
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <FadeInView fromTranslateY={-6}>
-              <View style={styles.titleWrap}>
-                <View style={styles.suiteBadge}>
-                  <View style={styles.suiteBadgeDot} />
-                  <Text style={styles.suiteBadgeText}>AI CURATION · DIGITAL WARDROBE</Text>
-                </View>
-                <Text style={styles.mainTitle}>Add to Your Wardrobe</Text>
-                <Text style={styles.mainSubtitle}>
-                  Scan or upload clothing to build your 3D digital closet.
-                </Text>
-              </View>
-            </FadeInView>
-
-            <FadeInView delayMs={80} fromTranslateY={8}>
-              <View style={styles.cardsRow}>
-                <GarmentOptionCard
-                  type="camera"
-                  title="Take a Photo"
-                  subtitle="Live camera capture"
-                  onPress={pickFromCamera}
-                />
-                <GarmentOptionCard
-                  type="gallery"
-                  title="From Gallery"
-                  subtitle="Select saved photo"
-                  onPress={pickFromGallery}
-                />
-              </View>
-            </FadeInView>
-
-            <FadeInView delayMs={140} fromTranslateY={8}>
-              <PhotoCaptureGuide />
-            </FadeInView>
-
-            <View style={styles.divider} />
-
-            <FadeInView delayMs={200} fromTranslateY={10}>
+            {/* Capture options + tips live in the Add a Piece sheet; the page is the wardrobe. */}
+            <FadeInView fromTranslateY={8}>
               <SavedWardrobeSection
                 items={wardrobeItems}
                 isLoading={isLoadingWardrobe}
                 onRefresh={refreshWardrobe}
                 onSelectItem={(item) => setSelectedItemId(item.id)}
-                onTakeFirstPhoto={pickFromCamera}
+                onTakeFirstPhoto={() => setIsAddSheetOpen(true)}
+                onAddPiece={() => setIsAddSheetOpen(true)}
               />
             </FadeInView>
           </ScrollView>
@@ -214,6 +180,13 @@ export default function GarmentScreen(): React.JSX.Element {
           onSave={editItem}
           onDelete={removeItem}
         />
+
+        <AddPieceSheet
+          visible={isAddSheetOpen}
+          onClose={() => setIsAddSheetOpen(false)}
+          onTakePhoto={() => void pickFromCamera()}
+          onChooseFromGallery={() => void pickFromGallery()}
+        />
       </SafeAreaView>
     </View>
   );
@@ -222,21 +195,14 @@ export default function GarmentScreen(): React.JSX.Element {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#EEF2FB' },
   safeArea: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 8 },
+  // Sits lower on the page, with a larger logo.
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 22, paddingBottom: 14 },
   backBtn: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.76)', borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.95)', shadowColor: '#8C78B3', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
   backBtnText: { fontSize: 13, fontWeight: '600', color: '#6B5299' },
   btnPressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
-  logo: { width: 92, height: 38 },
+  logo: { width: 136, height: 56 },
   headerSpacer: { width: 84 },
   bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 2, paddingBottom: 110, gap: 10 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 110, gap: 10 },
   previewScroll: { paddingTop: 10, paddingBottom: 110 },
-  titleWrap: { alignItems: 'center', marginTop: 2, marginBottom: 2 },
-  suiteBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 3.5, borderRadius: 12, backgroundColor: 'rgba(217, 207, 241, 0.55)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.85)', marginBottom: 6 },
-  suiteBadgeDot: { width: 5.5, height: 5.5, borderRadius: 3, backgroundColor: '#8B7BEF', marginRight: 5 },
-  suiteBadgeText: { fontSize: 9.5, fontWeight: '700', color: '#6B5299', letterSpacing: 0.6 },
-  mainTitle: { fontSize: 22, fontWeight: '800', color: '#34264C', letterSpacing: -0.3, textAlign: 'center' },
-  mainSubtitle: { marginTop: 3, maxWidth: 320, fontSize: 12.5, lineHeight: 17, color: '#76648E', textAlign: 'center' },
-  cardsRow: { flexDirection: 'row', gap: 10 },
-  divider: { height: 1, backgroundColor: 'rgba(165, 148, 195, 0.20)', marginVertical: 2 },
 });

@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { HangerIcon } from '@/features/home/components/HomeIcons';
+import { AddPieceTile } from '@/features/wardrobe/components/AddPieceTile';
 import { SavedGarmentTile } from '@/features/wardrobe/components/SavedGarmentTile';
 import {
   getCategoryGroup,
@@ -36,6 +37,8 @@ export interface SavedWardrobeSectionProps {
   onRefresh: () => void;
   onSelectItem: (item: WardrobeItem) => void;
   onTakeFirstPhoto?: () => void;
+  /** Shows an "Add a Piece" tile first in the grid. */
+  onAddPiece?: () => void;
 }
 
 export function SavedWardrobeSection({
@@ -44,6 +47,7 @@ export function SavedWardrobeSection({
   onRefresh,
   onSelectItem,
   onTakeFirstPhoto,
+  onAddPiece,
 }: SavedWardrobeSectionProps): React.JSX.Element {
   const [activeFilter, setActiveFilter] = useState<WardrobeFilterGroup>('all');
 
@@ -58,13 +62,13 @@ export function SavedWardrobeSection({
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           <View style={styles.titleLine}>
-            <Text style={styles.sectionTitle}>My Saved Garments</Text>
+            <Text style={styles.sectionTitle}>My Wardrobe</Text>
             <View style={styles.countPill}>
               <Text style={styles.countText}>{items.length}</Text>
             </View>
           </View>
           <Text style={styles.sectionSub}>
-            Tap any piece to view details or edit category & fabric
+            Your style, your collection.
           </Text>
         </View>
 
@@ -72,7 +76,7 @@ export function SavedWardrobeSection({
           onPress={onRefresh}
           disabled={isLoading}
           accessibilityRole="button"
-          accessibilityLabel="Refresh saved garments"
+          accessibilityLabel="Refresh my wardrobe"
           style={({ pressed }) => [styles.refreshBtn, pressed && styles.btnPressed]}
         >
           {isLoading ? (
@@ -136,16 +140,16 @@ export function SavedWardrobeSection({
           </LinearGradient>
           <Text style={styles.emptyTitle}>No Saved Garments Yet</Text>
           <Text style={styles.emptySubtitle}>
-            Take a photo or choose from your gallery above. Every analyzed garment will automatically appear right here.
+            Tap below to take a photo or choose one from your gallery. Every analyzed garment will appear right here.
           </Text>
           {onTakeFirstPhoto ? (
             <Pressable
               onPress={onTakeFirstPhoto}
               accessibilityRole="button"
-              accessibilityLabel="Scan your first garment"
+              accessibilityLabel="Add your first piece"
               style={({ pressed }) => [styles.emptyCta, pressed && styles.btnPressed]}
             >
-              <Text style={styles.emptyCtaText}>+ Capture First Piece</Text>
+              <Text style={styles.emptyCtaText}>+ Add a Piece</Text>
             </Pressable>
           ) : null}
         </LinearGradient>
@@ -160,9 +164,10 @@ export function SavedWardrobeSection({
         </View>
       ) : null}
 
-      {/* 2-Column Bento Garment Grid */}
+      {/* 2-Column Bento Garment Grid — "Add a Piece" always leads it */}
       {filteredItems.length > 0 ? (
         <View style={styles.grid}>
+          {onAddPiece ? <AddPieceTile onPress={onAddPiece} /> : null}
           {filteredItems.map((item) => (
             <SavedGarmentTile
               key={item.id}

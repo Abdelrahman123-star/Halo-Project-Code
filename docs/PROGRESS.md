@@ -3,6 +3,10 @@
 _Last updated: 2026-11-08_
 
 ## Current state
+**Interactive Bathroom (frontend only):** full-screen bathroom image; skincare shelf → Skin recommendations (`/(app)/skincare`, PROTOTYPE sample data), vanity mirror → Wellness & skin (`/(app)/wellness`, sample data), makeup shelf → Makeup (`/(app)/makeup`, PROTOTYPE sample data). Sample content lives in `src/features/home/bathroom/beautySampleData.ts`; pages are labelled "Preview · sample data". tsc clean, Jest 145/145. Device check pending.
+
+**Interactive Bedroom (frontend only)** — full-screen room image with tappable wardrobe (→ Digital Wardrobe `/(app)/garment`) and mirror (→ avatar page / Create Avatar; a dedicated 3D try-on screen is not built yet), minimal line-icon hints with labels revealed on touch/hover, breathing edge light, shimmer + zoom transitions. tsc clean, Jest 140/140. Device check pending.
+
 **Measurements pinned on the avatar (device check pending).** After preprocessing, the final screen and the
 avatar page show the preview avatar with the user's ratios pinned to body parts (dots, measured segments,
 callout labels). Anchor positions were found by running MediaPipe Pose + Face on the avatar image itself

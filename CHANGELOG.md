@@ -1,6 +1,93 @@
 # Changelog
 
 ## [Unreleased]
+### Changed — Digital Wardrobe header and title
+- Section title "My Saved Garments" → "My Wardrobe" (refresh button label updated to match).
+- `/(app)/garment` header lowered (top padding 6 → 22, bottom 8 → 14) with a larger HALO logo (92×38 → 136×56); page content starts lower too (scroll top padding 2 → 12). `tsc --noEmit` clean; Jest 145/145.
+### Changed — Add to Wardrobe options moved into an "Add a Piece" sheet
+- New `src/features/wardrobe/components/AddPieceSheet.tsx`: bottom sheet (styled like `WardrobeDetailModal`) holding the "AI CURATION · DIGITAL WARDROBE" badge, "Add to Your Wardrobe" heading, the existing Take a Photo / From Gallery `GarmentOptionCard`s and the existing `PhotoCaptureGuide`. Choosing a source closes the sheet, then opens the picker (iOS waits for `onDismiss`; Android runs immediately).
+- `/(app)/garment`: those blocks removed from the page (it now shows only the saved wardrobe); the "Add a Piece" tile and the empty-state button open the sheet (replaces the earlier `Alert` chooser). Empty-state copy updated ("Tap below…", "+ Add a Piece"). Preview / analysis / save flow unchanged.
+- `tsc --noEmit` clean; Jest 145/145. Not yet verified on a device.
+### Added — "Add a Piece" tile in the Digital Wardrobe grid
+- New `src/features/wardrobe/components/AddPieceTile.tsx`, built from `SavedGarmentTile`'s structure and styles (same 48% width, 128 pt stage, name/sub-label, footer): dashed lavender stage with the page's lavender gradient "+" orb, "Add a Piece" / "Photo or gallery", camera + gallery mini badges.
+- `SavedWardrobeSection` gained optional `onAddPiece`; the tile leads the grid whenever saved pieces are shown. `/(app)/garment` passes a chooser (Take a Photo / Choose from Gallery / Cancel) that calls the existing `pickFromCamera` / `pickFromGallery`.
+- `tsc --noEmit` clean; Jest 145/145. Not yet verified on a device.
+### Removed — Immersive Digital Wardrobe closet (user decision)
+- Deleted `app/(app)/digital-wardrobe.tsx`, `src/features/wardrobe/closet/` (`closetLayout`, `ClosetRoomView`, `ClosetPieces`, `AddPieceCompartment`) and `src/features/wardrobe/__tests__/closetLayout.test.ts`. The closet entries below describe code that no longer exists.
+- Bedroom wardrobe opens `/(app)/garment` (Digital Wardrobe) again; `digital-wardrobe` removed from the bottom nav's hidden routes. The teammate's 3D closet (`/(app)/closet`) and the wardrobe data/hooks are untouched. `assets/closet.png` left in place (now unused).
+- Checks: `tsc --noEmit` clean; Jest 145/145.
+### Changed — Larger closet frames, two pieces per shelf
+- `ITEMS_PER_SHELF` 3 → 2 and `HANGING_SLOTS` 4 → 3; shelf frames now use 94% of the shelf opening (was 86%) with an 8 pt gap. On a 390 pt phone shelf frames are ≈114 pt wide (was ≈77) and 78–109 pt tall; rail frames ≈76 pt wide. Capacity: 3 hanging + 12 on shelves before the "+N" marker. `tsc --noEmit` clean; Jest 156/156.
+### Changed — Closet pieces shown in display frames with their names
+- Each piece now sits in a delicate pearl frame (translucent white, hairline white edge, 8 pt radius, soft shadow) with the item's `name` in an 8.5 pt plum strip at its foot (single line, ellipsised). Frames hug each photo's real proportions at the slot width, capped to the slot (`framePiece()` + `PIECE_FRAME` in `closetLayout.ts`, replacing `placePieceImage`); hanging frames start right under the hanger, folded frames stand on the board with a contact shadow.
+- Rail pieces are now side by side (6 pt gap) instead of overlapping, so frames don't stack.
+- `tsc --noEmit` clean; Jest 156/156 (4 `framePiece` tests); checked by rendering at 390 pt width.
+### Changed — Closet: Add a Piece moved to the top compartment, stronger glow, garment placement fixed
+- "Add a Piece" now lives in the small top compartment under the crown (`ADD_PIECE_SPACE`, image y 0.075–0.1215), visible on open; all six open shelves now hold clothes (capacity 18).
+- `AddPieceCompartment`: solid rose-gold edge with an outer glow, a warm radial rose-gold light inside breathing 60–100%, a stronger touch wash, bolder "+" and label.
+- Garment placement: photos were `contain`-centred in their slots, so hanging pieces floated below the hanger and folded pieces floated above the board. New `placePieceImage()` uses each photo's real size (from `onLoad`) to pin hanging pieces right under the hanger and stand folded pieces on the board; the contact shadow matches the piece width; photos stay hidden until measured. Hanging piece width 0.32 → 0.38 of the rail.
+- `tsc --noEmit` clean; full Jest suite passes (3 new `placePieceImage` tests); checked by rendering at 390 pt width.
+### Changed — Digital Wardrobe closet zoomed in and scrollable
+- `closetLayout(screenWidth)` now draws the closet at `CLOSET_ZOOM` (1.15) × screen width at its natural height (≈448×1345 pt on a 390 pt phone; interior ≈248 pt wide, was ≈156) — door outer edges slightly cropped, interior always fully on screen (tested at 360/390/430 pt).
+- `ClosetRoomView` wraps the scene in a vertical `ScrollView` (rail at the top → shelves → Add a Piece → drawers); back button stays fixed; entrance animation and all touch targets move with the content.
+- `tsc --noEmit` clean; wardrobe Jest suites 16/16; checked by rendering at 390 pt width.
+### Added — Immersive Digital Wardrobe closet (frontend only)
+- New route `app/(app)/digital-wardrobe.tsx`: the user's closet image (`assets/closet.png`, 724×2172) fills the screen height, sides extended in the image's wall colour (`#EBDFE7`); camera eases in ("stepping closer", 1.2 s) with the clothes layer settling a beat later for depth; warm top light and soft side shading. Bottom nav hidden on this route for immersion.
+- The user's real saved items (existing `useWardrobe`, refreshed on focus) are placed in the closet: long tops/outerwear/dresses hang on the rod (up to 4, fine hanger, overlapping), everything else stands on the first five shelves (3 per shelf, contact shadow); overflow shows a small "+N MORE" marker. Each piece has a faint breathing pearl halo, brighter on touch/hover. Tapping a piece opens the existing `WardrobeDetailModal` (edit / delete). Empty wardrobe: "Your pieces will appear here" on the rail.
+- "Add a Piece": the bottom open shelf above the drawers is an empty compartment with a dashed rose-gold outline, faint breathing rose-gold light, a fine "+" and small label; the whole compartment opens the existing Add to Wardrobe screen `/(app)/garment` (take a photo / choose from gallery). "+N" also opens it (full list there).
+- New `src/features/wardrobe/closet/`: `closetLayout.ts` (measured rod/shelf/interior fractions; `arrangeCloset` placement logic), `ClosetRoomView`, `ClosetPieces`, `AddPieceCompartment`.
+- Bedroom wardrobe now opens `/(app)/digital-wardrobe` (was `/(app)/garment`). `/(app)/garment`, `/(app)/closet` (3D closet) and other routes unchanged. No shoes/accessories, no backend changes, no new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 151/151 (6 new in `src/features/wardrobe/__tests__/closetLayout.test.ts`); shelf/rod geometry verified by overlaying bands on the image, slot placement by rendering at 390×844. Not yet verified on a device.
+### Changed — Smaller room callout labels
+- `BedroomHint` (bedroom + bathroom): label 11.5 → 9.5 pt, letter-spacing 1.6 → 1.3, line height 16 → 13; chip padding/radius trimmed to match (user's chip colours kept); first line still centred on the callout bend. `tsc --noEmit` clean; home Jest suites pass.
+### Changed — Smaller room callout labels
+- `BedroomHint` (bedroom + bathroom): label 11.5 → 9.5 pt, letter-spacing 1.6 → 1.3, line height 16 → 13; chip padding/radius trimmed to match; first line still centred on the callout bend. `tsc --noEmit` clean; home Jest suites pass.
+### Changed — Interactive Bathroom + Skin Recommendations / Makeup preview pages (frontend only)
+- `app/(app)/bathroom.tsx` now shows `assets/girl-bathroom.png` full-screen (old card layout + mirror "prototype" modal replaced; backup not kept in repo, `RoomPortalCard` component untouched). Three hotspots with the bedroom's hint/callout style: left skincare shelf → new `/(app)/skincare`; round mirror → existing `/(app)/wellness` (skin analysis); right makeup shelf → new `/(app)/makeup`. Labels: "PRESS FOR SKIN RECOMMENDATIONS" (drops onto the vanity front), "PRESS FOR SKIN ANALYSIS" and "PRESS FOR MAKEUP" (upper wall rows; widths computed so lines/labels never cross).
+- New `src/features/home/bathroom/`: `bathroomLayout.ts` (regions/points as image fractions; crop centred between the two shelves), `BathroomRoomView`, `BathroomIcons` (bottle, face-scan, lipstick), `SkincareCards`, `MakeupCards`, `beautySampleData.ts`.
+- New shared hook `src/features/home/rooms/useRoomInteraction.ts` (breathing light, label reveal, shimmer → zoom → navigate, focus reset, reduced motion). The bedroom still uses its own copy of this logic (not refactored here to avoid touching it).
+- `coverLayout` gained an optional `cropCenterX`; default (bedroom: keep right edge) unchanged.
+- New pages use `FeaturePageShell` and are labelled "Preview · sample data": Skin recommendations (morning/evening routines, product-type picks tied to the sample wellness metrics — no brands) and Makeup (sample shade match, three looks). No analysis, no backend, no new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 145/145 (5 new in `src/features/home/__tests__/bathroomLayout.test.ts`); placement checked by rendering at 390×844. Not yet verified on a device.
+### Fixed — Bedroom callout line and label legibility
+- The wardrobe line was effectively invisible: with the icon at x≈119 it ran along the wardrobe's gold divider (x≈117) as a 1 pt line at 60% opacity. Line/bend now 1.5 pt in darker plum `rgba(78,58,106,0.9)`.
+- Labels were too faint on bright furniture: now 11.5 pt bold in `#3D2E55` on a light frosted pearl chip (`rgba(255,255,255,0.62)`, 0.5 pt white edge, 10 pt radius); the bend runs straight into the chip. Applies to both callouts.
+- `tsc --noEmit` clean; home Jest 22/22; checked by rendering at 390×844 (zoomed on the wardrobe line).
+### Changed — Wardrobe callout points down to just above the pouf
+- `BedroomHint` supports downward callouts (line drops from the icon when `calloutY` is below it, grows from the icon edge) and an optional `maxLabelWidth` (label wraps; 16 pt line height).
+- New `POUF_TOP_Y` (0.632) in `bedroomLayout.ts`. Wardrobe label sits at `poufTop − 28`, on the white drawer fronts just above the pouf, wrapped to two lines so it stops before the mirror (`maxLabelWidth = mirror.x − labelStart − 12`). 3D Try-On callout unchanged (upper row).
+- `tsc --noEmit` clean; home Jest 22/22; placement checked at 390×844.
+### Changed — Bedroom label rows swapped; larger hint buttons
+- Wardrobe label moved down a row (just above the wardrobe); the 3D Try-On label takes the upper ceiling row (`mirrorCalloutY = max(wardrobe.y − 52, safeTop + 18)`, `wardrobeCalloutY = mirrorCalloutY + 32`). Wardrobe icon x offset `−20` (user edit) kept.
+- Hint buttons enlarged: icon box 34 → 44 pt, glow 56 → 72 pt, hanger 19 → 25 pt, avatar 20 → 26 pt. `tsc --noEmit` clean; home Jest 22/22; placement checked at 390×844.
+### Changed — Wardrobe hint centred on the wardrobe
+- Wardrobe icon moved to the middle of the wardrobe: vertically level with the handles (`WARDROBE_HINT_POINT.y = 0.432`), horizontally centred on the visible part of the wardrobe (`visibleCenterX`, since phones crop its left edge). Callout line now rises from there to the same label. `tsc --noEmit` clean; home Jest 22/22; placement checked at 390×844.
+### Changed — Bedroom callout labels raised; mirror label text
+- Callouts moved up into the ceiling band (`wardrobeCalloutY = max(wardrobe.y − 52, safeTop + 18)`, mirror label a fixed 32 pt below) so the mirror label no longer sits on the bright mirror frame. Mirror label now reads "PRESS TO OPEN 3D TRY-ON". Placement checked by rendering at 390×844; `tsc --noEmit` clean.
+### Changed — Bedroom hints get hairline callouts with always-visible labels
+- `BedroomHint` rewritten: a 1 pt mauve hairline (soft white glow) rises from each icon past the furniture's top edge, bends 18 pt (wardrobe → right, mirror → left), ends in a 4 pt dot and a small spaced-capitals label with a white halo: "PRESS TO OPEN WARDROBE" / "3D TRY-ON". Labels are tappable (same action as the object).
+- Callouts draw in on entering the room (line grows upward, bend extends, label fades in; ~1.1 s ease-out) and retract during the zoom-out; touching brightens the line. Mirror callout is kept ≥32 pt below the wardrobe's so labels never collide; both stay below the back button.
+- Checks: `tsc --noEmit` clean; home Jest suites 22/22; placement checked by rendering onto the image at 390×844.
+### Changed — Bottom nav floats with a clear surround (frontend only)
+- `app/(app)/_layout.tsx`: the bottom nav is now an absolutely positioned layer over the screen stack instead of a separate strip below it; `HomeBottomNav` wrapper background `#EEF2FB` → transparent, so the page shows around/under the pill (the pill itself is unchanged).
+- New `BOTTOM_NAV_CLEARANCE` (110, matching the `paddingBottom: 110` most screens already use). Home scroll padding 32 → `BOTTOM_NAV_CLEARANCE`; 3D Closet door prompt / inspect card lifted above the bar.
+- Checks: `tsc --noEmit` clean; Jest 140/140. Not yet verified on a device.
+### Changed — Bedroom hints larger and placed on the furniture
+- `BedroomHint`: icon box 26→34 pt, icons ~19–20 pt (1.5 stroke), larger glow, label 13.5 pt.
+- Hints now sit on the objects via image-fraction points (`WARDROBE_HINT_POINT` on the wardrobe's central divider at the top shelf, label above; `MIRROR_HINT_POINT` on the upper mirror glass, label below) using new `imagePoint()` in `bedroomLayout.ts`.
+- Checks: `tsc --noEmit` clean; home Jest suites 22/22; placement checked by rendering onto the image at 390×844.
+### Changed — Bedroom interactions redesigned to be minimal and discoverable (frontend only)
+- Removed the frosted "MY WARDROBE" / "3D TRY-ON" pills (`BedroomLabel.tsx` deleted).
+- New `BedroomHint`: a tiny line icon (hanger on the wardrobe's top edge; avatar-with-orbit on the floor under the mirror) on a breathing pearl glow; its label ("My Wardrobe" / "3D Try-On") is plain mauve text with a soft white halo that only fades in on touch-down, pointer hover (iPad/desktop pointer), or selection. Icons are 14–15 pt; touch area padded with `hitSlop`.
+- `BedroomHotspot`: idle state is now a 1 pt pearl hairline breathing at 8–30% opacity; press/hover brightens the rim and reveals the label; selection adds a diagonal light shimmer (wardrobe) / reflection sweep (mirror) clipped to the object's shape. Whole wardrobe and whole mirror remain the touch targets.
+- `BedroomRoomView`: tap → label + shimmer (≈0.4 s) → zoom toward the object + pastel fade → navigate (single tap). Routes unchanged: wardrobe → `/(app)/garment`; mirror → `/(app)/avatar` or `/(app)/create-avatar`. Reduced motion: no breathing/zoom.
+- Checks: `tsc --noEmit` clean; Jest 140/140; hint/label placement checked by rendering the computed layout onto the image at 390×844. Not yet verified on a device.
+### Changed — Immersive interactive Bedroom (frontend only)
+- `app/(app)/bedroom.tsx` now shows the user's bedroom image full-screen (`assets/girl-bedroom.png`, renamed from `girl bedroom.png` — spaces are unsafe in Android asset names). The previous card layout is replaced; `BedroomPortalCard` is kept (bathroom + tests use it).
+- New `src/features/home/bedroom/`: `bedroomLayout.ts` (cover geometry + image-fraction regions for wardrobe/mirror; side crop biased so the mirror is always fully visible), `BedroomHotspot` (breathing lavender outline, bright glow on press/selection), `BedroomLabel` (frosted pearl pill: "MY WARDROBE" with hanger icon, "3D TRY-ON" with mirror icon; 46 pt tall), `BedroomRoomView` (zoom toward the chosen object + pastel fade, then navigate; HUD fades back in on return; reduced motion skips the zoom and pulse).
+- Only the wardrobe, the mirror and their labels are tappable. Wardrobe → `/(app)/garment` (existing Digital Wardrobe). Mirror → existing avatar experience (`/(app)/avatar` if the user has an avatar, else `/(app)/create-avatar`), the same destination the old "3D Dressing Suite" button used — a dedicated 3D try-on screen does not exist yet. Back → hallway.
+- No backend changes, no new dependencies.
+- Checks: `tsc --noEmit` clean; Jest 140/140 (6 new in `src/features/home/__tests__/bedroomLayout.test.ts`); `npx expo export --platform android` bundles the image; hotspot/label placement checked by rendering the computed layout onto the image at 390×844. Not yet verified on a device.
 ### Added — Measurements pinned on the preview avatar
 - `src/features/avatar/avatarAnchors.ts` (body-part anchor points on `avatar-preview.png`, annotation builder,
   label layout), `components/AnnotatedAvatar.tsx` (SVG dots/segments/callouts + label columns),

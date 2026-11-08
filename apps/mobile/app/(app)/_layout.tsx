@@ -6,7 +6,8 @@ import { AppBottomNav } from "@/features/home/components/HomeBottomNav";
 export default function AppLayout() {
   return (
     <View style={styles.container}>
-      {/* Screens fill only the space above the nav bar, so the bar never covers their content. */}
+      {/* Screens fill the whole screen; the nav floats over the bottom with a clear surround.
+          Screens leave BOTTOM_NAV_CLEARANCE free at the bottom so nothing is hidden under it. */}
       <View style={styles.screens}>
         <Stack
           screenOptions={{
@@ -18,7 +19,9 @@ export default function AppLayout() {
           <Stack.Screen name="hallway" options={{ animation: "none" }} />
         </Stack>
       </View>
-      <AppBottomNav />
+      <View style={styles.navLayer} pointerEvents="box-none">
+        <AppBottomNav />
+      </View>
     </View>
   );
 }
@@ -30,5 +33,11 @@ const styles = StyleSheet.create({
   },
   screens: {
     flex: 1,
+  },
+  navLayer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });
