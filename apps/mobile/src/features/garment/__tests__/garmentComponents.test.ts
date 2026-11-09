@@ -9,7 +9,8 @@ import { WardrobeHangerDecor } from '@/features/garment/components/WardrobeHange
 import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { HaloHeader } from '@/features/garment/components/HaloHeader';
-import { WardrobeAtelier } from '@/features/wardrobe/atelier/WardrobeAtelier';
+import { GarmentDetailSheet } from '@/features/wardrobe/closet/GarmentDetailSheet';
+import { WardrobeCloset } from '@/features/wardrobe/closet/WardrobeCloset';
 import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
 import { WardrobeDropdownField } from '@/features/wardrobe/components/WardrobeDropdownField';
 
@@ -103,13 +104,14 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
     expect(header.props.onBack).toBe(onBack);
   });
 
-  it('instantiates the wardrobe atelier view in empty and populated states', () => {
-    const emptySection = React.createElement(WardrobeAtelier, {
+  it('instantiates the wardrobe closet view, detail sheet and editor', () => {
+    const emptySection = React.createElement(WardrobeCloset, {
       items: [],
       isLoading: false,
+      washIds: new Set<string>(),
+      onRefresh: jest.fn(),
       onOpenItem: jest.fn(),
       onAddPiece: jest.fn(),
-      onViewAll: jest.fn(),
     });
 
     const sampleItem = {
@@ -129,12 +131,23 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
       updated_at: '2026-11-07T12:00:00Z',
     };
 
-    const populatedSection = React.createElement(WardrobeAtelier, {
+    const populatedSection = React.createElement(WardrobeCloset, {
       items: [sampleItem],
       isLoading: false,
+      washIds: new Set<string>(),
+      onRefresh: jest.fn(),
       onOpenItem: jest.fn(),
       onAddPiece: jest.fn(),
-      onViewAll: jest.fn(),
+    });
+
+    const sheet = React.createElement(GarmentDetailSheet, {
+      item: sampleItem,
+      onClose: jest.fn(),
+      onEdit: jest.fn(),
+      onTryOn: jest.fn(),
+      onDelete: jest.fn(),
+      isInWash: false,
+      onToggleWash: jest.fn(),
     });
 
     const modal = React.createElement(WardrobeDetailModal, {
@@ -156,6 +169,7 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
 
     expect((emptySection.props as any).items).toHaveLength(0);
     expect((populatedSection.props as any).items).toHaveLength(1);
+    expect((sheet.props as any).item).toBe(sampleItem);
     expect((modal.props as any).visible).toBe(true);
     expect((dropdown.props as any).selectedValue).toBe('trousers');
   });

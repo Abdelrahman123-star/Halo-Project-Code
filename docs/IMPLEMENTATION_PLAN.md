@@ -511,3 +511,32 @@ Files: new `src/features/launch/components/WelcomeVideoScreen.tsx`; `app/_layout
 | 8 | **Screen UI & Inspection** | `app/(app)/closet.tsx` with header, quality switch (Light/HD), section tabs, and inspection overlay. | ✅ 176 lines (<250); strict TypeScript |
 | 9 | **Home Navigation Link** | Added "✨ My 3D Closet" action card on `app/(app)/index.tsx`. | ✅ 224 lines (<250) |
 | 10 | **Regression & Automated Checks** | Ran TypeScript typecheck, mobile Jest suite (53/53 tests pass), and backend pytest (31/31 pass). | ✅ 100% checks passed |
+
+## 11. Digital Wardrobe shelves redesign (frontend only, 2026-11-09)
+
+**Objective:** Replace the orbit / pearl-white wardrobe with a lilac shelf layout (brief from the user). No backend, schema or analysis changes.
+
+| # | Step | Status |
+|---|---|---|
+| 1 | Pure logic `shelves/shelfLogic.ts`: colour ribbon, colour filter, category shelves, stage tint, attribute callouts (+ tests) | ✅ 8 tests pass |
+| 2 | Components: title bar, colour ribbon, shelf row, garment / Add a Piece cards, empty state, grid toggle | ✅ tsc clean |
+| 3 | `GarmentDetailSheet` with SVG callouts, Front/Back, Fix it → existing editor, Try on my avatar, Delete with confirm | ✅ tsc clean |
+| 4 | Wire into `/(app)/garment`; Add a Piece back to a bottom sheet; remove atelier, `wardrobe-pieces` route and their tests | ✅ Jest 164/164, iOS export bundles |
+| 5 | Device visual check (iOS + Android, Reduce Motion on/off) | ⏳ Pending |
+
+Out of scope by user decision: In the wash, Today's look tray, Style me, Save look, Add to look. Callouts show only stored attributes (no sleeve data exists).
+
+## 12. Digital Wardrobe image closet (frontend only, 2026-11-09)
+
+**Objective:** Replace the shelf view with a horizontally scrolling closet built from `closet-left/middle/right` images, garments placed in calibrated slots. No backend changes.
+
+| # | Step | Status |
+|---|---|---|
+| 1 | `closetSlots.ts` (image-fraction slots, gender image set) + `closetPacking.ts` (zone packing, Add a Piece first) with tests | ✅ 7 tests pass |
+| 2 | `ClosetScroller`, `ClosetSegment`, `GarmentSlotCard` (rod / shelf), `AddPieceCard`, dots, swipe hint, empty card, DEV slot outlines | ✅ tsc clean |
+| 3 | Category pills; "In the wash" (device-only AsyncStorage) + "Edit details" in the detail sheet | ✅ Jest 169/169 |
+| 4 | Wire into `/(app)/garment`; remove shelf view | ✅ iOS + Android export bundle |
+| 5 | Men's closet images + own slots (`closetSceneFor`) | ✅ Jest 173/173 |
+| 6 | Device check on small + large phones; fine-tune slots with the DEV "Slots" toggle | ⏳ Pending |
+
+Deviations: the images are landscape 2752 × 1536 JPGs (brief said portrait 3:4 PNGs) — sizes follow the real ratio. Parallax skipped (would misalign garments with shelves). Image edges show a slight tone change in the art (half-bays at each edge); a card sits on each side of every edge.

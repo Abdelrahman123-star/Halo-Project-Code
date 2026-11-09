@@ -1,9 +1,9 @@
 /**
- * AddPieceSheet — centred pearl popup opened by "Add a Piece". Holds the Add to
+ * AddPieceSheet — pearl bottom sheet opened by "Add a Piece". Holds the Add to
  * Your Wardrobe heading, the Take a Photo / From Gallery cards and the
  * "For great 3D models" tips (closed until tapped).
  *
- * Choosing a source closes the popup first and only then opens the picker:
+ * Choosing a source closes the sheet first and only then opens the picker:
  * on iOS a picker launched while the modal is still animating out can fail,
  * so it waits for `onDismiss`; Android has no `onDismiss`, so it runs right away.
  */
@@ -13,7 +13,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { PhotoCaptureGuide } from '@/features/garment/components/PhotoCaptureGuide';
-import { PEARL_HAIRLINE, PEARL_TINT, PEARL_WHITE } from '../atelier/pearlWhite';
+import { useClosetPalette, usePaletteStyles } from '../closet/ClosetPaletteContext';
+import type { ClosetPalette } from '../closet/closetTheme';
+import { useReduceMotion } from '../closet/useReduceMotion';
 
 export interface AddPieceSheetProps {
   visible: boolean;
@@ -24,6 +26,9 @@ export interface AddPieceSheetProps {
 
 export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGallery }: AddPieceSheetProps): React.JSX.Element {
   const pendingPick = useRef<(() => void) | null>(null);
+  const reduceMotion = useReduceMotion();
+  const palette = useClosetPalette();
+  const styles = usePaletteStyles(makeStyles);
 
   function runPendingPick() {
     const pick = pendingPick.current;
@@ -43,7 +48,7 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType={reduceMotion ? 'fade' : 'slide'}
       transparent
       onRequestClose={onClose}
       onDismiss={Platform.OS === 'ios' ? runPendingPick : undefined}
@@ -51,7 +56,8 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
 
-        <LinearGradient colors={['#FFFFFF', PEARL_WHITE]} style={styles.sheet}>
+        <LinearGradient colors={['#FFFFFF', palette.base]} style={styles.sheet}>
+          <View style={styles.handle} />
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
               <Text style={styles.title}>Add to Your Wardrobe</Text>
@@ -65,7 +71,7 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
               style={({ pressed }) => [styles.closeBtn, pressed && styles.pressed]}
             >
               <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                <Path d="M6 6l12 12M18 6L6 18" stroke="#6B5299" strokeWidth={2.2} strokeLinecap="round" />
+                <Path d="M6 6l12 12M18 6L6 18" stroke={palette.heading} strokeWidth={2.2} strokeLinecap="round" />
               </Svg>
             </Pressable>
           </View>
@@ -88,34 +94,37 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
   );
 }
 
-const styles = StyleSheet.create({
-  // Centred popup over a soft plum veil.
-  backdrop: { flex: 1, backgroundColor: 'rgba(61, 48, 85, 0.32)', justifyContent: 'center', paddingHorizontal: 20 },
+const makeStyles = (p: ClosetPalette) =>
+  StyleSheet.create({
+  // Bottom sheet over a soft veil.
+  backdrop: { flex: 1, backgroundColor: p.veil, justifyContent: 'flex-end' },
   sheet: {
-    borderRadius: 28,
-    maxHeight: '82%',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    maxHeight: '86%',
     paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 18,
+    paddingTop: 10,
+    paddingBottom: 34,
     borderWidth: 1,
-    borderColor: PEARL_HAIRLINE,
-    shadowColor: '#8C78B3',
+    borderColor: p.glassBorder,
+    shadowColor: p.shadow,
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.22,
     shadowRadius: 28,
     elevation: 12,
   },
+  handle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: p.outline, opacity: 0.6, marginBottom: 14 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
   headerText: { flex: 1 },
-  title: { fontSize: 21, fontWeight: '800', color: '#34264C', letterSpacing: -0.3 },
-  subtitle: { marginTop: 3, fontSize: 12.5, lineHeight: 17, color: '#76648E' },
+  title: { fontSize: 21, fontWeight: '800', color: p.text, letterSpacing: -0.3 },
+  subtitle: { marginTop: 3, fontSize: 12.5, lineHeight: 17, color: p.muted },
   closeBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: PEARL_TINT,
+    backgroundColor: p.glassStrong,
     borderWidth: 1,
-    borderColor: PEARL_HAIRLINE,
+    borderColor: p.outline,
     alignItems: 'center',
     justifyContent: 'center',
   },

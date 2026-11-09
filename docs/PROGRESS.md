@@ -1,9 +1,9 @@
 # Progress
 
-_Last updated: 2026-11-08_
+_Last updated: 2026-11-09_
 
 ## Current state
-**Digital Wardrobe (frontend only):** pearl-white `/(app)/garment` led by "Your Style Orbit" (up to 8 real saved pieces floating around a glowing centre, category pearls that filter), then the full staggered gallery and floating pearl +. tsc clean, Jest 164/164, iOS export OK; device visual check pending.
+**Digital Wardrobe (frontend only):** `/(app)/garment` is a horizontally scrolling closet built from images (`closet-left/middle/right.jpg`; male users get `closet-*-men.jpg` with their own slot positions and a steel/navy palette), with saved garments packed into calibrated slots (rod: outerwear/dresses; shelves: tops, bottoms), category pills, refresh, detail sheet (callouts, Fix it / Edit details → existing editor, Try on my avatar, In the wash — device-only, Delete). tsc clean, Jest 173/173, iOS + Android export OK; device visual check pending.
 
 **Gender-specific rooms:** bedroom and bathroom pick their scene by the user's registered gender (`src/features/home/rooms/roomScenes.ts`): female (and unknown) → girl rooms, male → boy rooms. The male bathroom has no makeup mark. Device check pending.
 
