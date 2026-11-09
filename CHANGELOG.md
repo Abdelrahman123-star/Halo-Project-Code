@@ -1,6 +1,13 @@
 # Changelog
 
 ## [Unreleased]
+### Changed — Digital Wardrobe redesigned as an editorial "atelier" (frontend only)
+- `/(app)/garment` browsing view replaced by `src/features/wardrobe/atelier/WardrobeAtelier`: editorial intro ("My Wardrobe", "Every piece tells your story.", piece count, breathing pearl sparkle); "The Style Edit" featuring the newest piece (large white stage, pearl glow behind the card); "Create an Outfit" teaser clearly marked **Coming soon** (no outfit flow exists; not tappable); category pills (soft periwinkle active); "Your Colour Story" built from the garments' real detected colours (tap to filter, tap again to clear; hidden when no colour data); two-column staggered gallery with editorial index numbers, white photo stages (`contain`), name, subtype/category, colour dots, 3D badge (only for pieces with a photo — the on-device 3D model needs it), edit mark; paged 24 at a time ("Show more pieces"); filtered-empty state with "Clear filters"; elegant empty state ("Your Style Story Starts Here", pearl "Add Your First Piece").
+- Selection effect: soft lilac outline + pearl shimmer across the white stage, then the existing detail sheet opens. Reduce Motion skips shimmer/breathing/floating.
+- Floating pearl-gradient "+" above the bottom nav opens the existing Add a Piece sheet; camera / gallery / preview / back photo / analysis / save flow unchanged. Header gains a small profile button; pull-to-refresh replaces the refresh button.
+- Detail sheet: grab handle, larger white photo stage (240 pt), AI confidence shown as quiet text instead of a pill; editing, 3D preview (existing, only when a model can be built), Save / Delete unchanged.
+- Removed now-unused `SavedWardrobeSection`, `SavedGarmentTile`, `AddPieceTile`; `garmentComponents.test.ts` now instantiates `WardrobeAtelier`.
+- New `wardrobeInsights.ts` (latest piece, colour story, category/colour filtering) with 8 tests. `tsc --noEmit` clean; Jest 164/164; `npx expo export --platform ios` bundles. Not yet verified visually on a device.
 ### Added — Separate colours for the men's room marks
 - New `src/features/home/rooms/roomLabelTheme.ts` (`RoomLabelTheme`: line, labelText, boxBackground, boxBorder, icon, outline). `FEMALE_LABEL_THEME` = the existing colours (unchanged look); `MALE_LABEL_THEME` = navy lines/text on a light silver-blue box, navy icons, ice-blue outline.
 - Each `BedroomScene` / `BathroomScene` now has `labelTheme`; `BedroomHint` takes `theme`, `BedroomHotspot` takes `outlineColor`, and both room views pass the scene's colours to callouts, outlines, hint icons and the back button.

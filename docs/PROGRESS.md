@@ -3,6 +3,8 @@
 _Last updated: 2026-11-08_
 
 ## Current state
+**Digital Wardrobe atelier redesign (frontend only):** editorial wardrobe at `/(app)/garment` using real saved garments (latest piece feature, real colour story filter, staggered gallery, floating pearl +). "Create an Outfit" is a labelled **Coming soon** teaser — no outfit flow exists yet. tsc clean, Jest 164/164, iOS export OK; device visual check pending.
+
 **Gender-specific rooms:** bedroom and bathroom pick their scene by the user's registered gender (`src/features/home/rooms/roomScenes.ts`): female (and unknown) → girl rooms, male → boy rooms. The male bathroom has no makeup mark. Device check pending.
 
 **Interactive Bathroom (frontend only):** full-screen bathroom image; skincare shelf → Skin recommendations (`/(app)/skincare`, PROTOTYPE sample data), vanity mirror → Wellness & skin (`/(app)/wellness`, sample data), makeup shelf → Makeup (`/(app)/makeup`, PROTOTYPE sample data). Sample content lives in `src/features/home/bathroom/beautySampleData.ts`; pages are labelled "Preview · sample data". tsc clean, Jest 145/145. Device check pending.

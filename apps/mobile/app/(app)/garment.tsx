@@ -1,11 +1,12 @@
 /**
  * Digital Wardrobe Screen (`/(app)/garment`) — Reached from Bedroom.
- * Redesigned with `ui-ux-pro-max`: frosted pastel capture cards, capture tip banner,
- * inline Saved Garments Bento grid + empty state, Garment Detail & Dropdown Edit Modal,
- * and automatic backend persistence via `useWardrobe` (Supabase RLS + local cache).
+ * Browsing is the editorial "atelier" view (WardrobeAtelier); adding a piece goes
+ * through the floating pearl "+" → Add a Piece sheet → preview → analysis → save,
+ * all via the existing `useGarmentAnalysis` / `useWardrobe` hooks. Tapping a piece
+ * opens the existing detail / edit sheet.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -14,10 +15,12 @@ import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { GarmentProcessingView } from '@/features/garment/components/GarmentProcessingView';
 import { useGarmentAnalysis } from '@/features/garment/hooks/useGarmentAnalysis';
 import type { GarmentAnalysisResponse } from '@/features/garment/types/garment';
-import { FadeInView } from '@/features/home/components/FadeInView';
-import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
+import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
+import { GlassIconButton } from '@/features/home/components/GlassIconButton';
+import { ChevronLeftIcon, ProfileIcon } from '@/features/home/components/HomeIcons';
+import { FloatingAddButton } from '@/features/wardrobe/atelier/AtelierActions';
+import { WardrobeAtelier } from '@/features/wardrobe/atelier/WardrobeAtelier';
 import { AddPieceSheet } from '@/features/wardrobe/components/AddPieceSheet';
-import { SavedWardrobeSection } from '@/features/wardrobe/components/SavedWardrobeSection';
 import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
 import { useWardrobe } from '@/features/wardrobe/hooks/useWardrobe';
 import type { WardrobeItem } from '@/features/wardrobe/types/wardrobe';
@@ -90,6 +93,7 @@ export default function GarmentScreen(): React.JSX.Element {
   }
 
   const combinedError = !isProcessingMode ? analysisError || wardrobeError : null;
+  const isBrowsing = !isPreviewMode && !isProcessingMode;
 
   return (
     <View style={styles.root}>
@@ -118,7 +122,13 @@ export default function GarmentScreen(): React.JSX.Element {
             accessibilityLabel="HALO Logo"
           />
 
-          <View style={styles.headerSpacer} />
+          <View style={styles.headerSide}>
+            {isBrowsing ? (
+              <GlassIconButton onPress={() => router.push('/(app)/profile')} accessibilityLabel="Open your profile">
+                <ProfileIcon size={18} />
+              </GlassIconButton>
+            ) : null}
+          </View>
         </View>
 
         {combinedError ? (
@@ -127,19 +137,20 @@ export default function GarmentScreen(): React.JSX.Element {
           </View>
         ) : null}
 
-        {!isPreviewMode && !isProcessingMode ? (
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            {/* Capture options + tips live in the Add a Piece sheet; the page is the wardrobe. */}
-            <FadeInView fromTranslateY={8}>
-              <SavedWardrobeSection
-                items={wardrobeItems}
-                isLoading={isLoadingWardrobe}
-                onRefresh={refreshWardrobe}
-                onSelectItem={(item) => setSelectedItemId(item.id)}
-                onTakeFirstPhoto={() => setIsAddSheetOpen(true)}
-                onAddPiece={() => setIsAddSheetOpen(true)}
-              />
-            </FadeInView>
+        {isBrowsing ? (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isLoadingWardrobe && wardrobeItems.length > 0} onRefresh={refreshWardrobe} tintColor="#7E5FA8" />
+            }
+          >
+            <WardrobeAtelier
+              items={wardrobeItems}
+              isLoading={isLoadingWardrobe}
+              onOpenItem={(item) => setSelectedItemId(item.id)}
+              onAddPiece={() => setIsAddSheetOpen(true)}
+            />
           </ScrollView>
         ) : null}
 
@@ -188,6 +199,12 @@ export default function GarmentScreen(): React.JSX.Element {
           onChooseFromGallery={() => void pickFromGallery()}
         />
       </SafeAreaView>
+
+      {/* Floats just above the bottom navigation; only while browsing with pieces saved
+          (the empty state has its own "Add Your First Piece" button). */}
+      {isBrowsing && wardrobeItems.length > 0 ? (
+        <FloatingAddButton bottom={BOTTOM_NAV_CLEARANCE + 8} onPress={() => setIsAddSheetOpen(true)} />
+      ) : null}
     </View>
   );
 }
@@ -201,8 +218,10 @@ const styles = StyleSheet.create({
   backBtnText: { fontSize: 13, fontWeight: '600', color: '#6B5299' },
   btnPressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
   logo: { width: 136, height: 56 },
-  headerSpacer: { width: 84 },
+  // Same width as the back pill, so the logo stays centred.
+  headerSide: { width: 84, alignItems: 'flex-end' },
   bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 110, gap: 10 },
+  // Extra bottom room so the floating + never covers the last pieces.
+  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: BOTTOM_NAV_CLEARANCE + 84 },
   previewScroll: { paddingTop: 10, paddingBottom: 110 },
 });

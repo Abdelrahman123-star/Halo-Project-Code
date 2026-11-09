@@ -9,7 +9,7 @@ import { WardrobeHangerDecor } from '@/features/garment/components/WardrobeHange
 import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { HaloHeader } from '@/features/garment/components/HaloHeader';
-import { SavedWardrobeSection } from '@/features/wardrobe/components/SavedWardrobeSection';
+import { WardrobeAtelier } from '@/features/wardrobe/atelier/WardrobeAtelier';
 import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
 import { WardrobeDropdownField } from '@/features/wardrobe/components/WardrobeDropdownField';
 
@@ -103,12 +103,12 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
     expect(header.props.onBack).toBe(onBack);
   });
 
-  it('instantiates SavedWardrobeSection in empty and populated states', () => {
-    const emptySection = React.createElement(SavedWardrobeSection, {
+  it('instantiates the wardrobe atelier view in empty and populated states', () => {
+    const emptySection = React.createElement(WardrobeAtelier, {
       items: [],
       isLoading: false,
-      onRefresh: jest.fn(),
-      onSelectItem: jest.fn(),
+      onOpenItem: jest.fn(),
+      onAddPiece: jest.fn(),
     });
 
     const sampleItem = {
@@ -128,11 +128,11 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
       updated_at: '2026-11-07T12:00:00Z',
     };
 
-    const populatedSection = React.createElement(SavedWardrobeSection, {
+    const populatedSection = React.createElement(WardrobeAtelier, {
       items: [sampleItem],
       isLoading: false,
-      onRefresh: jest.fn(),
-      onSelectItem: jest.fn(),
+      onOpenItem: jest.fn(),
+      onAddPiece: jest.fn(),
     });
 
     const modal = React.createElement(WardrobeDetailModal, {
