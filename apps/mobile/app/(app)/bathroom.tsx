@@ -8,9 +8,13 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { BathroomRoomView } from '@/features/home/bathroom/BathroomRoomView';
+import { bathroomSceneFor } from '@/features/home/rooms/roomScenes';
+import { useUserGender } from '@/features/profile/hooks/useUserGender';
 
 export default function BathroomScreen() {
   const router = useRouter();
+  // Only the room picture differs by gender; everything else is shared.
+  const scene = bathroomSceneFor(useUserGender());
 
   function goBack() {
     if (router.canGoBack()) router.back();
@@ -21,6 +25,7 @@ export default function BathroomScreen() {
     <View style={styles.root}>
       <StatusBar style="dark" />
       <BathroomRoomView
+        scene={scene}
         onOpenSkincare={() => router.push('/(app)/skincare')}
         onOpenSkinAnalysis={() => router.push('/(app)/wellness')}
         onOpenMakeup={() => router.push('/(app)/makeup')}

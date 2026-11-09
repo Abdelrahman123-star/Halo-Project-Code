@@ -36,7 +36,8 @@ export async function signUp(input: RegisterInput): Promise<AuthResult> {
   const { data, error } = await supabase.auth.signUp({
     email: input.email.trim(),
     password: input.password,
-    options: { data: { display_name: input.displayName.trim() } },
+    // Stored in the account's sign-up metadata alongside the name (no table change).
+    options: { data: { display_name: input.displayName.trim(), gender: input.gender } },
   });
   if (error) return { ok: false, message: friendlyMessage(error.message) };
   // Supabase returns an empty identities list for an already-registered email when

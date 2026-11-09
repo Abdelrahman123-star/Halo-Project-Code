@@ -1,6 +1,29 @@
 # Changelog
 
 ## [Unreleased]
+### Added — Separate colours for the men's room marks
+- New `src/features/home/rooms/roomLabelTheme.ts` (`RoomLabelTheme`: line, labelText, boxBackground, boxBorder, icon, outline). `FEMALE_LABEL_THEME` = the existing colours (unchanged look); `MALE_LABEL_THEME` = navy lines/text on a light silver-blue box, navy icons, ice-blue outline.
+- Each `BedroomScene` / `BathroomScene` now has `labelTheme`; `BedroomHint` takes `theme`, `BedroomHotspot` takes `outlineColor`, and both room views pass the scene's colours to callouts, outlines, hint icons and the back button.
+- `tsc --noEmit` clean; Jest passes (new theme test in `roomScenes.test.ts`). Not yet verified on a device.
+### Changed — Gender circles use the Create Account button's colours
+- Female circle `#F27FC3` → baby pink `#F2C4E2`, Male circle `#5CA9F2` → baby blue `#BCD6F6`, read from `authTheme.pearlBtnGradient` (first / last stop) so they stay in sync with the button. Check mark white → plum `authTheme.pearlBtnText` for contrast on the lighter fills. `tsc --noEmit` clean; auth tests pass.
+### Added — Male bedroom & bathroom
+- `MALE_BEDROOM` (`assets/boy-bedroom.png`) and `MALE_BATHROOM` (`assets/boy-bathroom.png`) in `roomScenes.ts`; male users now see them, female users and accounts without a saved gender keep the original rooms.
+- The boy images share the girls' composition (verified by overlaying the measured regions): the bedroom reuses all female measurements; the bathroom reuses them except a taller skincare region (lowest row sits lower) and `vanityFrontY` 0.528 → 0.548.
+- No makeup mark in the male bathroom: `BathroomScene.makeupRegion` / `makeupHintPoint` are now nullable and `BathroomRoomView` renders the makeup hotspot and callout only when present. Destinations, labels, animations unchanged.
+- `tsc --noEmit` clean; Jest 155/155 (room-scene tests updated); boy bathroom placement checked by rendering at 390×844. Not yet verified on a device.
+### Added — Gender-specific bedroom & bathroom scenes (male scenes pending)
+- New `src/features/home/rooms/roomScenes.ts`: `BedroomScene` / `BathroomScene` (room image + measured furniture regions / hint points / label lines). `FEMALE_BEDROOM` / `FEMALE_BATHROOM` hold the current rooms (incl. the wardrobe hint's −20 pt offset); `MALE_BEDROOM` / `MALE_BATHROOM` are `null` until male images are provided, so `bedroomSceneFor` / `bathroomSceneFor` fall back to the female scenes for male users and for accounts without a saved gender.
+- New `src/features/profile/hooks/useUserGender.ts` (`readGender` reads `user_metadata.gender`).
+- `BedroomRoomView` / `BathroomRoomView` now take a `scene` prop instead of importing the female constants; `bedroom.tsx` / `bathroom.tsx` pick the scene from the user's gender. Everything else in the app is unchanged and shared. No visual change for current rooms.
+- Tests: `src/features/home/__tests__/roomScenes.test.ts` (5). `tsc --noEmit` clean; Jest 154/154.
+### Changed — Gender field moved under Confirm Password, checklist style
+- `GenderSelector` is now a frosted input pill ("Gender" label + Female / Male options) with a circle per option; selecting fills the circle pink (`#F27FC3`, Female) or blue (`#5CA9F2`, Male) with a white check. Placed under Confirm Password (above Create Account). Validation/storage unchanged. `tsc --noEmit` clean; auth tests pass.
+### Added — Gender on the register form
+- `registerSchema` gains required `gender` (`'female' | 'male'`, exported `GENDER_OPTIONS` / `Gender`); empty choice shows "Please choose your gender.".
+- New `src/features/auth/components/GenderSelector.tsx` (Female / Male segmented control styled like the Log In / Register switch), placed under Full Name in `RegisterFormView` (used by both `login.tsx` and `register.tsx` sliders). `useRegisterForm` tracks `gender`.
+- `signUp` stores it in the Supabase account's sign-up metadata (`user_metadata.gender`) alongside `display_name` — no table, migration or backend change. Existing accounts have no gender value.
+- Tests: 3 new schema tests + `src/features/auth/__tests__/signUpMetadata.test.ts` (mocked Supabase). `tsc --noEmit` clean; full Jest suite passes.
 ### Changed — Digital Wardrobe header and title
 - Section title "My Saved Garments" → "My Wardrobe" (refresh button label updated to match).
 - `/(app)/garment` header lowered (top padding 6 → 22, bottom 8 → 14) with a larger HALO logo (92×38 → 136×56); page content starts lower too (scroll top padding 2 → 12). `tsc --noEmit` clean; Jest 145/145.

@@ -12,20 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
 import { BedroomHint, FineAvatarIcon, FineHangerIcon } from './BedroomHint';
 import { BedroomHotspot } from './BedroomHotspot';
-import {
-  coverLayout,
-  imagePoint,
-  MIRROR_HINT_POINT,
-  MIRROR_REGION,
-  POUF_TOP_Y,
-  regionRect,
-  visibleCenterX,
-  WARDROBE_HINT_POINT,
-  WARDROBE_REGION,
-  type Rect,
-} from './bedroomLayout';
+import { coverLayout, imagePoint, regionRect, visibleCenterX, type Rect } from './bedroomLayout';
+import type { BedroomScene } from '../rooms/roomScenes';
 
-const BEDROOM_IMAGE = require('../../../../assets/girl-bedroom.png');
 const INK = '#5E4A78';
 
 type Target = 'wardrobe' | 'mirror';
@@ -34,17 +23,19 @@ type Target = 'wardrobe' | 'mirror';
 const ZOOM_SCALE: Record<Target, number> = { wardrobe: 1.35, mirror: 2.1 };
 
 type BedroomRoomViewProps = {
+  /** Room picture + furniture positions (differs by gender). */
+  scene: BedroomScene;
   onOpenWardrobe: () => void;
   onOpenTryOn: () => void;
   onBack: () => void;
 };
 
-export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: BedroomRoomViewProps) {
+export function BedroomRoomView({ scene, onOpenWardrobe, onOpenTryOn, onBack }: BedroomRoomViewProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const layout = coverLayout(width, height);
-  const wardrobe = regionRect(layout, WARDROBE_REGION);
-  const mirror = regionRect(layout, MIRROR_REGION);
+  const layout = coverLayout(width, height, scene.imageSize, scene.cropCenterX);
+  const wardrobe = regionRect(layout, scene.wardrobeRegion);
+  const mirror = regionRect(layout, scene.mirrorRegion);
 
   const [target, setTarget] = useState<Target | null>(null);
   const isNavigating = useRef(false);
@@ -134,8 +125,11 @@ export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: Bedroom
   // central divider (label just above), the avatar on the upper mirror glass
   // (label just below).
   // Centred on the part of the wardrobe actually on screen (phones crop its left edge).
-  const wardrobeAnchor = { x: visibleCenterX(wardrobe, width)-20, y: imagePoint(layout, WARDROBE_HINT_POINT).y };
-  const mirrorAnchor = imagePoint(layout, MIRROR_HINT_POINT);
+  const wardrobeAnchor = {
+    x: visibleCenterX(wardrobe, width) + scene.wardrobeHintOffsetX,
+    y: imagePoint(layout, scene.wardrobeHintPoint).y,
+  };
+  const mirrorAnchor = imagePoint(layout, scene.mirrorHintPoint);
   // Callout lines rise into the ceiling band, where the text reads clearly.
   // Labels sit right of the back button, so they only need to clear the safe area.
   // The mirror's line rises to the ceiling band. The wardrobe's line drops from
@@ -143,18 +137,19 @@ export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: Bedroom
   // of the mirror.
   const mirrorCalloutY = Math.max(wardrobe.y - 52, insets.top + 18);
   // −28: the two-line label (≈32 pt tall) ends just above the pouf, on the white drawer fronts.
-  const wardrobeCalloutY = layout.y + POUF_TOP_Y * layout.height - 28;
+  const wardrobeCalloutY = layout.y + scene.wardrobeLabelRestY * layout.height - 28;
   const wardrobeLabelMaxWidth = Math.max(mirror.x - (wardrobeAnchor.x + 24) - 12, 90);
 
   return (
     <View style={styles.container}>
       <Animated.View style={[StyleSheet.absoluteFill, { transform }]}>
         <Image
-          source={BEDROOM_IMAGE}
+          source={scene.image}
           style={{ position: 'absolute', left: layout.x, top: layout.y, width: layout.width, height: layout.height }}
           accessible={false}
         />
         <BedroomHotspot
+          outlineColor={scene.labelTheme.outline}
           rect={wardrobe}
           radius={6}
           pulse={pulse}
@@ -165,6 +160,7 @@ export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: Bedroom
           onReveal={(visible) => setRevealed('wardrobe', visible)}
         />
         <BedroomHotspot
+          outlineColor={scene.labelTheme.outline}
           rect={mirror}
           radius={mirror.width * 0.48}
           pulse={pulse}
@@ -179,13 +175,14 @@ export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: Bedroom
       <Animated.View pointerEvents="none" style={[styles.veil, { opacity: veil }]} />
 
       <BedroomHint
+        theme={scene.labelTheme}
         id="wardrobe"
         anchor={wardrobeAnchor}
         calloutY={wardrobeCalloutY}
         side="right"
         label="PRESS TO OPEN WARDROBE"
         maxLabelWidth={wardrobeLabelMaxWidth}
-        icon={<FineHangerIcon />}
+        icon={<FineHangerIcon color={scene.labelTheme.icon} />}
         pulse={pulse}
         reveal={reveal.wardrobe}
         draw={hud}
@@ -194,12 +191,13 @@ export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: Bedroom
         onReveal={(visible) => setRevealed('wardrobe', visible)}
       />
       <BedroomHint
+        theme={scene.labelTheme}
         id="mirror"
         anchor={mirrorAnchor}
         calloutY={mirrorCalloutY}
         side="left"
         label="PRESS TO OPEN 3D TRY-ON"
-        icon={<FineAvatarIcon />}
+        icon={<FineAvatarIcon color={scene.labelTheme.icon} />}
         pulse={pulse}
         reveal={reveal.mirror}
         draw={hud}
@@ -216,8 +214,8 @@ export function BedroomRoomView({ onOpenWardrobe, onOpenTryOn, onBack }: Bedroom
           hitSlop={8}
           style={({ pressed }) => [styles.backBtn, pressed && styles.backPressed]}
         >
-          <ChevronLeftIcon size={18} color={INK} />
-          <Text style={styles.backText}>Hallway</Text>
+          <ChevronLeftIcon size={18} color={scene.labelTheme.icon} />
+          <Text style={[styles.backText, { color: scene.labelTheme.icon }]}>Hallway</Text>
         </Pressable>
       </Animated.View>
     </View>

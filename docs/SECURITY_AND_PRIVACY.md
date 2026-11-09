@@ -16,6 +16,7 @@
 | Consent | explicit screen before upload (`AvatarConsentView`): what is sent, not kept, saved, deletable | ✅ avatar flow (per session, not persisted); garment photos still go to Roboflow without a consent screen |
 
 ## Data captured and why
+Gender (female / male) chosen at registration → stored only in the account's Supabase auth metadata (`user_metadata.gender`), intended for avatar and styling defaults; not used yet. Required on the form by product decision.
 Front/back/face photos → body proportions & appearance suggestions. Clothing photos →
 garment analysis. Nothing else (no location, contacts, etc.).
 

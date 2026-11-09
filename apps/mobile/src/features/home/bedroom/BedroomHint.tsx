@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 import { Animated, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import { SoftGlow, type GlowStop } from '@/features/auth/components/IridescentOrb';
+import { FEMALE_LABEL_THEME, type RoomLabelTheme } from '../rooms/roomLabelTheme';
 
 const ICON_BOX = 44;
 const ELBOW = 18;
@@ -51,6 +52,8 @@ type BedroomHintProps = {
   accessibilityLabel: string;
   onPress: () => void;
   onReveal: (visible: boolean) => void;
+  /** Line / label / box colours (per room scene). */
+  theme?: RoomLabelTheme;
 };
 
 export function BedroomHint({
@@ -67,6 +70,7 @@ export function BedroomHint({
   accessibilityLabel,
   onPress,
   onReveal,
+  theme = FEMALE_LABEL_THEME,
 }: BedroomHintProps) {
   const { width: screenWidth } = useWindowDimensions();
   const goesDown = calloutY > anchor.y;
@@ -106,6 +110,7 @@ export function BedroomHint({
         pointerEvents="none"
         style={[
           styles.line,
+          { backgroundColor: theme.line },
           { left: anchor.x - LINE_WIDTH / 2, top: lineTop, height: lineHeight, opacity: lineBoost },
           { transformOrigin: goesDown ? 'top' : 'bottom', transform: [{ scaleY: lineGrow }] },
         ]}
@@ -115,19 +120,20 @@ export function BedroomHint({
         pointerEvents="none"
         style={[
           styles.elbow,
+          { backgroundColor: theme.line },
           { left: elbowLeft, top: calloutY - LINE_WIDTH / 2, opacity: lineBoost },
           { transformOrigin: side === 'right' ? 'left' : 'right', transform: [{ scaleX: elbowGrow }] },
         ]}
       />
-      <Animated.View pointerEvents="none" style={[styles.dot, { left: anchor.x - 2, top: calloutY - 1.5, opacity: elbowGrow }]} />
+      <Animated.View pointerEvents="none" style={[styles.dot, { backgroundColor: theme.labelText,  left: anchor.x - 2, top: calloutY - 1.5, opacity: elbowGrow }]} />
 
       {/* First text line is centred on the bend, so line and label meet cleanly. */}
       <Animated.View
         pointerEvents="box-none"
         style={[styles.labelSlot, labelPosition, { top: calloutY - LABEL_LINE_HEIGHT / 2 - CHIP_PAD_Y, opacity: labelIn, transform: [{ translateX: labelShift }] }]}
       >
-        <Pressable {...pressHandlers} hitSlop={10} accessibilityRole="button" accessibilityLabel={accessibilityLabel} style={styles.chip}>
-          <Text style={[styles.label, maxLabelWidth ? { maxWidth: maxLabelWidth - CHIP_PAD_X * 2 } : null]}>{label}</Text>
+        <Pressable {...pressHandlers} hitSlop={10} accessibilityRole="button" accessibilityLabel={accessibilityLabel} style={[styles.chip, { backgroundColor: theme.boxBackground, borderColor: theme.boxBorder }]}>
+          <Text style={[styles.label, { color: theme.labelText }, maxLabelWidth ? { maxWidth: maxLabelWidth - CHIP_PAD_X * 2 } : null]}>{label}</Text>
         </Pressable>
       </Animated.View>
 

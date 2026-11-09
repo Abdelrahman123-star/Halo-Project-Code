@@ -21,6 +21,8 @@ type BedroomHotspotProps = {
   accessibilityLabel: string;
   onPress: () => void;
   onReveal: (visible: boolean) => void;
+  /** Colour of the faint breathing outline (per room scene). */
+  outlineColor?: string;
 };
 
 export function BedroomHotspot({
@@ -32,6 +34,7 @@ export function BedroomHotspot({
   accessibilityLabel,
   onPress,
   onReveal,
+  outlineColor,
 }: BedroomHotspotProps) {
   const press = useRef(new Animated.Value(0)).current;
 
@@ -59,7 +62,7 @@ export function BedroomHotspot({
       accessibilityLabel={accessibilityLabel}
       style={[styles.hit, { left: rect.x, top: rect.y, width: rect.width, height: rect.height }]}
     >
-      <Animated.View pointerEvents="none" style={[styles.rim, styles.idleRim, { borderRadius: radius, opacity: idleOpacity }]} />
+      <Animated.View pointerEvents="none" style={[styles.rim, styles.idleRim, outlineColor ? { borderColor: outlineColor } : null, { borderRadius: radius, opacity: idleOpacity }]} />
       <Animated.View
         pointerEvents="none"
         style={[styles.rim, styles.activeRim, { borderRadius: radius, opacity: isSelected ? 1 : press }]}
