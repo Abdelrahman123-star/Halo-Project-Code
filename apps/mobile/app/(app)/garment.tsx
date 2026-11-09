@@ -217,5 +217,6 @@ const styles = StyleSheet.create({
   bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
   // The closet fills what's left above the floating bottom navigation.
   closetArea: { flex: 1, paddingTop: 4, paddingBottom: BOTTOM_NAV_CLEARANCE },
-  previewScroll: { paddingTop: 10, paddingBottom: 110 },
+  // Clears the floating bottom navigation so the preview's buttons stay tappable.
+  previewScroll: { paddingTop: 10, paddingBottom: BOTTOM_NAV_CLEARANCE + 24 },
 });

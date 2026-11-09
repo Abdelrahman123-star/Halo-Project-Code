@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed — "Done · View in My Wardrobe" hidden under the bottom navigation
+- `GarmentProcessingView` scroll content bottom padding 40 → `BOTTOM_NAV_CLEARANCE + 24`, so the last buttons scroll clear of the floating nav; the photo preview screen (`garment.tsx` `previewScroll`) 110 → `BOTTOM_NAV_CLEARANCE + 24` for the same reason. `tsc --noEmit` clean; garment tests 42/42. Not yet verified on a device.
 ### Changed — Men's wardrobe colours match the men's closet
 - New per-gender palettes in `closet/closetTheme.ts` (`WOMENS_PALETTE` unchanged lilac/plum/pearl; `MENS_PALETTE` sampled from the men's closet images: steel-white `#E8ECF3` page with a soft steel wash, navy text `#1C2A4A`, headings `#2E3F66`, steel-blue accents, ice → silver highlight gradient, cool shadows). `closetPaletteFor(gender)` uses the same rule as the closet images.
 - `closet/ClosetPaletteContext.tsx` provides the palette; all wardrobe components (header, title bar + pills, slot cards, Add a Piece card, dots, swipe hint, message card, detail sheet + callouts, Add a Piece sheet) build their styles from it (`usePaletteStyles`). "Try on my avatar" uses a new palette-aware `PearlButton`. Header + background moved from `garment.tsx` to `closet/WardrobeHeader.tsx`. `stageTint` takes the palette's neutral fallback.
