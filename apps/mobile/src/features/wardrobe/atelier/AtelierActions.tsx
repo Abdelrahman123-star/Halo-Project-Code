@@ -6,16 +6,57 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import { AuthButton, authTheme } from '@/features/auth/components/AuthComponents';
+import { AuthButton } from '@/features/auth/components/AuthComponents';
 import { SoftGlow, type GlowStop } from '@/features/auth/components/IridescentOrb';
 import { HangerIcon } from '@/features/home/components/HomeIcons';
 import { dashboardTheme } from '@/features/home/dashboard/dashboardTheme';
+import { useReduceMotion } from './pearlMotion';
 
 const SIZE = 58;
 
+// Iridescent light inside the pearl: white core shading through blush, lavender, powder blue.
+const IRIDESCENT_STOPS: readonly GlowStop[] = [
+  { offset: 0, color: '#FFFFFF', opacity: 0.9 },
+  { offset: 0.35, color: '#F7C6E3', opacity: 0.65 },
+  { offset: 0.68, color: '#C9B8F5', opacity: 0.5 },
+  { offset: 1, color: '#A9CFF6', opacity: 0 },
+];
+
+/** Thin plus with a tiny four-point sparkle at its upper right — "add" as a little pearl portal. */
+function SparklePlus() {
+  const sparkle = (cx: number, cy: number, r: number) =>
+    `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
+  return (
+    <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
+      <Path d="M11.5 6.8v10.4M6.3 12h10.4" stroke="#4E3A6E" strokeWidth={1.6} strokeLinecap="round" />
+      <Path d={sparkle(18.4, 5.6, 3.1)} fill="#FFFFFF" stroke="#4E3A6E" strokeWidth={0.9} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 export function FloatingAddButton({ bottom, onPress }: { bottom: number; onPress: () => void }) {
   const scale = useRef(new Animated.Value(1)).current;
+  const breath = useRef(new Animated.Value(0.5)).current;
+  const reduceMotion = useReduceMotion();
   const spring = (toValue: number) => Animated.spring(scale, { toValue, useNativeDriver: true, speed: 40, bounciness: 6 }).start();
+
+  useEffect(() => {
+    if (reduceMotion) {
+      breath.setValue(0.6);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breath, { toValue: 1, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(breath, { toValue: 0, duration: 2400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [breath, reduceMotion]);
+
+  const glowOpacity = breath.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
+  const glowScale = breath.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.1] });
 
   return (
     <Animated.View style={[styles.fabWrap, { bottom, transform: [{ scale }] }]}>
@@ -27,10 +68,14 @@ export function FloatingAddButton({ bottom, onPress }: { bottom: number; onPress
         accessibilityLabel="Add a piece"
         style={styles.fabShadow}
       >
-        <LinearGradient colors={authTheme.pearlBtnGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fab}>
-          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-            <Path d="M12 5v14M5 12h14" stroke={authTheme.pearlBtnText} strokeWidth={2} strokeLinecap="round" />
-          </Svg>
+        <LinearGradient colors={['#F4CFE6', '#DCCFF8', '#C6DDF8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.fab}>
+          {/* Soft iridescent glow, breathing gently inside the pearl. */}
+          <Animated.View pointerEvents="none" style={[styles.innerGlow, { opacity: glowOpacity, transform: [{ scale: glowScale }] }]}>
+            <SoftGlow id="add-pearl-glow" size={SIZE} stops={IRIDESCENT_STOPS} />
+          </Animated.View>
+          {/* Glassy pearl highlight. */}
+          <View pointerEvents="none" style={styles.highlight} />
+          <SparklePlus />
         </LinearGradient>
       </Pressable>
     </Animated.View>
@@ -96,8 +141,22 @@ const styles = StyleSheet.create({
     borderRadius: SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    // Thin translucent white edge; the glow is clipped to the pearl.
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    overflow: 'hidden',
+  },
+  // Offset up-left so the iridescence shifts across the pearl instead of sitting dead centre.
+  innerGlow: { position: 'absolute', left: -8, top: -10 },
+  highlight: {
+    position: 'absolute',
+    top: 8,
+    left: 12,
+    width: 20,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    transform: [{ rotate: '-22deg' }],
   },
   empty: { alignItems: 'center', paddingTop: 18, paddingBottom: 8, gap: 10 },
   illustration: { width: 170, height: 150, alignItems: 'center', justifyContent: 'center' },

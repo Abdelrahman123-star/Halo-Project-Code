@@ -3,7 +3,7 @@
 _Last updated: 2026-11-08_
 
 ## Current state
-**Digital Wardrobe atelier redesign (frontend only):** editorial wardrobe at `/(app)/garment` using real saved garments (latest piece feature, real colour story filter, staggered gallery, floating pearl +). "Create an Outfit" is a labelled **Coming soon** teaser — no outfit flow exists yet. tsc clean, Jest 164/164, iOS export OK; device visual check pending.
+**Digital Wardrobe (frontend only):** pearl-white `/(app)/garment` led by "Your Style Orbit" (up to 8 real saved pieces floating around a glowing centre, category pearls that filter), then the full staggered gallery and floating pearl +. tsc clean, Jest 164/164, iOS export OK; device visual check pending.
 
 **Gender-specific rooms:** bedroom and bathroom pick their scene by the user's registered gender (`src/features/home/rooms/roomScenes.ts`): female (and unknown) → girl rooms, male → boy rooms. The male bathroom has no makeup mark. Device check pending.
 

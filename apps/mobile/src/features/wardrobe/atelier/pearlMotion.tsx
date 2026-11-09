@@ -88,9 +88,8 @@ const styles = StyleSheet.create({
   stage: {
     width: '100%',
     borderRadius: 14,
+    // Same white as the photos' own backgrounds, so the stage blends into the page.
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(217, 207, 241, 0.45)',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',

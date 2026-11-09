@@ -11,6 +11,7 @@ import { HangerIcon } from '@/features/home/components/HomeIcons';
 import { dashboardTheme } from '@/features/home/dashboard/dashboardTheme';
 import { getCategoryLabel, type WardrobeItem } from '../types/wardrobe';
 import { PhotoStage, usePearlOpen } from './pearlMotion';
+import { PEARL_HAIRLINE, PEARL_TINT } from './pearlWhite';
 
 export const GARMENT_STAGE_HEIGHT = 168;
 
@@ -89,20 +90,10 @@ function GarmentCardBase({ item, index, reduceMotion, onOpen }: GarmentCardProps
 export const GarmentCard = memo(GarmentCardBase);
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.62)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    shadowColor: '#8C78B3',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 3,
-  },
+  // No card: the photo's white stage sits directly on the white page.
+  card: { borderRadius: 16 },
   pressed: { transform: [{ scale: 0.98 }] },
-  outline: { ...StyleSheet.absoluteFill, borderRadius: 20, borderWidth: 1.5, borderColor: '#B9A8F3' },
+  outline: { position: 'absolute', top: -4, left: -4, right: -4, bottom: -4, borderRadius: 18, borderWidth: 1.5, borderColor: '#B9A8F3' },
   photo: { width: '88%', height: '88%' },
   index: { position: 'absolute', top: 8, left: 10, fontSize: 10, fontWeight: '700', letterSpacing: 1.2, color: '#B3A6C9' },
   badge3d: {
@@ -113,23 +104,17 @@ const styles = StyleSheet.create({
     paddingVertical: 1.5,
     borderRadius: 7,
     borderWidth: 1,
-    borderColor: 'rgba(185, 168, 243, 0.7)',
-    backgroundColor: 'rgba(245, 240, 255, 0.92)',
+    borderColor: PEARL_HAIRLINE,
+    backgroundColor: PEARL_TINT,
   },
   badge3dText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.6, color: dashboardTheme.accent },
-  info: { paddingHorizontal: 4, paddingTop: 9, paddingBottom: 3, gap: 2 },
-  name: { fontSize: 14, fontWeight: '700', color: dashboardTheme.text, letterSpacing: -0.1 },
-  sub: { fontSize: 11.5, color: dashboardTheme.muted, textTransform: 'capitalize' },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, minHeight: 24 },
-  dots: { flexDirection: 'row', gap: 4 },
-  dot: { width: 11, height: 11, borderRadius: 6, borderWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.95)', shadowColor: '#8C78B3', shadowOpacity: 0.25, shadowRadius: 2, shadowOffset: { width: 0, height: 1 } },
-  editMark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginLeft: 'auto',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(185, 168, 243, 0.16)',
-  },
+  info: { paddingHorizontal: 2, paddingTop: 10, gap: 2 },
+  name: { fontSize: 13, fontWeight: '600', color: dashboardTheme.text, letterSpacing: 0.1 },
+  sub: { fontSize: 11, color: dashboardTheme.muted, textTransform: 'capitalize', letterSpacing: 0.2 },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 5, minHeight: 18 },
+  dots: { flexDirection: 'row', gap: 3 },
+  // Discreet: small dots with a hairline edge so white garments still show a dot.
+  dot: { width: 8, height: 8, borderRadius: 4, borderWidth: 0.5, borderColor: 'rgba(61, 48, 85, 0.25)' },
+  // Minimal edit control: just the fine pencil.
+  editMark: { width: 18, height: 18, marginLeft: 'auto', alignItems: 'center', justifyContent: 'center', opacity: 0.75 },
 });

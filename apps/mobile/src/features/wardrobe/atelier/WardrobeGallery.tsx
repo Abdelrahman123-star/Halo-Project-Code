@@ -8,11 +8,13 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { dashboardTheme } from '@/features/home/dashboard/dashboardTheme';
 import type { WardrobeItem } from '../types/wardrobe';
+import { PEARL_HAIRLINE, PEARL_TINT } from './pearlWhite';
 import { GarmentCard } from './GarmentCard';
 
 const PAGE_SIZE = 24;
-const COLUMN_GAP = 12;
-const COLUMN_OFFSET = 26;
+// Generous editorial spacing on the white page.
+const COLUMN_GAP = 16;
+const COLUMN_OFFSET = 30;
 
 type WardrobeGalleryProps = {
   items: readonly WardrobeItem[];
@@ -63,16 +65,16 @@ export function WardrobeGallery({ items, resetKey, reduceMotion, onOpen }: Wardr
 const styles = StyleSheet.create({
   wrap: { gap: 16 },
   columns: { flexDirection: 'row', gap: COLUMN_GAP, alignItems: 'flex-start' },
-  column: { flex: 1, gap: COLUMN_GAP },
+  column: { flex: 1, gap: 22 },
   columnOffset: { paddingTop: COLUMN_OFFSET },
   more: {
     alignSelf: 'center',
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: PEARL_TINT,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderColor: PEARL_HAIRLINE,
   },
   pressed: { opacity: 0.8, transform: [{ scale: 0.97 }] },
   moreText: { fontSize: 12.5, fontWeight: '700', color: dashboardTheme.accent, letterSpacing: 0.2 },

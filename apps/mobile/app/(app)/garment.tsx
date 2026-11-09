@@ -5,12 +5,11 @@
  * all via the existing `useGarmentAnalysis` / `useWardrobe` hooks. Tapping a piece
  * opens the existing detail / edit sheet.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { GarmentProcessingView } from '@/features/garment/components/GarmentProcessingView';
 import { useGarmentAnalysis } from '@/features/garment/hooks/useGarmentAnalysis';
@@ -19,6 +18,7 @@ import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
 import { GlassIconButton } from '@/features/home/components/GlassIconButton';
 import { ChevronLeftIcon, ProfileIcon } from '@/features/home/components/HomeIcons';
 import { FloatingAddButton } from '@/features/wardrobe/atelier/AtelierActions';
+import { PEARL_HAIRLINE, PEARL_TINT, PEARL_WHITE } from '@/features/wardrobe/atelier/pearlWhite';
 import { WardrobeAtelier } from '@/features/wardrobe/atelier/WardrobeAtelier';
 import { AddPieceSheet } from '@/features/wardrobe/components/AddPieceSheet';
 import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
@@ -51,6 +51,15 @@ export default function GarmentScreen(): React.JSX.Element {
       void saveAllGarments(result.garments).then(setSavedBatch);
     }
   }, [result, saveAllGarments]);
+
+  // Reload when coming back (e.g. after editing or deleting on the All pieces screen).
+  const hasFocusedOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (hasFocusedOnce.current) void refreshWardrobe();
+      hasFocusedOnce.current = true;
+    }, [refreshWardrobe]),
+  );
 
   const activeModalItem = selectedItemId
     ? wardrobeItems.find((i) => i.id === selectedItemId) ?? null
@@ -98,7 +107,6 @@ export default function GarmentScreen(): React.JSX.Element {
   return (
     <View style={styles.root}>
       <StatusBar style="dark" />
-      <PastelBlobBackground animated={false} />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
@@ -124,7 +132,7 @@ export default function GarmentScreen(): React.JSX.Element {
 
           <View style={styles.headerSide}>
             {isBrowsing ? (
-              <GlassIconButton onPress={() => router.push('/(app)/profile')} accessibilityLabel="Open your profile">
+              <GlassIconButton onPress={() => router.push('/(app)/profile')} accessibilityLabel="Open your profile" style={styles.tinted}>
                 <ProfileIcon size={18} />
               </GlassIconButton>
             ) : null}
@@ -139,7 +147,7 @@ export default function GarmentScreen(): React.JSX.Element {
 
         {isBrowsing ? (
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, styles.orbitPage]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl refreshing={isLoadingWardrobe && wardrobeItems.length > 0} onRefresh={refreshWardrobe} tintColor="#7E5FA8" />
@@ -150,6 +158,7 @@ export default function GarmentScreen(): React.JSX.Element {
               isLoading={isLoadingWardrobe}
               onOpenItem={(item) => setSelectedItemId(item.id)}
               onAddPiece={() => setIsAddSheetOpen(true)}
+              onViewAll={(group) => router.push({ pathname: '/(app)/wardrobe-pieces', params: { group } })}
             />
           </ScrollView>
         ) : null}
@@ -210,11 +219,13 @@ export default function GarmentScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF2FB' },
+  // Pearl-white editorial page (no lilac background on this screen).
+  root: { flex: 1, backgroundColor: PEARL_WHITE },
+  tinted: { backgroundColor: PEARL_TINT, borderColor: PEARL_HAIRLINE, shadowOpacity: 0 },
   safeArea: { flex: 1 },
   // Sits lower on the page, with a larger logo.
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 22, paddingBottom: 14 },
-  backBtn: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.76)', borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.95)', shadowColor: '#8C78B3', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 44, paddingBottom: 10 },
+  backBtn: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: PEARL_TINT, borderWidth: 1, borderColor: PEARL_HAIRLINE },
   backBtnText: { fontSize: 13, fontWeight: '600', color: '#6B5299' },
   btnPressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
   logo: { width: 136, height: 56 },
@@ -222,6 +233,8 @@ const styles = StyleSheet.create({
   headerSide: { width: 84, alignItems: 'flex-end' },
   bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
   // Extra bottom room so the floating + never covers the last pieces.
-  scrollContent: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: BOTTOM_NAV_CLEARANCE + 84 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: BOTTOM_NAV_CLEARANCE + 84 },
+  // The orbit is the page: centred in the space between the header and the nav.
+  orbitPage: { flexGrow: 1, justifyContent: 'center' },
   previewScroll: { paddingTop: 10, paddingBottom: 110 },
 });

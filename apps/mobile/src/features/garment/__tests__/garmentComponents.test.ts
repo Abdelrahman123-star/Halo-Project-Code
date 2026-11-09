@@ -109,6 +109,7 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
       isLoading: false,
       onOpenItem: jest.fn(),
       onAddPiece: jest.fn(),
+      onViewAll: jest.fn(),
     });
 
     const sampleItem = {
@@ -133,6 +134,7 @@ describe('HALO Garment Studio Visual Identity & Tokens', () => {
       isLoading: false,
       onOpenItem: jest.fn(),
       onAddPiece: jest.fn(),
+      onViewAll: jest.fn(),
     });
 
     const modal = React.createElement(WardrobeDetailModal, {

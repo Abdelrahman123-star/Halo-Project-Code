@@ -1,9 +1,9 @@
 /**
- * AddPieceSheet — bottom sheet opened by "Add a Piece". Holds the Add to Your
- * Wardrobe heading, the Take a Photo / From Gallery cards and the
- * "For great 3D models" capture guide (the existing components, unchanged).
+ * AddPieceSheet — centred pearl popup opened by "Add a Piece". Holds the Add to
+ * Your Wardrobe heading, the Take a Photo / From Gallery cards and the
+ * "For great 3D models" tips (closed until tapped).
  *
- * Choosing a source closes the sheet first and only then opens the picker:
+ * Choosing a source closes the popup first and only then opens the picker:
  * on iOS a picker launched while the modal is still animating out can fail,
  * so it waits for `onDismiss`; Android has no `onDismiss`, so it runs right away.
  */
@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { PhotoCaptureGuide } from '@/features/garment/components/PhotoCaptureGuide';
+import { PEARL_HAIRLINE, PEARL_TINT, PEARL_WHITE } from '../atelier/pearlWhite';
 
 export interface AddPieceSheetProps {
   visible: boolean;
@@ -42,7 +43,7 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent
       onRequestClose={onClose}
       onDismiss={Platform.OS === 'ios' ? runPendingPick : undefined}
@@ -50,15 +51,9 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
 
-        <LinearGradient colors={['#FAF8FF', '#EEF2FB']} style={styles.sheet}>
-          <View style={styles.handle} />
-
+        <LinearGradient colors={['#FFFFFF', PEARL_WHITE]} style={styles.sheet}>
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
-              <View style={styles.suiteBadge}>
-                <View style={styles.suiteBadgeDot} />
-                <Text style={styles.suiteBadgeText}>AI CURATION · DIGITAL WARDROBE</Text>
-              </View>
               <Text style={styles.title}>Add to Your Wardrobe</Text>
               <Text style={styles.subtitle}>Scan or upload clothing to build your 3D digital closet.</Text>
             </View>
@@ -85,7 +80,7 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
                 onPress={() => choose(onChooseFromGallery)}
               />
             </View>
-            <PhotoCaptureGuide />
+            <PhotoCaptureGuide defaultExpanded={false} />
           </ScrollView>
         </LinearGradient>
       </View>
@@ -93,49 +88,38 @@ export function AddPieceSheet({ visible, onClose, onTakePhoto, onChooseFromGalle
   );
 }
 
-// Sheet styling matches WardrobeDetailModal so the two read as one family.
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(32, 22, 50, 0.48)', justifyContent: 'flex-end' },
+  // Centred popup over a soft plum veil.
+  backdrop: { flex: 1, backgroundColor: 'rgba(61, 48, 85, 0.32)', justifyContent: 'center', paddingHorizontal: 20 },
   sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: '90%',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 28,
-    borderTopWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 28,
+    maxHeight: '82%',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 18,
+    borderWidth: 1,
+    borderColor: PEARL_HAIRLINE,
+    shadowColor: '#8C78B3',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 28,
+    elevation: 12,
   },
-  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(107, 82, 153, 0.22)', marginBottom: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 14 },
   headerText: { flex: 1 },
-  suiteBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3.5,
-    borderRadius: 12,
-    backgroundColor: 'rgba(217, 207, 241, 0.55)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.85)',
-    marginBottom: 6,
-  },
-  suiteBadgeDot: { width: 5.5, height: 5.5, borderRadius: 3, backgroundColor: '#8B7BEF', marginRight: 5 },
-  suiteBadgeText: { fontSize: 9.5, fontWeight: '700', color: '#6B5299', letterSpacing: 0.6 },
   title: { fontSize: 21, fontWeight: '800', color: '#34264C', letterSpacing: -0.3 },
   subtitle: { marginTop: 3, fontSize: 12.5, lineHeight: 17, color: '#76648E' },
   closeBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    backgroundColor: PEARL_TINT,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.96)',
+    borderColor: PEARL_HAIRLINE,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pressed: { opacity: 0.75, transform: [{ scale: 0.96 }] },
-  content: { gap: 12, paddingBottom: 4 },
+  content: { gap: 12 },
   cardsRow: { flexDirection: 'row', gap: 10 },
 });
