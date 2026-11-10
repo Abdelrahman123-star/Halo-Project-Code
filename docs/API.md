@@ -26,8 +26,17 @@ returns FastAPI's `{"detail": {...}}` shape (unchanged to keep its tests/clients
 | Method & path | Auth | Purpose |
 |---|---|---|
 | `GET /health` | None | Liveness check |
-| `POST /v1/garment/analyze-test` | None (dev test only) | Garment detection + attribute analysis |
+| `POST /v1/garment/analyze` | `Bearer <Supabase JWT>` | Authenticated garment CV analysis, server validation (magic bytes, size, dimensions), and RLS-forwarded persistence to `wardrobe_items` |
+| `POST /v1/garment/analyze-test` | None (dev test only) | Garment detection + attribute analysis (no auth, no DB writes) |
 | `POST /v1/avatar/preprocess` | Bearer | Front/back/face photos → validation + body/face profile, saved for the user |
+
+### POST /v1/garment/analyze
+
+**Auth:** `Authorization: Bearer <Supabase access token>` (verified against Supabase `/auth/v1/user`).  
+**Query params:** `persist=true` (default `true`; inserts detected garments into `public.wardrobe_items` using the caller's JWT so RLS `user_id = auth.uid()` enforces ownership).  
+**Request:** `multipart/form-data` with field `file` (JPEG / PNG / WEBP; validated by Content-Type, binary magic bytes, max 10 MB size, and 32–8192 px dimensions).  
+**Response (200):** `{ "analysis": GarmentAnalysisResponse, "saved_items": SavedWardrobeRow[], "persisted": boolean }`.  
+**Error responses:** 401 (`unauthorized`) · 413/415 (`file_invalid`) · 422 (`validation_error`) · 503 (`model_unavailable`) · 500/502 (`processing_failed`).
 
 ### POST /v1/garment/analyze-test
 

@@ -14,3 +14,8 @@ __pycache__/
 services/api/notebooks/*.ipynb
 services/api/models/
 services/api/local_test_photos/
+# Next.js web-admin build outputs
+.next/
+apps/web-admin/.next/
+apps/web-admin/out/
+*.tsbuildinfo

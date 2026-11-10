@@ -49,6 +49,25 @@ class GarmentAnalysisResponse(BaseModel):
     garments: list[DetectedGarment]
 
 
+class SavedWardrobeRow(BaseModel):
+    id: str
+    user_id: str
+    name: str
+    category: str
+    confidence: float | None = None
+    crop_base64: str | None = None
+    colors: list[ColorResult] = Field(default_factory=list)
+    attributes: dict[str, Any] = Field(default_factory=dict)
+    created_at: str
+    updated_at: str
+
+
+class GarmentAnalyzeAndSaveResponse(BaseModel):
+    analysis: GarmentAnalysisResponse
+    saved_items: list[SavedWardrobeRow] = Field(default_factory=list)
+    persisted: bool = False
+
+
 class ErrorDetail(BaseModel):
     code: str
     message: str
@@ -57,4 +76,3 @@ class ErrorDetail(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: ErrorDetail
-

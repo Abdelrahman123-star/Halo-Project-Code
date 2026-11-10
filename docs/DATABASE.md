@@ -1,27 +1,34 @@
 # Database, RLS & Storage
 
-> Status: **`profiles` (0001) and `wardrobe_items` (0002) are implemented**; `avatars` + `body_scans`
+> Status: **`profiles` (0001, 0004, 0005) and `wardrobe_items` (0002, 0005) are implemented**; `avatars` + `body_scans`
 > (0003) are written but **must be applied manually** (see below); all other tables below are design. Never edit schema only via the dashboard.
 
-## Implemented: `profiles` (migration 0001)
-- Columns: `id` (PK, FK → `auth.users` on delete cascade), `display_name`, `settings`
+## Implemented: `profiles` (migration 0001, 0004, 0005)
+- Columns: `id` (PK, FK → `auth.users` on delete cascade), `display_name`, `gender` (text, `check (gender in ('female', 'male'))`), `role` (text, `check (role in ('user', 'admin'))`, default `'user'`), `settings`
   jsonb, `created_at`, `updated_at` (trigger-maintained).
-- RLS enabled. Policies: authenticated users may **select** and **update** only their
-  own row (`id = auth.uid()`). No client insert/delete policy.
+- RLS enabled. Policies:
+  - `profiles_select_admin`: authenticated users select their own row OR admins (`is_admin()`) select all profiles.
+  - `profiles_update_admin`: users update their own row (cannot escalate role), admins update any row/role.
+- Helper function `public.is_admin()` checks if `auth.uid()` has `role = 'admin'` with `security definer`.
 - Trigger `on_auth_user_created` (SECURITY DEFINER, pinned search_path) inserts the row
-  on signup, taking `display_name` from signUp metadata.
-- **Apply:** paste the file into Supabase Dashboard → SQL Editor → Run (idempotent).
+  on signup, taking `display_name` and `gender` from signUp metadata.
+- **Apply 0001:** paste `supabase/migrations/0001_profiles.sql` into Supabase Dashboard → SQL Editor → Run (idempotent).
+- **Apply 0004:** paste `supabase/migrations/0004_profile_gender.sql` into Supabase Dashboard → SQL Editor → Run.
+- **Apply 0005:** paste `supabase/migrations/0005_admin_role.sql` into Supabase Dashboard → SQL Editor → Run.
+- **Promote first admin:** `update public.profiles set role = 'admin' where id = '<your-user-id>';`
 - **Users created before the migration** have no profile row; backfill with:
   `insert into public.profiles (id) select id from auth.users on conflict do nothing;`
 
-## Implemented: `wardrobe_items` (migration 0002)
+## Implemented: `wardrobe_items` (migration 0002, 0005)
 - Columns: `id` (uuid PK default `gen_random_uuid()`), `user_id` (uuid FK → `auth.users` on delete cascade),
   `name` (text default 'Garment'), `category` (text), `confidence` (float), `crop_base64` (text data URI),
   `colors` (jsonb), `attributes` (jsonb), `created_at` (timestamptz), `updated_at` (timestamptz).
 - Index: `idx_wardrobe_items_user_created` on `(user_id, created_at desc)`.
-- RLS enabled. Policies: authenticated users may **select**, **insert**, **update**, and **delete** only their
-  own rows (`user_id = auth.uid()`).
+- RLS enabled. Policies:
+  - Users select, insert, update, and delete their own rows (`user_id = auth.uid()`).
+  - Admins (`is_admin()`) may **select** and **delete** all wardrobe items across all users for moderation.
 - Trigger: `wardrobe_items_set_updated_at` maintains `updated_at`.
+- Honesty / provenance (`AGENTS.md` §3): `attributes` JSONB stores `{ fabric, pattern, subtype, ai_original? }` where `ai_original` preserves the immutable model-predicted `{ category, subtype, fabric, pattern }` separately from user-corrected values edited via the Digital Wardrobe modal.
 - **Apply:** paste `supabase/migrations/0002_wardrobe.sql` into Supabase Dashboard → SQL Editor → Run.
 
 ## Written, apply manually: `avatars` + `body_scans` (migration 0003)

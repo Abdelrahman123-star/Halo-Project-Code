@@ -1,3 +1,350 @@
+# Active Implementation Plan — Enhanced Admin User Actions (Edit Password, Profile, Reset, Delete)
+
+**Current task:** Expand admin capabilities in the web dashboard by adding rich user actions: editing user passwords directly, sending password reset emails, editing display names and gender, managing roles, and deleting accounts.
+**Status:** Completed & Verified ✅ (Next.js 15 build passed · web-admin typecheck passed · mobile Jest 98/98 passed · Pytest 35/35 passed · all files < 250 lines)
+
+---
+
+## 1. Objectives & Approach
+1. **Server-Side Admin Operations API (`apps/web-admin/app/api/admin/users/route.ts`)**:
+   - Verify caller is an authenticated admin using session cookies + profile check (`role === 'admin'`).
+   - Implement `PATCH /api/admin/users`:
+     - Action `'update_password'`: Set new password via Supabase Service Role client (`auth.admin.updateUserById`). If service key is absent, prompt admin with clear instructions.
+     - Action `'send_reset_email'`: Trigger Supabase recovery email via `auth.resetPasswordForEmail`.
+     - Action `'update_profile'`: Update `display_name`, `gender`, `role` in `public.profiles`.
+   - Implement `DELETE /api/admin/users`:
+     - Delete user account from Supabase Auth (`auth.admin.deleteUser`) and cascade. Block self-deletion.
+2. **Service Role Helper (`apps/web-admin/lib/supabase/admin.ts`)**:
+   - Provide `getAdminClient()` which loads `SUPABASE_SERVICE_ROLE_KEY` if configured, safely isolated to the server.
+3. **Dedicated User Actions Modal (`apps/web-admin/components/users/UserActionsModal.tsx`, `UserProfileTab.tsx`, `UserSecurityTab.tsx`)**:
+   - Glassmorphic modal containing:
+     - Profile editor (Name, Gender binary selector, Role).
+     - Security panel (Direct password change + Send Reset Link button).
+     - Danger zone (Delete user account with confirmation).
+4. **UserTable Integration (`apps/web-admin/components/users/UserTable.tsx`)**:
+   - Add "Manage" button in the Actions column of each user row to open `UserActionsModal`.
+   - Handle immediate UI state updates on edit/delete.
+5. **Verification**:
+   - `npm run typecheck --prefix apps/web-admin` (0 errors).
+   - `npm run build --prefix apps/web-admin` (clean build, 9 pages compiled, 0 errors).
+   - `npm run typecheck --prefix apps/mobile` & `npm run test --prefix apps/mobile` (98/98 passing).
+   - `python -m pytest services/api/tests -q` (35/35 passing).
+   - All files strictly `< 250` lines.
+
+---
+
+# Active Implementation Plan — HALO Web Admin Dashboard (`apps/web-admin`)
+
+**Current task:** Implement a dedicated, secure Next.js 15 Web Admin Dashboard in `apps/web-admin` with HALO Brand Glassmorphism styling, connecting to the existing Supabase project with RBAC (`role = 'admin'`), edge middleware security, and 4 core panels: Overview KPIs, Users Management, Wardrobe & CV Moderation, and System Health.
+**Status:** Completed & Verified ✅ (Next.js 15 build passed · mobile Jest 98/98 · Pytest 35/35 · all files < 250 lines)
+
+---
+
+## 1. Objectives & Approach
+1. **Database Migration (`supabase/migrations/0004_admin_role.sql`)**:
+   - Added `role text not null default 'user' check (role in ('user', 'admin'))` to `public.profiles`.
+   - Created `public.is_admin()` security definer function.
+   - Established admin RLS policies for `public.profiles` and `public.wardrobe_items`.
+   - Updated `docs/DATABASE.md`.
+2. **Next.js 15 App Scaffold (`apps/web-admin`)**:
+   - Created Next.js 15 App Router structure with TypeScript, Tailwind CSS, `@supabase/ssr`, `@supabase/supabase-js`, and `lucide-react`.
+   - Configured HALO Glassmorphism design tokens (pastel lilac canvas `#EEF0FA`, soft frosted blur surfaces, pearlescent highlights).
+3. **Authentication & Edge Middleware Security**:
+   - Implemented Supabase server/client/middleware helpers in `lib/supabase/`.
+   - Created `middleware.ts` to intercept `/(dashboard)/:path*`, validating session and querying `is_admin()`, instantly blocking unauthorized or regular user accounts.
+   - Built `app/(auth)/login/page.tsx` with glassmorphic auth card, error handling, and role verification.
+4. **Core 4-Panel Administration Suite**:
+   - `app/(dashboard)/layout.tsx`: Persistent frosted glass sidebar with active glow, top header with admin identity & logout.
+   - `app/(dashboard)/page.tsx`: Overview KPI metrics (user counts, garment scan counts, detection accuracy, activity feed).
+   - `app/(dashboard)/users/page.tsx`: Filterable user directory with role toggle (`user` <-> `admin`).
+   - `app/(dashboard)/wardrobe/page.tsx`: Wardrobe & CV garment moderation gallery, crop previews, Roboflow confidence meters, and detailed modal inspector.
+   - `app/(dashboard)/system/page.tsx`: System & AI health monitoring (FastAPI endpoint status, Roboflow API check, Supabase health).
+5. **Verification & Regression**:
+   - Build check: `apps/web-admin` builds cleanly (`next build` 0 errors, 8 static/dynamic routes generated).
+   - Mobile check: `npm run typecheck --prefix apps/mobile` (0 errors) & `npm run test --prefix apps/mobile` (98/98 passing).
+   - Backend check: `python -m pytest services/api/tests -q` (35/35 passing).
+   - All files strictly `< 250` lines.
+
+---
+
+# Active Implementation Plan — Required Binary Gender Selection (Female / Male Only) in Signup
+
+**Current task:** Add a required gender selection section to the user registration / signup form, allowing strictly `Female` or `Male` only (no other options), and saving the selection in auth metadata and the user profile.
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 98/98 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Approach
+1. **Zod Validation Schema (`apps/mobile/src/features/auth/schemas.ts`)**:
+   - Defined `genderEnum = z.enum(['female', 'male'], { message: 'Please select Female or Male.' })`.
+   - Added `gender: genderEnum` to `registerSchema`.
+   - Exported `Gender` type (`'female' | 'male'`).
+2. **Form State Hook (`apps/mobile/src/features/auth/hooks/useRegisterForm.ts`)**:
+   - Added `gender: Gender | ''` to form values.
+   - Provided `setGender: (gender: Gender) => void` which also clears any active gender validation error.
+   - Forwarded `gender` in payload to `registerSchema.safeParse`.
+3. **UI Component (`apps/mobile/src/features/auth/components/AuthGenderSelector.tsx`)**:
+   - Created a dedicated, modular, accessible selector (163 lines, `< 250`).
+   - Exactly two selectable options: `Female` and `Male` (strictly no other options).
+   - Frosted glass design matching `authTheme` with pearl gradient active state, subtle purple focus border, tactile press feedback, and custom Venus / Mars SVG icons.
+   - Accessible radiogroup semantics (`accessibilityRole="radiogroup"` and `accessibilityRole="radio"`).
+   - Displays error label and styled coral error border if validation fails.
+4. **Form Integration (`apps/mobile/src/features/auth/components/AuthForms.tsx`)**:
+   - Placed `<AuthGenderSelector />` cleanly between Full Name and Email Address.
+5. **Auth API & Supabase User Metadata (`apps/mobile/src/features/auth/api/authApi.ts`)**:
+   - Passed `gender: input.gender` inside `options.data` to `supabase.auth.signUp`.
+6. **Database Migration & Profile Schema (`supabase/migrations/0003_profile_gender.sql` & `docs/DATABASE.md`)**:
+   - Added `gender text check (gender in ('female', 'male'))` column to `public.profiles`.
+   - Updated `handle_new_user()` trigger to copy `gender` from `raw_user_meta_data`.
+7. **Verification & Testing**:
+   - Updated `apps/mobile/src/features/auth/__tests__/schemas.test.ts` to verify:
+     - Accepts `'female'`.
+     - Accepts `'male'`.
+     - Rejects missing / empty gender.
+     - Rejects any options other than `'female'` or `'male'`.
+   - `npm run typecheck --prefix apps/mobile` (0 errors).
+   - `npm run test --prefix apps/mobile` (98/98 passing across 15 suites).
+   - `python -m pytest services/api/tests -q` (35/35 passing).
+   - All touched files strictly `< 250` lines.
+
+---
+
+# Active Implementation Plan — Smooth Fluid Navigation Transitions (Masking Load Time)
+
+**Current task:** Implement smooth, fluid navigation transitions across bottom navbar route changes (e.g. Home to Weather, Calendar, Wellness, Reminders) that mask background loading and provide an elegant, seamless cross-fade feel instead of abrupt cuts.
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 94/94 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Approach
+1. **Enable Animated Route Navigation (`HomeBottomNav.tsx`)**:
+   - Switched bottom navigation from `router.replace` to `router.navigate(item.href)`, allowing `react-native-screens` to execute hardware-accelerated screen transition animations on Android and iOS (NativeStack bypasses animations when `replace` is used).
+   - Retained active tab short-circuiting (`if (isItemActive(item)) return;`) so tapping the current active tab does not re-trigger transitions or unnecessary re-renders.
+2. **Smooth Native Stack Cross-Fade (`apps/mobile/app/(app)/_layout.tsx`)**:
+   - Configured `<Stack screenOptions={{ headerShown: false, animation: 'fade' }}>` for a clean, hardware-accelerated cross-fade between views.
+   - Decoupled `AppLayout` from `usePathname()` to ensure the root navigation Stack never reconciles or drops transition frames on route switches.
+3. **Cohesive In-Screen Glide & Render Masking (`FeaturePageShell.tsx`)**:
+   - Paired the stack cross-fade with a tight, hardware-accelerated entrance on [`FeaturePageShell.tsx`](file:///c:/Users/HP/Desktop/GradProject%20Code/apps/mobile/src/features/home/dashboard/FeaturePageShell.tsx) using `FadeInView` (`fromTranslateY: -6` for header, `delayMs: 40, fromTranslateY: 8` for body content).
+   - Smoothly glides content into place during the fade, seamlessly masking any data/view initialization.
+   - Passed `showOrb={false}` to `PastelBlobBackground` to skip instantiating 60+ SVG radial gradient nodes behind cards, ensuring instant, stutter-free frame delivery.
+4. **Verification**:
+   - `npm run typecheck --prefix apps/mobile` (0 errors).
+   - `npm run test --prefix apps/mobile` (94/94 passing).
+   - `python -m pytest services/api/tests -q` (35/35 passing).
+   - All touched files strictly `< 250` lines.
+
+---
+
+# Active Implementation Plan — Fix Navigation Lag & UI Performance Bottlenecks
+
+**Current task:** Investigate and eliminate severe navigation lag when switching tabs in the bottom navbar (e.g. Weather, Calendar, Wellness, Reminders, Home).
+**Root Causes Identified:**
+1. **GPU Blur Thrashing (`BlurView`)**: In `HomeBottomNav.tsx`, `BlurView` was rendering without a valid `blurTarget` on Android / iOS inside the persistent root layout, forcing continuous native Gaussian re-blur passes of the full window during screen transitions.
+2. **Stack Accumulation (`router.navigate`)**: In `HomeBottomNav.tsx`, tapping tabs used `router.navigate`, causing screens in the `<Stack>` to continuously pile up in memory without unmounting, while missing an early-return check when tapping an already active tab.
+3. **Heavy Slide Transitions**: In `_layout.tsx`, `<Stack>` used the default OS slide transition, translating full-screen views with complex SVGs and shadows across 350-400ms.
+4. **Perceived Lag from Double Delay (`FadeInView`)**: `FeaturePageShell.tsx` wrapped the entire content in `<FadeInView>` starting from 0 opacity with a delay on top of the slide transition, causing the screen to appear blank/unresponsive for 300-500ms before content appeared.
+5. **Background Animation Overhead (`PastelBlobBackground`)**: `PastelBlobBackground` ran 16 simultaneous infinite SVG animation loops (in `IridescentOrb` and corner glows) on screens where the orb was completely hidden behind cards.
+
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 94/94 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Performance Fixes
+1. **Replace `BlurView` in `HomeBottomNav.tsx`**:
+   - Replace native `BlurView` with high-performance hardware-accelerated frosted liquid-glass `LinearGradient` (`['rgba(255, 255, 255, 0.94)', 'rgba(248, 245, 255, 0.90)', 'rgba(240, 246, 255, 0.88)']`).
+   - Completely eliminates GPU blur passes and rendering stalls during navigation.
+2. **Tab Navigation Optimization in `HomeBottomNav.tsx`**:
+   - Early return if `isItemActive(item)`: Prevents redundant navigation and re-renders when tapping the active tab.
+   - Use `router.replace(item.href)`: Replaces the current tab in the stack so previous screens cleanly unmount, stopping background activity and preventing stack memory leaks.
+3. **Smooth, Fast Cross-Fade in `apps/mobile/app/(app)/_layout.tsx`**:
+   - Configure `screenOptions={{ headerShown: false, animation: 'fade', animationDuration: 150 }}` on `<Stack>`.
+   - Eliminates heavy horizontal slide translation; provides an instantaneous, fluid 150ms cross-fade between screens.
+4. **Immediate Content Visibility in `FeaturePageShell.tsx`**:
+   - Remove the artificial delayed fade-in so screen content (cards, forecast, events) appears immediately upon screen mount without perceived lag.
+5. **Add `animated` Prop to `PastelBlobBackground.tsx`**:
+   - Allow passing `animated={false}` to disable infinite `Animated.loop` loops on secondary screens where the animated orb is occluded by cards.
+6. **Verification**:
+   - `npm run typecheck --prefix apps/mobile` (0 errors).
+   - `npm run test --prefix apps/mobile` (all Jest tests pass).
+   - `python -m pytest services/api/tests -q` (35/35 pass).
+   - Strict adherence to `< 250` lines per file.
+
+---
+
+# Active Implementation Plan — App Polish (`ui-ux-pro-max`), Fixed 5-Button Bottom Nav & Animation Tuning
+
+**Current task:** Polish the entire application's UI/UX using `ui-ux-pro-max` design intelligence: implement a persistent, fixed 5-button bottom navbar anchored across all app screens (with the central elevated button routing to Home, visible everywhere except the intro and entrance videos), tune sluggish entrance and hallway animations, and adjust scroll bottom insets so content never collides with the fixed bottom navbar. Preserve the intentional home page house + avatar overlay unchanged.
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 94/94 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Scope
+1. **Persistent 5-Button Fixed Bottom Navbar**:
+   - Items: `Wellness` (`/(app)/wellness`), `Reminders` (`/(app)/reminders`), `Home` (center, `/(app)`), `Weather` (`/(app)/weather`), and `Calendar` (`/(app)/calendar`).
+   - Center button: elevated circular pearl-lavender badge with subtle halo glow, prominent `HomeIcon` SVG, distinct active indicator.
+   - Mounted globally in `apps/mobile/app/(app)/_layout.tsx` so it persists cleanly across navigation transitions.
+   - Hidden strictly on video screens (`pathname?.includes('house-entrance')` and launch intro `WelcomeVideoScreen.tsx`).
+   - Active route detection via `usePathname()`.
+   - Remove duplicate local bottom nav from `apps/mobile/app/(app)/index.tsx`.
+   - Remove obsolete 2-tab `FloatingNavBar` from `apps/mobile/app/(app)/profile.tsx`.
+2. **Strict Preservation**:
+   - **DO NOT TOUCH** or alter the house image and avatar image overlay on `apps/mobile/app/(app)/index.tsx` (`HouseHero.tsx`).
+3. **Animation Polish (Fast, Fluid, Liquid Glass Experience)**:
+   - `FadeInView.tsx`: reduce sluggish 520ms timing to 240ms; tighten spring tension from 40 to 68 and friction from 8 to 10 for responsive, instant entrance without floaty lag. Reduce default translateY to 8px and scale from 0.92 to 0.98.
+   - `DoorSelectionView.tsx`: eliminate extreme 2.7x zoom that pixelates the hallway; reduce scale to 1.38x. Shorten transition delay from 900ms to 420ms for a crisp, cinematic door entry.
+   - `FeaturePageShell.tsx`: refine stagger delays for rapid, responsive rendering.
+4. **Layout & Scroll Clearance**:
+   - Ensure all scrollable screens (`FeaturePageShell.tsx`, `bedroom.tsx`, `bathroom.tsx`, `garment.tsx`, `avatar.tsx`, `profile.tsx`) provide `paddingBottom: 110` so all content scrolls cleanly above the floating bottom navbar.
+   - Adjust `DoorSelectionView.tsx` bottom HUD padding so the "Tap a door to enter" pill does not overlap with the bottom nav.
+5. **Architectural & Quality Compliance**:
+   - Keep every touched file strictly `< 250` lines.
+   - TypeScript strict mode (0 errors).
+   - Jest (all tests pass) and Pytest (35/35 pass).
+
+---
+
+# Active Implementation Plan — App Intro & Landing Page Video Skip Button
+
+**Current task:** Add a "Skip" pill button to `WelcomeVideoScreen.tsx` (the app-open intro / landing page video) matching the styling and behavior of the Skip button in `house-entrance.tsx`, allowing users to immediately skip directly into the app.
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 92/92 · Pytest 35/35)
+
+---
+
+## 1. Objectives & UI Implementation
+1. **Visual Parity with House Entrance Skip Button**:
+   - Translucent dark frosted pill (`backgroundColor: 'rgba(25, 18, 40, 0.45)'`, `borderWidth: 1`, `borderColor: 'rgba(255, 255, 255, 0.28)'`, `borderRadius: 20`).
+   - Clean white text (`Skip`, `fontSize: 13, fontWeight: '600'`).
+   - Placed in top-right `SafeAreaView` with generous touch slop (`hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}`).
+2. **Behavior & Lifecycle**:
+   - Tapping "Skip" pauses playback and smoothly triggers the native fade-out into the authenticated navigation stack (`Login` or `Home`).
+3. **Verification**:
+   - `tsc --noEmit` 0 errors.
+   - Mobile Jest tests passing (92/92 across 15 suites).
+   - File length strictly `< 250` lines.
+
+---
+
+# Active Implementation Plan — Test Pages & Cloned Assets Deletion & Route Hygiene
+
+**Current task:** Delete all identified test pages (`/(app)/test-closet.tsx`, `/(app)/test-garment.tsx`, and the entire `public/closet/` directory), restore default `metro.config.js`, remove backend test endpoint `POST /v1/garment/analyze-test`, and retarget internal links (`closet.tsx` empty-rail scan action) to production routes (`/(app)/garment`) without affecting core room and styling suites.
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 91/91 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Scope
+1. **Deletion of Standalone Test Pages & Cloned Assets**:
+   - `apps/mobile/app/(app)/test-closet.tsx` (WebView 3D rail test viewer).
+   - `apps/mobile/app/(app)/test-garment.tsx` (Legacy garment scanner test page).
+   - `apps/mobile/public/closet/` (All ~15MB of static cloned assets: `rack.html`, `shoes.html`, `accessories.html`, `index.html`, `_next/`, 3D `.glb` assets).
+   - Cleaned `apps/mobile/metro.config.js` back to standard Expo Metro configuration.
+2. **Backend Test Endpoint Removal**:
+   - Removed developer test endpoint `POST /v1/garment/analyze-test` from `services/api/app/routers/garment.py`.
+   - Updated `services/api/tests/test_garment_router.py` to validate directly against the production authenticated endpoint `POST /v1/garment/analyze`.
+3. **Production Route Hygiene**:
+   - Updated `apps/mobile/app/(app)/closet.tsx` line 88 so the empty rail action button ("+ Scan Clothes to Hang Here") points directly to the real, redesigned Digital Wardrobe screen (`/(app)/garment`).
+4. **Verification**:
+   - `tsc --noEmit` 0 errors.
+   - All 15 Jest test suites passing (91/91 tests).
+   - Backend pytest 35/35 passing.
+   - Preserves all production rooms (`bedroom.tsx`, `bathroom.tsx`, `hallway.tsx`, `garment.tsx`, etc.).
+
+---
+
+# Active Implementation Plan — Vanity Suite Screen Redesign (`ui-ux-pro-max`)
+
+**Current task:** Redesign the Vanity Suite screen (`apps/mobile/app/(app)/bathroom.tsx`) accessed from the hallway ("BATHROOM" door), applying `ui-ux-pro-max` design intelligence to match the exact visual language, elegance, and layout of "The Bedroom" page (`bedroom.tsx`).
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 91/91 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Architecture
+1. **Visual Parity with The Bedroom (`bedroom.tsx`)**:
+   - Dreamy pastel canvas (`#EEF2FB`, `PastelBlobBackground`, plum `#2E2242`/`#34264C`, royal lilac `#6B5299`, blush rose `#B04278`, celestial periwinkle `#4865B8`).
+   - Frosted back button navigating back to `Hallway` (`ChevronLeftIcon`, tactile scale feedback).
+   - Centered HALO logo asset (`assets/halo-logo.png`) with symmetrical header spacing (`headerSpacer: { width: 80 }`).
+   - Suite badge: `SUITE 02 · BEAUTY & RADIANCE` with glowing dot indicator (`#E05E9A`).
+   - Main title `The Vanity Suite` and responsive subtitle.
+2. **Elevated Feature Portal Cards (`RoomPortalCard` / `BedroomPortalCard.tsx`)**:
+   - **Smart Vanity Mirror**: Frosted gradient card with rose accent badge (`SMART MIRROR`), dual-layer gradient icon circle (`MirrorIcon`), micro-tags (`Studio Lighting`, `Shade Match`, `Radiance`), tactile scale micro-interaction (`0.985`), and honest prototype preview modal for upcoming smart mirror live camera shader.
+   - **Beauty Shelf**: Frosted gradient card with periwinkle accent badge (`SKINCARE & WELLNESS`), dual-layer gradient icon circle (`SparkleBeautyIcon`), micro-tags (`Skincare Shelf`, `Daily Ritual`, `Formulas`), tactile scale micro-interaction (`0.985`), and working navigation to `/(app)/wellness`.
+3. **Icons & Components (`HomeIcons.tsx`, `BedroomPortalCard.tsx`)**:
+   - Added `MirrorIcon` and `SparkleBeautyIcon` to `HomeIcons.tsx` in HALO's rounded-stroke SVG style.
+   - Added `'rose'` badge variant to `BedroomPortalCard.tsx` and exported alias `RoomPortalCard`.
+4. **Constraints & Verification**:
+   - Strict TypeScript (`tsc --noEmit` clean with 0 errors), Jest unit tests (15 suites passing, 91/91 tests), every touched file `< 250` lines, zero `any`.
+
+---
+
+# Active Implementation Plan — Digital Wardrobe Compact Ergonomic Capture Layout (`ui-ux-pro-max`)
+
+**Current task:** Optimize the layout of the top capture section on `/(app)/garment` (`Take a Photo`, `Choose from Gallery`, and `PhotoCaptureGuide` tip banner) to make it reasonably compact, balanced, and space-efficient, so users can comfortably see both the capture actions and their saved garments without excessive vertical scrolling.
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 91/91 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Ergonomic Redesign
+1. **Side-by-Side Dual Capture Tiles (`GarmentOptionCard.tsx`)**:
+   - Transformed the two full-width vertically stacked cards into a side-by-side 2-column action grid (`cardsRow` with `flexDirection: 'row', gap: 10`).
+   - Each card (`Take a Photo` and `From Gallery`) is now a compact, vertical frosted bento card (`minHeight: 108px`) with top icon circle + micro badge, prominent title, and crisp caption.
+   - Retains all tactile press feedback, pastel gradients (royal lilac for Camera, celestial periwinkle for Gallery), and SVG icons.
+2. **Compact Streamlined Photo Tip Banner (`PhotoCaptureGuide.tsx`)**:
+   - Replaced the tall multi-section card (~130px) with an ultra-compact single-tier frosted helper banner (~42px).
+   - Features a lilac sparkle SVG badge, concise 1-line guidance ("Photo tip: Lay flat in bright, even light for clean 3D garment edges"), and an interactive toggle pill ("Tips") that reveals the 3 micro-pills (`Even Lighting`, `Full Frame`, `Minimal Folds`) on tap.
+3. **Streamlined Header Spacing in `garment.tsx`**:
+   - Tightened title and subtitle typography and vertical gaps (`titleWrap`, `cardsRow`, `divider`) recovering ~220px+ of vertical space.
+   - Ensures the "My Saved Garments" grid and filter pills are immediately visible and prominent above or near the fold on mobile screens.
+4. **Verification & Constraints**:
+   - Strict TypeScript (`tsc --noEmit` passed with 0 errors), Jest test suite (15 suites, 91/91 tests passing), Pytest (35/35 passing), all files strictly `< 250` lines, zero `any`.
+
+---
+
+# Active Implementation Plan — Digital Wardrobe UI/UX Redesign (`ui-ux-pro-max`) & End-to-End Wardrobe Persistence
+
+**Current task:** Redesign Digital Wardrobe (`apps/mobile/app/(app)/garment.tsx`) using `ui-ux-pro-max` while preserving HALO's dreamy pastel palette, add an inline **Saved Garments** section with empty state and a **Garment Detail & Dropdown Edit Modal**, and wire full backend persistence (Supabase `wardrobe_items` RLS + local cache sync + FastAPI `POST /v1/garment/analyze` with magic-byte/dimension/JWT validation).
+**Status:** Completed & Verified ✅ (tsc 0 errors · Jest 91/91 · Pytest 35/35)
+
+---
+
+## 1. Objectives & Architecture
+1. **`ui-ux-pro-max` Visual Redesign (`/(app)/garment`)**:
+   - Cohesive dreamy pastel palette (`#EEF2FB`, `PastelBlobBackground`, deep plum `#2E2242`, heather `#6D5B85`, royal lilac `#6B5299`, celestial periwinkle `#4865B8`).
+   - Redesigned `GarmentOptionCard` (Camera & Gallery) and `PhotoCaptureGuide` ("A little tip for better results") with crisp SVG icons (no emoji icons), frosted glass gradients, >=4.5:1 WCAG AA contrast, and tactile press micro-interactions.
+2. **Inline Saved Garments Section + Empty State**:
+   - Displayed directly below the capture guide on `/(app)/garment` (`SavedWardrobeSection.tsx`), with category filter pills, item count badge, memoized 2-column garment cards, and an inviting SVG empty state when no garments are saved.
+3. **Garment Detail & Dropdown Edit Modal (`WardrobeDetailModal.tsx` + `WardrobeDropdownField.tsx`)**:
+   - Tapping any saved garment opens a frosted modal showing isolated crop preview, dominant color swatches, AI confidence, immutable original AI prediction metadata (`ai_original` per AGENTS.md §3), editable name, dropdown selectors for Category, Style/Subtype, Fabric, and Pattern, plus Save and confirmed Delete actions.
+4. **Backend Implementation & Persistence Wiring**:
+   - **Mobile Persistence (`wardrobeApi.ts`, `useWardrobe.ts`, `garment.tsx`)**: Auto-saves detected garments upon photo/gallery analysis to Supabase `public.wardrobe_items` (RLS `user_id = auth.uid()`) with per-user local cache fallback and honest manual-add fallback (`confidence: null`, `predicted: null`) when CV detects 0 items.
+   - **FastAPI Server (`services/api`)**: Adds authenticated `POST /v1/garment/analyze` with Bearer JWT verification (`dependencies.py`), server-side magic-byte + size + dimension validation (`AGENTS.md` §7), and optional RLS-forwarded persistence to `wardrobe_items`.
+5. **Constraints**:
+   - Every touched file strictly `< 250` lines; TypeScript strict (`0` errors); Zod validation at boundaries; Jest & Pytest suites green.
+
+---
+
+# Active Implementation Plan — Bedroom & Dressing Suite UI/UX Redesign (ui-ux-pro-max)
+
+**Current task:** Redesign the Bedroom & Dressing Suite screen (`apps/mobile/app/(app)/bedroom.tsx`) accessed from the hallway, applying `ui-ux-pro-max` design intelligence while strictly preserving HALO's dreamy pastel color palette and style.
+**Status:** Completed & Verified ✅
+
+---
+
+## 1. Objectives & Guidelines
+1. **Retain Brand Aesthetic & Palette**:
+   - Maintain HALO's dreamy pastel canvas (`#EEF2FB`, `PastelBlobBackground`, plum `#2E2242`, lilac `#72618A`, periwinkle `#686EE8`).
+2. **Elevate the 2 Primary Action Cards**:
+   - **Digital Wardrobe**: Luminous frosted glass gradient, dedicated AI Curation badge, enhanced iconography, clear micro-tags (`CV Tagging`, `Catalogue`), and tactile press feedback.
+   - **3D Dressing Suite**: Luminous frosted glass gradient, Virtual Fit badge, enhanced avatar iconography, micro-tags (`Rigged Avatar`, `3D Try-On`), and tactile press feedback.
+3. **Ergonomics & Touch Accessibility**:
+   - Touch targets exceed 44×44px with generous touch padding.
+   - Contrast ratio meets WCAG AA standards (minimum 4.5:1 for body, 7:1 for headings).
+   - Smooth press micro-interactions with tactile scale feedback (`0.985`).
+4. **Non-breaking Architecture**:
+   - Preserves routes: `/(app)/garment` and `/(app)/create-avatar`.
+   - Preserves return navigation to `/(app)/hallway`.
+   - File length under 250 lines; TypeScript strict with zero `any`.
+
+---
+
 # Active Implementation Plan — Avatar preprocessing (body + face profile)
 
 **Status:** Implemented and tested in code (2026-11-08); migration 0003 + device E2E pending (user).
