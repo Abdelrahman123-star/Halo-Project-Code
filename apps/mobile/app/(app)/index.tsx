@@ -8,11 +8,11 @@ import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { BlurTargetView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 import { usePreviewAvatar } from '@/features/avatar/hooks/usePreviewAvatar';
 import { FadeInView } from '@/features/home/components/FadeInView';
 import { HomeHeader } from '@/features/home/components/HomeHeader';
-import { HOME_BOTTOM_NAV_HEIGHT } from '@/features/home/components/HomeBottomNav';
 import { HouseHero } from '@/features/home/components/HouseHero';
 import { useDisplayName } from '@/features/profile/hooks/useDisplayName';
 
@@ -62,8 +62,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: SCREEN_GUTTER,
     paddingTop: 8,
-    // Keeps the last content scrollable above the floating bottom nav.
-    paddingBottom: HOME_BOTTOM_NAV_HEIGHT + 48,
+    // The bottom nav sits below this screen (not over it), so only normal breathing room is needed.
+    // Room for the floating bottom nav.
+    paddingBottom: BOTTOM_NAV_CLEARANCE,
     gap: 24,
   },
 });

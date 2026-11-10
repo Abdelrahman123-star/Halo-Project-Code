@@ -1,27 +1,36 @@
 /**
- * Create Your Avatar — guided three-photo capture (front, back, face).
+ * Create Your Avatar — guided three-photo capture (front, back, face), consent,
+ * server-side preprocessing (body + face profile) and results.
  *
- * Prototype scope: photos are held in memory on this screen only. Nothing is
- * uploaded and no avatar is generated; the final stage says so plainly.
- * All stages live on this one route so moving between steps can never drop a
- * photo; leaving the screen with photos asks for confirmation first.
+ * Photos stay in memory on this screen and are deleted from the app cache when
+ * the user leaves. With consent they are uploaded once to the HALO backend, which
+ * analyses and discards them and saves only the derived profile. The 3D avatar is
+ * still the labelled preview image; the profile is input for future 3D work.
  */
 import { useCallback, useReducer, useState } from 'react';
 import { Alert, BackHandler, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
+import { deleteLocalPhotoFiles } from '@/features/avatar/api/avatarApi';
+import { measurementsFromResponse } from '@/features/avatar/avatarProfileStore';
 import {
   avatarCaptureReducer,
   capturedCount,
+  completePhotos,
   initialAvatarCaptureState,
 } from '@/features/avatar/avatarCaptureState';
-import { CAPTURE_STEP_ORDER, getStepConfig } from '@/features/avatar/avatarSteps';
+import { CAPTURE_STEP_ORDER, getStepConfig, type CaptureStepId } from '@/features/avatar/avatarSteps';
+import { useAvatarPreprocessing } from '@/features/avatar/hooks/useAvatarPreprocessing';
 import { usePreviewAvatar } from '@/features/avatar/hooks/usePreviewAvatar';
 import { CloseIcon } from '@/features/avatar/components/AvatarIcons';
+import { AvatarConsentView } from '@/features/avatar/components/AvatarConsentView';
 import { AvatarIntroView } from '@/features/avatar/components/AvatarIntroView';
+import { AvatarProcessingView } from '@/features/avatar/components/AvatarProcessingView';
 import { AvatarReadyView } from '@/features/avatar/components/AvatarReadyView';
+import { AvatarResultsView } from '@/features/avatar/components/AvatarResultsView';
 import { AvatarReviewView } from '@/features/avatar/components/AvatarReviewView';
 import { CaptureProgress } from '@/features/avatar/components/CaptureProgress';
 import { CaptureStepView } from '@/features/avatar/components/CaptureStepView';
@@ -36,22 +45,40 @@ export default function CreateAvatarScreen() {
   const { width, height } = useWindowDimensions();
   const [state, dispatch] = useReducer(avatarCaptureReducer, initialAvatarCaptureState);
   const [isFocused, setIsFocused] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const { create: createPreviewAvatar } = usePreviewAvatar();
+  const { state: preprocessing, run: runPreprocessing } = useAvatarPreprocessing();
   const { stage, photos } = state;
 
-  // PROTOTYPE: no generation yet — finishing assigns the labelled sample preview avatar.
-  async function handleCreateAvatar() {
-    if (isCreating) return;
-    setIsCreating(true);
-    try {
-      await createPreviewAvatar();
-      dispatch({ type: 'finish' });
-    } catch {
-      Alert.alert('Something went wrong', "We couldn't save your avatar on this device. Please try again.");
-    } finally {
-      setIsCreating(false);
+  async function analysePhotos() {
+    const allPhotos = completePhotos(photos);
+    if (!allPhotos) return;
+    const outcome = await runPreprocessing(allPhotos);
+    if (outcome.kind === 'success') {
+      // The profile is saved server-side; this on-device flag keeps Home showing the (preview) avatar.
+      await createPreviewAvatar().catch(() => undefined);
     }
+    dispatch({ type: 'processingFinished' });
+  }
+
+  function handleConsent() {
+    dispatch({ type: 'consentAccepted' });
+    void analysePhotos();
+  }
+
+  function handleRetry() {
+    dispatch({ type: 'retryProcessing' });
+    void analysePhotos();
+  }
+
+  async function pickFromLibrary(step: CaptureStepId) {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Photo access needed', 'Allow access to your photos in Settings to choose a picture.');
+      return;
+    }
+    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
+    const asset = picked.canceled ? undefined : picked.assets[0];
+    if (asset) dispatch({ type: 'photoTaken', step, photo: { uri: asset.uri, width: asset.width, height: asset.height } });
   }
 
   // Camera runs only while this screen is focused; it is released when the user navigates away.
@@ -63,7 +90,13 @@ export default function CreateAvatarScreen() {
   );
 
   const leave = useCallback(() => {
-    const exit = () => (router.canGoBack() ? router.back() : router.replace('/(app)'));
+    // The upload is in flight; leaving now would hide its result.
+    if (stage.kind === 'processing') return;
+    const exit = () => {
+      deleteLocalPhotoFiles(Object.values(photos).map((photo) => photo.uri));
+      if (router.canGoBack()) router.back();
+      else router.replace('/(app)');
+    };
     if (capturedCount(photos) === 0 || stage.kind === 'complete') {
       exit();
       return;
@@ -115,6 +148,7 @@ export default function CreateAvatarScreen() {
             onCaptured={(photo) => dispatch({ type: 'photoTaken', step: stage.step, photo })}
             onRetake={() => dispatch({ type: 'retake', step: stage.step })}
             onConfirm={() => dispatch({ type: 'confirmStep', step: stage.step })}
+            onPickFromLibrary={() => void pickFromLibrary(stage.step)}
           />
         );
       }
@@ -123,12 +157,40 @@ export default function CreateAvatarScreen() {
           <AvatarReviewView
             photos={photos}
             onRetake={(step) => dispatch({ type: 'retake', step })}
-            isCreating={isCreating}
-            onCreate={() => void handleCreateAvatar()}
+            onCreate={() => dispatch({ type: 'requestCreate' })}
+          />
+        );
+      case 'consent':
+        return <AvatarConsentView onAccept={handleConsent} onDecline={() => dispatch({ type: 'back' })} />;
+      case 'processing':
+        return <AvatarProcessingView phase={preprocessing.kind === 'running' ? preprocessing.phase : 'preparing'} />;
+      case 'results':
+        if (preprocessing.kind === 'success') {
+          return (
+            <AvatarResultsView outcome="success" result={preprocessing.result} onFinish={() => dispatch({ type: 'finish' })} />
+          );
+        }
+        return (
+          <AvatarResultsView
+            outcome="failed"
+            failure={
+              preprocessing.kind === 'failed'
+                ? preprocessing.failure
+                : { code: 'unknown', message: 'Something went wrong. Please try again.', validation: null }
+            }
+            onRetake={(step) => dispatch({ type: 'retake', step })}
+            onRetry={handleRetry}
+            onBackToPhotos={() => dispatch({ type: 'back' })}
           />
         );
       case 'complete':
-        return <AvatarReadyView onGoHome={leave} onReviewPhotos={() => dispatch({ type: 'openReview' })} />;
+        return (
+          <AvatarReadyView
+            measurements={preprocessing.kind === 'success' ? measurementsFromResponse(preprocessing.result) : null}
+            onGoHome={leave}
+            onReviewPhotos={() => dispatch({ type: 'openReview' })}
+          />
+        );
     }
   }
 

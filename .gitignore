@@ -10,3 +10,12 @@ services/api/.env
 .DS_Store
 __pycache__/
 .venv/
+# Avatar pipeline: notebooks with outputs can embed user photos; model files are downloaded.
+services/api/notebooks/*.ipynb
+services/api/models/
+services/api/local_test_photos/
+# Next.js web-admin build outputs
+.next/
+apps/web-admin/.next/
+apps/web-admin/out/
+*.tsbuildinfo

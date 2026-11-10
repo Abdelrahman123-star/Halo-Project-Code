@@ -1,0 +1,8 @@
+# AGENTS.md §5: ruff for lint + format.
+line-length = 120
+target-version = "py312"
+# Colab export kept for reference only (contains `!pip` shell lines).
+extend-exclude = ["notebooks"]
+
+[lint]
+extend-select = ["I", "UP", "B", "SIM", "RUF"]

@@ -72,9 +72,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.96)',
     gap: 9,
   },
+  // Larger white "photograph" stage; the garment photo's own background is white.
   imageStage: {
     width: '100%',
-    height: 165,
+    height: 240,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -83,19 +84,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  image: { width: '100%', height: '100%' },
+  image: { width: '92%', height: '92%' },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  metaPill: {
-    backgroundColor: 'rgba(139, 123, 239, 0.14)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  metaPillText: { fontSize: 11, fontWeight: '700', color: '#6B5299' },
+  // AI confidence is shown quietly, not as a headline.
+  metaPill: {},
+  metaPillText: { fontSize: 11, fontWeight: '500', color: '#8A76A6' },
   dateText: { fontSize: 11.5, color: '#76648E', fontWeight: '500' },
   aiOriginNote: { fontSize: 11, color: '#6D5B85', fontStyle: 'italic' },
   swatchesWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },

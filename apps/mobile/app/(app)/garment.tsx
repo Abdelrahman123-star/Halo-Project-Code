@@ -1,39 +1,52 @@
 /**
  * Digital Wardrobe Screen (`/(app)/garment`) — Reached from Bedroom.
- * Redesigned with `ui-ux-pro-max`: frosted pastel capture cards, capture tip banner,
- * inline Saved Garments Bento grid + empty state, Garment Detail & Dropdown Edit Modal,
- * and automatic backend persistence via `useWardrobe` (Supabase RLS + local cache).
+ * Browsing is the image-built closet (WardrobeCloset: category pills + a
+ * horizontally scrolling closet with garments in its slots). "Add a Piece"
+ * (first rod slot) → Add a Piece sheet →
+ * preview → analysis → save, all via the existing `useGarmentAnalysis` /
+ * `useWardrobe` hooks. Tapping a piece opens GarmentDetailSheet; its "Fix it"
+ * opens the existing dropdown editor (WardrobeDetailModal).
  */
-import React, { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
-import { GarmentOptionCard } from '@/features/garment/components/GarmentOptionCard';
 import { GarmentPreview } from '@/features/garment/components/GarmentPreview';
 import { GarmentProcessingView } from '@/features/garment/components/GarmentProcessingView';
-import { PhotoCaptureGuide } from '@/features/garment/components/PhotoCaptureGuide';
 import { useGarmentAnalysis } from '@/features/garment/hooks/useGarmentAnalysis';
 import type { GarmentAnalysisResponse } from '@/features/garment/types/garment';
-import { FadeInView } from '@/features/home/components/FadeInView';
-import { ChevronLeftIcon } from '@/features/home/components/HomeIcons';
-import { SavedWardrobeSection } from '@/features/wardrobe/components/SavedWardrobeSection';
+import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
+import { usePreviewAvatar } from '@/features/avatar/hooks/usePreviewAvatar';
+import { AddPieceSheet } from '@/features/wardrobe/components/AddPieceSheet';
 import { WardrobeDetailModal } from '@/features/wardrobe/components/WardrobeDetailModal';
 import { useWardrobe } from '@/features/wardrobe/hooks/useWardrobe';
+import { ClosetPaletteProvider } from '@/features/wardrobe/closet/ClosetPaletteContext';
+import { closetPaletteFor } from '@/features/wardrobe/closet/closetTheme';
+import { GarmentDetailSheet } from '@/features/wardrobe/closet/GarmentDetailSheet';
+import { WardrobeCloset } from '@/features/wardrobe/closet/WardrobeCloset';
+import { WardrobeBackground, WardrobeHeader } from '@/features/wardrobe/closet/WardrobeHeader';
+import { useWashState } from '@/features/wardrobe/closet/washStore';
 import type { WardrobeItem } from '@/features/wardrobe/types/wardrobe';
+import { useUserGender } from '@/features/profile/hooks/useUserGender';
 import { Banner } from '@/shared/ui/Banner';
 
 export default function GarmentScreen(): React.JSX.Element {
   const router = useRouter();
+  // The men's closet gets its own colours (steel + navy) to match its images.
+  const palette = closetPaletteFor(useUserGender());
   const [hasConfirmed, setHasConfirmed] = useState(false);
+  // The detail sheet (tap a piece) and the existing editor ("Fix it", or right after saving).
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [savedBatch, setSavedBatch] = useState<WardrobeItem[]>([]);
+  const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const lastSavedResultRef = useRef<GarmentAnalysisResponse | null>(null);
 
   const {
     imageUri, imageBase64, sourceType, isLoading: isAnalyzing, statusText,
     error: analysisError, result, pickFromCamera, pickFromGallery, runAnalysis, reset,
+    backImageUri, pickBackPhoto, clearBackPhoto,
   } = useGarmentAnalysis();
 
   const {
@@ -48,9 +61,23 @@ export default function GarmentScreen(): React.JSX.Element {
     }
   }, [result, saveAllGarments]);
 
-  const activeModalItem = selectedItemId
-    ? wardrobeItems.find((i) => i.id === selectedItemId) ?? null
-    : null;
+  const { washIds, toggleWash } = useWashState();
+  const washSet = useMemo(() => new Set(washIds), [washIds]);
+  const { state: avatarState } = usePreviewAvatar();
+  const hasAvatar = avatarState.status === 'ready' && avatarState.hasAvatar;
+
+  // Reload when coming back to this screen.
+  const hasFocusedOnce = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (hasFocusedOnce.current) void refreshWardrobe();
+      hasFocusedOnce.current = true;
+    }, [refreshWardrobe]),
+  );
+
+  const findItem = (id: string | null) => (id ? wardrobeItems.find((i) => i.id === id) ?? null : null);
+  const selectedItem = findItem(selectedItemId);
+  const editingItem = findItem(editingItemId);
 
   const isPreviewMode = Boolean(imageUri && !hasConfirmed);
   const isProcessingMode = Boolean(hasConfirmed);
@@ -85,154 +112,111 @@ export default function GarmentScreen(): React.JSX.Element {
     if (!dataUri) return;
     const saved = await saveManualPhoto(dataUri);
     handleFullReset();
-    if (saved) setSelectedItemId(saved.id);
+    if (saved) setEditingItemId(saved.id);
   }
 
   const combinedError = !isProcessingMode ? analysisError || wardrobeError : null;
+  const isBrowsing = !isPreviewMode && !isProcessingMode;
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="dark" />
-      <PastelBlobBackground animated={false} />
+    <ClosetPaletteProvider palette={palette}>
+      <View style={[styles.root, { backgroundColor: palette.base }]}>
+        <StatusBar style="dark" />
+        <WardrobeBackground />
 
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <Pressable
-            onPress={handleBack}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            style={({ pressed }) => [styles.backBtn, pressed && styles.btnPressed]}
-          >
-            <ChevronLeftIcon size={18} color="#6B5299" />
-            <Text style={styles.backBtnText}>
-              {isPreviewMode || isProcessingMode ? 'Back' : 'Bedroom'}
-            </Text>
-          </Pressable>
-
-          <Image
-            source={require('../../assets/halo-logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-            accessibilityLabel="HALO Logo"
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+          <WardrobeHeader
+            backLabel={isPreviewMode || isProcessingMode ? 'Back' : 'Bedroom'}
+            onBack={handleBack}
+            onOpenProfile={isBrowsing ? () => router.push('/(app)/profile') : null}
           />
 
-          <View style={styles.headerSpacer} />
-        </View>
+          {combinedError ? (
+            <View style={styles.bannerWrap}>
+              <Banner tone="error" message={combinedError} />
+            </View>
+          ) : null}
 
-        {combinedError ? (
-          <View style={styles.bannerWrap}>
-            <Banner tone="error" message={combinedError} />
-          </View>
-        ) : null}
-
-        {!isPreviewMode && !isProcessingMode ? (
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <FadeInView fromTranslateY={-6}>
-              <View style={styles.titleWrap}>
-                <View style={styles.suiteBadge}>
-                  <View style={styles.suiteBadgeDot} />
-                  <Text style={styles.suiteBadgeText}>AI CURATION · DIGITAL WARDROBE</Text>
-                </View>
-                <Text style={styles.mainTitle}>Add to Your Wardrobe</Text>
-                <Text style={styles.mainSubtitle}>
-                  Scan or upload clothing to build your 3D digital closet.
-                </Text>
-              </View>
-            </FadeInView>
-
-            <FadeInView delayMs={80} fromTranslateY={8}>
-              <View style={styles.cardsRow}>
-                <GarmentOptionCard
-                  type="camera"
-                  title="Take a Photo"
-                  subtitle="Live camera capture"
-                  onPress={pickFromCamera}
-                />
-                <GarmentOptionCard
-                  type="gallery"
-                  title="From Gallery"
-                  subtitle="Select saved photo"
-                  onPress={pickFromGallery}
-                />
-              </View>
-            </FadeInView>
-
-            <FadeInView delayMs={140} fromTranslateY={8}>
-              <PhotoCaptureGuide />
-            </FadeInView>
-
-            <View style={styles.divider} />
-
-            <FadeInView delayMs={200} fromTranslateY={10}>
-              <SavedWardrobeSection
+          {isBrowsing ? (
+            <View style={styles.closetArea}>
+              <WardrobeCloset
                 items={wardrobeItems}
                 isLoading={isLoadingWardrobe}
-                onRefresh={refreshWardrobe}
-                onSelectItem={(item) => setSelectedItemId(item.id)}
-                onTakeFirstPhoto={pickFromCamera}
+                washIds={washSet}
+                onRefresh={() => void refreshWardrobe()}
+                onOpenItem={(item) => setSelectedItemId(item.id)}
+                onAddPiece={() => setIsAddSheetOpen(true)}
               />
-            </FadeInView>
-          </ScrollView>
-        ) : null}
+            </View>
+          ) : null}
 
-        {isPreviewMode && imageUri ? (
-          <ScrollView contentContainerStyle={styles.previewScroll} showsVerticalScrollIndicator={false}>
-            <GarmentPreview
-              imageUri={imageUri}
-              sourceType={sourceType}
-              onRetakeOrChooseAnother={handleFullReset}
-              onConfirm={handleConfirmAndAnalyze}
+          {isPreviewMode && imageUri ? (
+            <ScrollView contentContainerStyle={styles.previewScroll} showsVerticalScrollIndicator={false}>
+              <GarmentPreview
+                imageUri={imageUri}
+                sourceType={sourceType}
+                backImageUri={backImageUri}
+                onPickBack={(source) => void pickBackPhoto(source)}
+                onRemoveBack={clearBackPhoto}
+                onRetakeOrChooseAnother={handleFullReset}
+                onConfirm={handleConfirmAndAnalyze}
+                isLoading={isAnalyzing}
+              />
+            </ScrollView>
+          ) : null}
+
+          {isProcessingMode ? (
+            <GarmentProcessingView
               isLoading={isAnalyzing}
+              isSaving={isSavingBatch}
+              statusText={statusText}
+              error={analysisError}
+              result={result}
+              savedBatch={savedBatch}
+              onRetry={runAnalysis}
+              onReset={handleFullReset}
+              onEditSavedItem={(item) => setEditingItemId(item.id)}
+              onManualSave={handleManualSave}
             />
-          </ScrollView>
-        ) : null}
+          ) : null}
 
-        {isProcessingMode ? (
-          <GarmentProcessingView
-            isLoading={isAnalyzing}
-            isSaving={isSavingBatch}
-            statusText={statusText}
-            error={analysisError}
-            result={result}
-            savedBatch={savedBatch}
-            onRetry={runAnalysis}
-            onReset={handleFullReset}
-            onEditSavedItem={(item) => setSelectedItemId(item.id)}
-            onManualSave={handleManualSave}
+          <GarmentDetailSheet
+            item={selectedItem}
+            onClose={() => setSelectedItemId(null)}
+            onEdit={(item) => setEditingItemId(item.id)}
+            // Try-on needs an avatar: open it if there is one, otherwise start creating it.
+            onTryOn={() => router.push(hasAvatar ? '/(app)/avatar' : '/(app)/create-avatar')}
+            onDelete={removeItem}
+            isInWash={selectedItem ? washSet.has(selectedItem.id) : false}
+            onToggleWash={toggleWash}
           />
-        ) : null}
 
-        <WardrobeDetailModal
-          visible={Boolean(activeModalItem)}
-          item={activeModalItem}
-          onClose={() => setSelectedItemId(null)}
-          onSave={editItem}
-          onDelete={removeItem}
-        />
-      </SafeAreaView>
-    </View>
+          <WardrobeDetailModal
+            visible={Boolean(editingItem)}
+            item={editingItem}
+            onClose={() => setEditingItemId(null)}
+            onSave={editItem}
+            onDelete={removeItem}
+          />
+
+          <AddPieceSheet
+            visible={isAddSheetOpen}
+            onClose={() => setIsAddSheetOpen(false)}
+            onTakePhoto={() => void pickFromCamera()}
+            onChooseFromGallery={() => void pickFromGallery()}
+          />
+        </SafeAreaView>
+      </View>
+    </ClosetPaletteProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#EEF2FB' },
+  root: { flex: 1 },
   safeArea: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 8 },
-  backBtn: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 22, backgroundColor: 'rgba(255, 255, 255, 0.76)', borderWidth: 1.2, borderColor: 'rgba(255, 255, 255, 0.95)', shadowColor: '#8C78B3', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
-  backBtnText: { fontSize: 13, fontWeight: '600', color: '#6B5299' },
-  btnPressed: { opacity: 0.72, transform: [{ scale: 0.97 }] },
-  logo: { width: 92, height: 38 },
-  headerSpacer: { width: 84 },
   bannerWrap: { paddingHorizontal: 20, marginBottom: 6 },
-  scrollContent: { paddingHorizontal: 20, paddingTop: 2, paddingBottom: 110, gap: 10 },
-  previewScroll: { paddingTop: 10, paddingBottom: 110 },
-  titleWrap: { alignItems: 'center', marginTop: 2, marginBottom: 2 },
-  suiteBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 3.5, borderRadius: 12, backgroundColor: 'rgba(217, 207, 241, 0.55)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.85)', marginBottom: 6 },
-  suiteBadgeDot: { width: 5.5, height: 5.5, borderRadius: 3, backgroundColor: '#8B7BEF', marginRight: 5 },
-  suiteBadgeText: { fontSize: 9.5, fontWeight: '700', color: '#6B5299', letterSpacing: 0.6 },
-  mainTitle: { fontSize: 22, fontWeight: '800', color: '#34264C', letterSpacing: -0.3, textAlign: 'center' },
-  mainSubtitle: { marginTop: 3, maxWidth: 320, fontSize: 12.5, lineHeight: 17, color: '#76648E', textAlign: 'center' },
-  cardsRow: { flexDirection: 'row', gap: 10 },
-  divider: { height: 1, backgroundColor: 'rgba(165, 148, 195, 0.20)', marginVertical: 2 },
+  // The closet fills what's left above the floating bottom navigation.
+  closetArea: { flex: 1, paddingTop: 4, paddingBottom: BOTTOM_NAV_CLEARANCE },
+  // Clears the floating bottom navigation so the preview's buttons stay tappable.
+  previewScroll: { paddingTop: 10, paddingBottom: BOTTOM_NAV_CLEARANCE + 24 },
 });

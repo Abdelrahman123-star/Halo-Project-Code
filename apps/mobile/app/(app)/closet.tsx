@@ -18,6 +18,7 @@ import { CLOSET_SECTIONS } from "@/features/closet/logic/sections";
 import { useClosetSections } from "@/features/closet/hooks/useClosetSections";
 import { EditWardrobeModal } from "@/features/wardrobe/components/EditWardrobeModal";
 import { ClosetScene } from "@/three/closet/ClosetScene";
+import { BOTTOM_NAV_CLEARANCE } from "@/features/home/components/HomeBottomNav";
 
 export default function ClosetScreen(): React.JSX.Element {
   const router = useRouter();
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
   headerTitle: { color: "#ffffff", fontSize: 16, fontWeight: "700" },
   headerSubtitle: { color: "rgba(255,255,255,0.6)", fontSize: 11, marginTop: 2 },
   sceneContainer: { flex: 1, position: "relative" },
-  doorPrompt: { position: "absolute", bottom: 40, alignSelf: "center", backgroundColor: "rgba(15,23,42,0.85)", paddingHorizontal: 22, paddingVertical: 14, borderRadius: 24, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" },
+  doorPrompt: { position: "absolute", bottom: BOTTOM_NAV_CLEARANCE + 12, alignSelf: "center", backgroundColor: "rgba(15,23,42,0.85)", paddingHorizontal: 22, paddingVertical: 14, borderRadius: 24, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.15)" },
   doorPromptIcon: { fontSize: 22, marginBottom: 4 },
   doorPromptTitle: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
   doorPromptSub: { color: "rgba(255,255,255,0.7)", fontSize: 11, marginTop: 2 },
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
   emptyTitle: { color: "rgba(255,255,255,0.8)", fontSize: 13 },
   scanBtn: { backgroundColor: "#3b82f6", paddingHorizontal: 14, paddingVertical: 7, borderRadius: 8 },
   scanBtnText: { color: "#ffffff", fontWeight: "700", fontSize: 12 },
-  inspectCard: { position: "absolute", bottom: 16, left: 16, right: 16, backgroundColor: "rgba(15,23,42,0.92)", borderRadius: 18, padding: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: "rgba(59,130,246,0.4)" },
+  inspectCard: { position: "absolute", bottom: BOTTOM_NAV_CLEARANCE, left: 16, right: 16, backgroundColor: "rgba(15,23,42,0.92)", borderRadius: 18, padding: 14, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: "rgba(59,130,246,0.4)" },
   inspectInfo: { flex: 1, gap: 2 },
   inspectName: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
   inspectMeta: { color: "rgba(255,255,255,0.65)", fontSize: 12, textTransform: "capitalize" },

@@ -22,6 +22,7 @@ type CaptureStepViewProps = {
   onCaptured: (photo: CapturedPhoto) => void;
   onRetake: () => void;
   onConfirm: () => void;
+  onPickFromLibrary: () => void;
 };
 
 export function CaptureStepView({
@@ -33,6 +34,7 @@ export function CaptureStepView({
   onCaptured,
   onRetake,
   onConfirm,
+  onPickFromLibrary,
 }: CaptureStepViewProps) {
   const stepNumber = CAPTURE_STEP_ORDER.indexOf(step.id) + 1;
 
@@ -76,7 +78,10 @@ export function CaptureStepView({
           </View>
         </View>
       ) : (
-        <CameraCapture key={step.id} step={step} height={frameHeight} isActive={cameraActive} onCaptured={onCaptured} />
+        <View style={styles.previewBlock}>
+          <CameraCapture key={step.id} step={step} height={frameHeight} isActive={cameraActive} onCaptured={onCaptured} />
+          <SoftButton label="Choose from library" onPress={onPickFromLibrary} compact />
+        </View>
       )}
     </View>
   );

@@ -18,6 +18,7 @@ import { GarmentDetectedCard } from '@/features/garment/components/GarmentDetect
 import { GarmentRoadmapCard } from '@/features/garment/components/GarmentRoadmapCard';
 import type { GarmentAnalysisResponse } from '@/features/garment/types/garment';
 import type { WardrobeItem } from '@/features/wardrobe/types/wardrobe';
+import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
 
 interface GarmentProcessingViewProps {
   isLoading: boolean;
@@ -65,7 +66,7 @@ export function GarmentProcessingView({
             </View>
             <View style={styles.stepRow}>
               <View style={styles.stepDotPulse} />
-              <Text style={styles.stepText}>Saving to Digital Wardrobe</Text>
+              <Text style={styles.stepText}>Saving & Starting 3D Conversion</Text>
             </View>
           </View>
         </FrostedGlassCard>
@@ -92,7 +93,7 @@ export function GarmentProcessingView({
             <FrostedGlassCard variant="card" style={styles.emptyCard}>
               <Text style={styles.emptyTitle}>No Garment Automatically Detected</Text>
               <Text style={styles.emptySubtitle}>
-                CV could not isolate a clear garment shape. You can retake with flat lighting, or save this photo manually and pick its category from the dropdown.
+                CV could not isolate a clear garment shape. Retake it laid flat on a plain background with the whole piece in frame, or save this photo manually and pick its category.
               </Text>
               {onManualSave ? (
                 <Pressable onPress={onManualSave} disabled={isSaving} style={styles.primaryPill} accessibilityRole="button">
@@ -140,7 +141,7 @@ export function GarmentProcessingView({
                         accessibilityRole="button"
                         style={styles.editInlineBtn}
                       >
-                        <Text style={styles.editInlineText}>Edit Category, Style & Fabric</Text>
+                        <Text style={styles.editInlineText}>✦ View 3D Model & Details</Text>
                       </Pressable>
                     ) : null}
                   </View>
@@ -163,7 +164,8 @@ export function GarmentProcessingView({
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingBottom: 40, alignItems: 'center', gap: 16 },
+  // Clears the floating bottom navigation so the last button ("Done · View in My Wardrobe") stays tappable.
+  container: { paddingHorizontal: 20, paddingBottom: BOTTOM_NAV_CLEARANCE + 24, alignItems: 'center', gap: 16 },
   loadingCard: { width: '100%', padding: 24, alignItems: 'center', gap: 12 },
   spinnerCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(139, 123, 239, 0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   loadingTitle: { fontSize: 18, fontWeight: '800', color: '#2E2242' },

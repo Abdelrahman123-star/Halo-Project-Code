@@ -5,6 +5,8 @@
 
 import { Buffer } from "buffer";
 import * as jpeg from "jpeg-js";
+import { illuminantFromBackground } from "@/features/garment/api/catalogGrade";
+import { applyStudioCleanup } from "@/features/garment/api/studioCleanup";
 
 const globalScope = globalThis as unknown as { Buffer?: typeof Buffer };
 if (!globalScope.Buffer) {
@@ -96,9 +98,10 @@ export function isLowerBodyGarment(categoryName: string): boolean {
 }
 
 /**
- * Crops the detected garment onto a clean white background (255, 255, 255),
- * applies polygon mask isolation when available, adds 5% uniform white padding,
- * and returns a `data:image/jpeg;base64,...` URI.
+ * Crops the detected garment using its segmentation polygon (when available),
+ * runs the on-device studio cleanup (wrinkle softening, shading flattening,
+ * pure-white background, centred 4:5 framing — see studioCleanup.ts), and
+ * returns a `data:image/jpeg;base64,...` URI.
  */
 export function cropAndCleanGarment(
   decoded: DecodedImage,
@@ -122,6 +125,7 @@ export function cropAndCleanGarment(
   const outH = cropH + padY * 2;
   const outData = new Uint8Array(outW * outH * 4);
   outData.fill(255); // Pure white RGBA background
+  const garmentMask = new Uint8Array(outW * outH);
 
   const polygon = normalizePoints(pred.points);
   const hasPolygon = polygon.length >= 3;
@@ -141,6 +145,10 @@ export function cropAndCleanGarment(
     }
   }
 
+  let bgR = 0;
+  let bgG = 0;
+  let bgB = 0;
+  let bgCount = 0;
   for (let cy = 0; cy < cropH; cy++) {
     const srcY = y1 + cy;
     const dstY = cy + padY;
@@ -156,6 +164,12 @@ export function cropAndCleanGarment(
           srcY > polyMaxY ||
           !isPointInPolygon(srcX, srcY, polygon)
         ) {
+          // Real background next to the garment: its colour is the scene's light (white balance).
+          const bgOffset = (srcY * imgW + srcX) * 4;
+          bgR += srcData[bgOffset];
+          bgG += srcData[bgOffset + 1];
+          bgB += srcData[bgOffset + 2];
+          bgCount++;
           continue;
         }
       }
@@ -168,16 +182,22 @@ export function cropAndCleanGarment(
       outData[dstOffset + 1] = srcData[srcOffset + 1];
       outData[dstOffset + 2] = srcData[srcOffset + 2];
       outData[dstOffset + 3] = 255;
+      garmentMask[dstY * outW + dstX] = 1;
     }
   }
 
+  const presented = applyStudioCleanup(
+    { width: outW, height: outH, data: outData },
+    garmentMask,
+    illuminantFromBackground(bgR, bgG, bgB, bgCount),
+  );
   const encoded = jpeg.encode(
     {
-      data: outData,
-      width: outW,
-      height: outH,
+      data: presented.data,
+      width: presented.width,
+      height: presented.height,
     },
-    85,
+    90,
   );
 
   const b64 = Buffer.isBuffer(encoded.data)

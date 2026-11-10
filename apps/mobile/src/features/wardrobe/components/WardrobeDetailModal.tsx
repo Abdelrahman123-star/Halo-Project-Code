@@ -1,6 +1,6 @@
 /**
  * WardrobeDetailModal — Frosted luxury garment detail & dropdown editor sheet.
- * Displays garment hero summary, editable name, dropdown selectors
+ * Displays the automatic 3D model, garment hero summary, editable name, dropdown selectors
  * (Category, Subtype, Fabric, Pattern), Save, and two-step Delete.
  */
 import React, { useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { WardrobeDropdownField } from '@/features/wardrobe/components/WardrobeDropdownField';
 import { WardrobeModalHero } from '@/features/wardrobe/components/WardrobeModalHero';
+import { Wardrobe3DSection } from '@/features/garment3d/components/Wardrobe3DSection';
 import {
   COMMON_FABRICS, COMMON_PATTERNS, getCategoryOption, WARDROBE_CATEGORIES,
   type UpdateWardrobeItemInput, type WardrobeItem,
@@ -111,6 +112,7 @@ export function WardrobeDetailModal({
       <View style={styles.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close modal" />
         <LinearGradient colors={['#FAF8FF', '#EEF2FB']} style={styles.sheet}>
+          <View style={styles.handle} />
           <View style={styles.sheetHeader}>
             <View>
               <Text style={styles.badgeTop}>GARMENT DETAILS & EDIT</Text>
@@ -124,6 +126,7 @@ export function WardrobeDetailModal({
           </View>
 
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <Wardrobe3DSection key={item.id} item={item} />
             <WardrobeModalHero item={item} />
 
             <View style={styles.fieldGroup}>
@@ -220,6 +223,7 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(32, 22, 50, 0.48)', justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 24, borderTopWidth: 1.5, borderColor: 'rgba(255, 255, 255, 0.95)' },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(107, 82, 153, 0.22)', marginTop: -8, marginBottom: 12 },
   badgeTop: { fontSize: 10, fontWeight: '700', color: '#6B5299', letterSpacing: 0.7 },
   sheetTitle: { fontSize: 20, fontWeight: '800', color: '#2E2242', maxWidth: 260, marginTop: 2 },
   closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255, 255, 255, 0.88)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.96)', alignItems: 'center', justifyContent: 'center' },

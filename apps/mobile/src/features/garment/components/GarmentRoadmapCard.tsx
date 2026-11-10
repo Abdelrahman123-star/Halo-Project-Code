@@ -1,6 +1,6 @@
 /**
- * GarmentRoadmapCard — displays an honest explanation of the 3D pipeline roadmap,
- * indicating that 3D template fitting and avatar try-on are in development (AGENTS.md §3).
+ * GarmentRoadmapCard — explains that the saved garment is converted to 3D automatically,
+ * while avatar fitting / try-on is still in development (AGENTS.md §3).
  */
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -27,11 +27,11 @@ export function GarmentRoadmapCard(): React.JSX.Element {
             strokeLinecap="round"
           />
         </Svg>
-        <Text style={styles.roadmapTitle}>Stage 1 Complete · 3D Fitting Next</Text>
+        <Text style={styles.roadmapTitle}>Saved · Converting to 3D Automatically</Text>
       </View>
       <Text style={styles.roadmapBody}>
-        Clothing analysis & feature extraction finished. 3D template adaptation
-        and avatar cloth fitting are upcoming in Phase 3 pipeline.
+        Your 3D model is being built in the background (usually 2–5 minutes). It appears
+        on the piece in your wardrobe automatically, ready to rotate and zoom.
       </Text>
     </FrostedGlassCard>
   );

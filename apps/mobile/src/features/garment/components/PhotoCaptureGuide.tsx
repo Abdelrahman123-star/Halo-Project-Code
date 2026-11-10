@@ -1,24 +1,31 @@
 /**
- * PhotoCaptureGuide — Compact frosted photo tip banner (`ui-ux-pro-max`).
- * Streamlined 1-tier helper (~42px) with optional tap-to-expand micro-tips,
- * high-contrast plum typography, and an SVG sparkle icon.
+ * PhotoCaptureGuide — how to photograph a garment so the automatic 3D
+ * conversion (single-image image-to-3D) gets a clean silhouette.
+ * Expanded by default (`defaultExpanded`); tap to collapse / expand.
  */
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 
-const TIPS = ['Even Lighting', 'Full Frame', 'Minimal Folds'] as const;
+const TIPS = [
+  { title: 'One garment only', detail: 'No other clothes, hangers, hands or people in the shot.' },
+  { title: 'Plain, contrasting background', detail: 'Lay it on a bed sheet, floor or wall that differs from its colour.' },
+  { title: 'Flat & front-facing', detail: 'Spread it out, sleeves to the sides, folds and wrinkles smoothed.' },
+  { title: 'Whole piece in frame', detail: 'Shoot straight from above with a little space around every edge.' },
+  { title: 'Bright, even light', detail: 'Daylight works best. No flash, harsh shadows or reflections.' },
+  { title: 'Sharp photo', detail: 'Hold steady; a blurry photo gives a blurry 3D model.' },
+] as const;
 
-export function PhotoCaptureGuide(): React.JSX.Element {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function PhotoCaptureGuide({ defaultExpanded = true }: { defaultExpanded?: boolean } = {}): React.JSX.Element {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
     <Pressable
       onPress={() => setIsExpanded((prev) => !prev)}
       accessibilityRole="button"
-      accessibilityLabel="Garment photography tip"
-      accessibilityHint="Tap to toggle detailed photography recommendations"
+      accessibilityLabel="How to photograph a garment for 3D"
+      accessibilityHint="Tap to show or hide the photo checklist"
       style={({ pressed }) => [styles.wrapper, pressed && styles.pressed]}
     >
       <LinearGradient
@@ -42,8 +49,8 @@ export function PhotoCaptureGuide(): React.JSX.Element {
 
           <View style={styles.textBox}>
             <Text style={styles.tipText} numberOfLines={isExpanded ? undefined : 1}>
-              <Text style={styles.tipLead}>Photo Tip: </Text>
-              Lay flat in bright, even light for clean 3D garment edges.
+              <Text style={styles.tipLead}>For a great 3D model: </Text>
+              one garment, laid flat, fully in frame.
             </Text>
           </View>
 
@@ -53,13 +60,21 @@ export function PhotoCaptureGuide(): React.JSX.Element {
         </View>
 
         {isExpanded ? (
-          <View style={styles.expandedRow}>
-            {TIPS.map((tip) => (
-              <View key={tip} style={styles.pill}>
-                <View style={styles.pillDot} />
-                <Text style={styles.pillText}>{tip}</Text>
+          <View style={styles.expandedList}>
+            {TIPS.map((tip, index) => (
+              <View key={tip.title} style={styles.tipRow}>
+                <View style={styles.tipNumber}>
+                  <Text style={styles.tipNumberText}>{index + 1}</Text>
+                </View>
+                <Text style={styles.tipRowText}>
+                  <Text style={styles.tipRowTitle}>{tip.title}. </Text>
+                  {tip.detail}
+                </Text>
               </View>
             ))}
+            <Text style={styles.privacyNote}>
+              Saved photos are sent to our 3D provider (Meshy) to build the model.
+            </Text>
           </View>
         ) : null}
       </LinearGradient>
@@ -128,33 +143,45 @@ const styles = StyleSheet.create({
     color: '#6B5299',
     letterSpacing: 0.3,
   },
-  expandedRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  expandedList: {
     gap: 6,
     paddingLeft: 35,
     paddingTop: 2,
   },
-  pill: {
+  tipRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 7,
+  },
+  tipNumber: {
+    width: 17,
+    height: 17,
+    borderRadius: 8.5,
+    marginTop: 0.5,
+    backgroundColor: 'rgba(139, 123, 239, 0.16)',
     alignItems: 'center',
-    gap: 4.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.90)',
-    borderWidth: 1,
-    borderColor: 'rgba(217, 207, 241, 0.60)',
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 8,
+    justifyContent: 'center',
   },
-  pillDot: {
-    width: 4.5,
-    height: 4.5,
-    borderRadius: 2.25,
-    backgroundColor: '#8B7BEF',
-  },
-  pillText: {
-    fontSize: 10.5,
-    fontWeight: '600',
+  tipNumberText: {
+    fontSize: 9.5,
+    fontWeight: '800',
     color: '#6B5299',
+  },
+  tipRowText: {
+    flex: 1,
+    fontSize: 11.5,
+    lineHeight: 16,
+    color: '#554271',
+  },
+  tipRowTitle: {
+    fontWeight: '700',
+    color: '#2E2242',
+  },
+  privacyNote: {
+    marginTop: 2,
+    fontSize: 10.5,
+    lineHeight: 14,
+    color: '#8A7AA5',
+    fontStyle: 'italic',
   },
 });

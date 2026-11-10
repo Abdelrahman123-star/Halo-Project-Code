@@ -1,22 +1,23 @@
 /** Small round frosted button, styled like the auth social buttons. */
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { authTheme } from '@/features/auth/components/AuthComponents';
 
 type GlassIconButtonProps = {
   onPress: () => void;
   accessibilityLabel: string;
   children: ReactNode;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function GlassIconButton({ onPress, accessibilityLabel, children }: GlassIconButtonProps) {
+export function GlassIconButton({ onPress, accessibilityLabel, children, style }: GlassIconButtonProps) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.button, style, pressed && styles.pressed]}
     >
       {children}
     </Pressable>

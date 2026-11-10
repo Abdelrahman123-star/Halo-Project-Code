@@ -1,7 +1,7 @@
 /**
  * Hook for managing the user's personal Digital Wardrobe state.
  * Orchestrates fetching, auto-saving analyzed garments, manual additions,
- * editing metadata, and deleting items.
+ * editing metadata, and deleting items. 3D models are built on-device at view time.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -60,10 +60,10 @@ export function useWardrobe() {
           category: garment.category,
           confidence: garment.confidence,
           crop_base64: garment.crop_base64,
+          back_crop_base64: garment.back_crop_base64 ?? null,
           colors: garment.colors,
           attributes: garment.attributes,
         });
-
         setItems((prev) => [saved, ...prev.filter((i) => i.id !== saved.id)]);
         setSavedItemNumbers((prev) => new Set([...prev, garment.item_number]));
         return saved;

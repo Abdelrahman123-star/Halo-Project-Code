@@ -25,6 +25,23 @@ import {
 
 const ANON_FALLBACK_UUID = "00000000-0000-4000-8000-000000000000";
 const LOCAL_ID_PREFIX = "a0eebc99-9c0b-4ef8-a000-";
+// Postgres "undefined_column" — the DB has not had migration 0003 applied yet.
+const UNDEFINED_COLUMN = "42703";
+
+export function isLocalWardrobeItemId(itemId: string): boolean {
+  return itemId.startsWith(LOCAL_ID_PREFIX);
+}
+
+// Supabase returns PostgrestError plain objects (not Error instances), which
+// would otherwise log as "[object Object]" and hide e.g. a missing column.
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    const { message, code } = err as { message?: unknown; code?: unknown };
+    if (typeof message === "string") return typeof code === "string" ? `${code}: ${message}` : message;
+  }
+  return String(err);
+}
 
 function hasSupabaseClient(): boolean {
   return Boolean(supabase && typeof supabase.from === "function");
@@ -56,15 +73,24 @@ export async function fetchWardrobeItems(): Promise<WardrobeItem[]> {
 
     if (error) throw error;
 
+    const cached = await getLocalItems();
+    // Without migration 0003 the back photo only exists in the local cache; keep it.
+    const cachedBackPhotos = new Map(
+      cached.filter((i) => i.back_crop_base64).map((i) => [i.id, i.back_crop_base64]),
+    );
     const remoteItems = Array.isArray(data)
-      ? data.map((item) => WardrobeItemSchema.parse(item))
+      ? data.map((row) => {
+          const item = WardrobeItemSchema.parse(row);
+          return item.back_crop_base64 || !cachedBackPhotos.has(item.id)
+            ? item
+            : { ...item, back_crop_base64: cachedBackPhotos.get(item.id) };
+        })
       : [];
 
-    const cached = await getLocalItems();
     const remoteIds = new Set(remoteItems.map((i) => i.id));
     const unsyncedLocal = cached.filter(
       (item) =>
-        item.id.startsWith(LOCAL_ID_PREFIX) &&
+        isLocalWardrobeItemId(item.id) &&
         !remoteIds.has(item.id) &&
         (activeUserId === ANON_FALLBACK_UUID ||
           item.user_id === activeUserId ||
@@ -75,7 +101,7 @@ export async function fetchWardrobeItems(): Promise<WardrobeItem[]> {
     await setLocalItems(merged);
     return merged;
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = describeError(err);
     console.warn(`[HALO Wardrobe] ⚠️ Supabase fetch failed (${msg}). Falling back to local cache.`);
 
     const localItems = await getLocalItems();
@@ -122,21 +148,28 @@ export async function insertWardrobeItem(
     attributes: enrichedAttributes,
   };
 
+  const backPhoto = parsedInput.back_crop_base64 ?? null;
+
   try {
     if (!hasSupabaseClient()) throw new Error("Supabase client not configured");
-    const { data, error } = await supabase
-      .from("wardrobe_items")
-      .insert(payload)
-      .select("*")
-      .single();
+    const insertRow = async (row: Record<string, unknown>) =>
+      supabase.from("wardrobe_items").insert(row).select("*").single();
 
+    let { data, error } = await insertRow(backPhoto ? { ...payload, back_crop_base64: backPhoto } : payload);
+    if (error && backPhoto && (error as { code?: string }).code === UNDEFINED_COLUMN) {
+      console.warn(
+        "[HALO Wardrobe] back_crop_base64 column missing (apply migration 0003). Keeping the back photo on this device only.",
+      );
+      ({ data, error } = await insertRow(payload));
+    }
     if (error) throw error;
 
-    const savedItem = WardrobeItemSchema.parse(data);
+    const parsed = WardrobeItemSchema.parse(data);
+    const savedItem = backPhoto ? { ...parsed, back_crop_base64: backPhoto } : parsed;
     await upsertLocalItem(savedItem);
     return savedItem;
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = describeError(err);
     console.warn(`[HALO Wardrobe] ⚠️ Supabase save fallback (${msg}). Saving locally.`);
 
     const uniqueSuffix = (Date.now() * 1000 + Math.floor(Math.random() * 1000))
@@ -151,6 +184,7 @@ export async function insertWardrobeItem(
       category: parsedInput.category,
       confidence: parsedInput.confidence ?? null,
       crop_base64: parsedInput.crop_base64 ?? null,
+      back_crop_base64: backPhoto,
       colors: parsedInput.colors,
       attributes: enrichedAttributes,
       created_at: new Date().toISOString(),
@@ -174,7 +208,7 @@ export async function updateWardrobeItem(
   if (parsedUpdates.colors !== undefined) payload.colors = parsedUpdates.colors;
 
   try {
-    if (!hasSupabaseClient() || itemId.startsWith(LOCAL_ID_PREFIX)) {
+    if (!hasSupabaseClient() || isLocalWardrobeItemId(itemId)) {
       throw new Error("Local-only wardrobe item");
     }
     const { data, error } = await supabase
@@ -186,23 +220,27 @@ export async function updateWardrobeItem(
 
     if (error) throw error;
 
-    const updatedItem = WardrobeItemSchema.parse(data);
+    const parsed = WardrobeItemSchema.parse(data);
+    const cachedBack = parsed.back_crop_base64
+      ? null
+      : (await getLocalItems()).find((i) => i.id === itemId)?.back_crop_base64 ?? null;
+    const updatedItem = cachedBack ? { ...parsed, back_crop_base64: cachedBack } : parsed;
     await upsertLocalItem(updatedItem);
     return updatedItem;
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = describeError(err);
     console.warn(`[HALO Wardrobe] ⚠️ Supabase update fallback (${msg}).`);
     return updateLocalItem(itemId, parsedUpdates);
   }
 }
 
 export async function deleteWardrobeItem(itemId: string): Promise<void> {
-  if (hasSupabaseClient() && !itemId.startsWith(LOCAL_ID_PREFIX)) {
+  if (hasSupabaseClient() && !isLocalWardrobeItemId(itemId)) {
     try {
       const { error } = await supabase.from("wardrobe_items").delete().eq("id", itemId);
       if (error) console.warn(`[HALO Wardrobe] ⚠️ Remote delete warning: ${error.message}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = describeError(err);
       console.warn(`[HALO Wardrobe] ⚠️ Remote delete skipped (${msg}).`);
     }
   }

@@ -345,7 +345,73 @@
 
 ---
 
-# Active Implementation Plan — Create Your Avatar (camera capture)
+# Active Implementation Plan — Avatar preprocessing (body + face profile)
+
+**Status:** Implemented and tested in code (2026-11-08); migration 0003 + device E2E pending (user).
+**Goal:** front / back / face photos from Create Avatar → FastAPI runs the HALO Colab
+preprocessing pipeline (OpenCV + MediaPipe Pose/Face Landmarker) → a per-user avatar
+profile (body + face proportions, landmarks, validation report) saved in Supabase.
+**Out of scope:** 3D avatar generation, Blender/Unity, try-on, smart-mirror pipeline. The app
+avatar stays the labelled "Preview avatar" image; the profile is input for later 3D work.
+
+## Decisions (user, 2026-11-08)
+1. Photos are processed **in memory and discarded**. Only the profile and validation report are stored.
+2. **Synchronous** request for now, but **benchmark first**. If it is slow or unreliable, move to the ADR-0004 background job → new ADR (ADR-0006).
+3. Backend uses `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (**backend `.env` only**). The user runs migration 0003 manually after it is explained.
+4. Backend reachable on local Wi-Fi (`uvicorn --host 0.0.0.0`); mobile `EXPO_PUBLIC_API_URL=http://<PC-LAN-IP>:8000`.
+5. Remove the hardcoded Roboflow key fallback in `garmentApi.ts`; handle a missing key safely.
+
+## Source pipeline
+`services/api/notebooks/halo_avatar_preprocessing.py` (Colab export, reference only, not imported).
+Fixes vs notebook: hardcoded `shoulder_width=103`, `hip_width=112` and `fused_body_features`
+replaced by per-user computation · crashes on "no person/face" → typed validation issues ·
+hip/shoulder widths use the torso-central silhouette segment (the full row includes arms) ·
+ratios are the real measurements; px values are diagnostics only · low-confidence values → `null` ·
+EXIF orientation applied before analysis · `mp.solutions` (drawing only) dropped.
+Quality checks beyond the notebook (brightness, blur, aspect, framing) are **new heuristics**.
+
+## Design
+- **API:** `POST /v1/avatar/preprocess` (Bearer Supabase token; multipart `front`, `back`, `face`).
+  200 → unified profile + validation report + timings. 422 `scan_invalid` (details carry the
+  report, so the app can ask for a retake), 401, 413/415 `file_invalid`, 503 `model_unavailable` /
+  `server_not_configured` / `save_failed`. Errors use the `{ "error": {...} }` shape from docs/API.md.
+- **Backend modules** (`app/ai/avatar/`, no FastAPI/DB imports): `schemas`, `image_io` (magic bytes,
+  decode, EXIF, dims), `quality`, `preprocess`, `landmarkers` (MediaPipe wrappers + lock),
+  `body_features`, `silhouette`, `face_features`, `pipeline`. Plus `app/auth.py` (verify the token via
+  Supabase `/auth/v1/user`), `app/supabase_rest.py` (PostgREST insert with the service role),
+  `app/errors.py`, `app/avatar_store.py`, `app/routers/avatar.py`, `scripts/download_models.py`,
+  `scripts/benchmark_avatar.py`. (No `GET` endpoint: reads/deletes go through Supabase RLS.)
+- **DB:** `supabase/migrations/0003_avatars.sql`: `avatars` (generated_params immutable for clients;
+  only appearance/body params are user-updatable) and `body_scans` (validation report, status,
+  timings). RLS: owner select/delete; clients cannot insert; only the backend's service role writes.
+- **Mobile:** `features/avatar/api/avatarApi.ts` (resize/normalize with expo-image-manipulator,
+  multipart upload with token, zod-validated response, typed errors), `types/avatarProfile.ts`,
+  `hooks/useAvatarPreprocessing.ts`, new stages consent → processing → results in the existing
+  reducer and screen (`AvatarConsentView`, `AvatarProcessingView`, `AvatarResultsView`),
+  "Choose from library" on capture steps, deleting the avatar also deletes server profiles (RLS).
+
+## Steps (each: implement → test → docs)
+| # | Step | Verify | Status |
+|---|---|---|---|
+| 0 | Backend env on Python 3.14 (inference-sdk marker), mediapipe dep, reference copy of notebook | deps install, existing pytest green | ✅ |
+| 1 | Pure modules: schemas, image_io, quality, preprocess, body/silhouette/face features | unit tests with synthetic landmarks/masks | ✅ |
+| 2 | MediaPipe wrappers + pipeline + model download script | real-image smoke run + benchmark | ✅ (public test images; ~0.2 s) |
+| 3 | Auth, error shape, Supabase REST, avatar router, config/env | router tests (models + Supabase mocked in tests only) | ✅ |
+| 4 | Migration 0003 (+ DATABASE.md); **user runs it** | SQL review; RLS check after the user applies it | ⏳ written, not applied |
+| 5 | Roboflow fallback removal + safe missing-key handling | Jest | ✅ (key rotation: user) |
+| 6 | Mobile api/types/hook + reducer stages | Jest + tsc | ✅ |
+| 7 | Mobile views (consent, processing, results, library pick), Ready copy, delete wiring | tsc, Jest, export | ✅ (device visual check pending) |
+| 8 | End-to-end: local backend + Supabase + phone (Expo Go) | user device run; DB row present | ⏳ needs 0003 + backend `.env` |
+| 9 | Docs: API, DATABASE, AI_MODELS, SECURITY, TESTING, PROGRESS, CHANGELOG, ADR-0006 | — | ✅ |
+
+## Risks
+MediaPipe accuracy on 2D phone photos is approximate (not 3D reconstruction). Left/right labels on
+the back view are unreliable (we average left/right). Face landmarks are biometric-like data:
+stored only on the user's own RLS-protected row and deleted with the avatar/account.
+
+---
+
+# Previous Implementation Plan — Create Your Avatar (camera capture)
 
 **Status:** Implemented — tsc, Jest, iOS/Android export pass; physical-device camera check pending.
 - Scope: guided capture of front, back, face photos with `expo-camera`; review; placeholder completion. No upload, no AI, no 3D.
@@ -792,3 +858,32 @@ Files: new `src/features/launch/components/WelcomeVideoScreen.tsx`; `app/_layout
 | 8 | **Screen UI & Inspection** | `app/(app)/closet.tsx` with header, quality switch (Light/HD), section tabs, and inspection overlay. | ✅ 176 lines (<250); strict TypeScript |
 | 9 | **Home Navigation Link** | Added "✨ My 3D Closet" action card on `app/(app)/index.tsx`. | ✅ 224 lines (<250) |
 | 10 | **Regression & Automated Checks** | Ran TypeScript typecheck, mobile Jest suite (53/53 tests pass), and backend pytest (31/31 pass). | ✅ 100% checks passed |
+
+## 11. Digital Wardrobe shelves redesign (frontend only, 2026-11-09)
+
+**Objective:** Replace the orbit / pearl-white wardrobe with a lilac shelf layout (brief from the user). No backend, schema or analysis changes.
+
+| # | Step | Status |
+|---|---|---|
+| 1 | Pure logic `shelves/shelfLogic.ts`: colour ribbon, colour filter, category shelves, stage tint, attribute callouts (+ tests) | ✅ 8 tests pass |
+| 2 | Components: title bar, colour ribbon, shelf row, garment / Add a Piece cards, empty state, grid toggle | ✅ tsc clean |
+| 3 | `GarmentDetailSheet` with SVG callouts, Front/Back, Fix it → existing editor, Try on my avatar, Delete with confirm | ✅ tsc clean |
+| 4 | Wire into `/(app)/garment`; Add a Piece back to a bottom sheet; remove atelier, `wardrobe-pieces` route and their tests | ✅ Jest 164/164, iOS export bundles |
+| 5 | Device visual check (iOS + Android, Reduce Motion on/off) | ⏳ Pending |
+
+Out of scope by user decision: In the wash, Today's look tray, Style me, Save look, Add to look. Callouts show only stored attributes (no sleeve data exists).
+
+## 12. Digital Wardrobe image closet (frontend only, 2026-11-09)
+
+**Objective:** Replace the shelf view with a horizontally scrolling closet built from `closet-left/middle/right` images, garments placed in calibrated slots. No backend changes.
+
+| # | Step | Status |
+|---|---|---|
+| 1 | `closetSlots.ts` (image-fraction slots, gender image set) + `closetPacking.ts` (zone packing, Add a Piece first) with tests | ✅ 7 tests pass |
+| 2 | `ClosetScroller`, `ClosetSegment`, `GarmentSlotCard` (rod / shelf), `AddPieceCard`, dots, swipe hint, empty card, DEV slot outlines | ✅ tsc clean |
+| 3 | Category pills; "In the wash" (device-only AsyncStorage) + "Edit details" in the detail sheet | ✅ Jest 169/169 |
+| 4 | Wire into `/(app)/garment`; remove shelf view | ✅ iOS + Android export bundle |
+| 5 | Men's closet images + own slots (`closetSceneFor`) | ✅ Jest 173/173 |
+| 6 | Device check on small + large phones; fine-tune slots with the DEV "Slots" toggle | ⏳ Pending |
+
+Deviations: the images are landscape 2752 × 1536 JPGs (brief said portrait 3:4 PNGs) — sizes follow the real ratio. Parallax skipped (would misalign garments with shelves). Image edges show a slight tone change in the art (half-bays at each edge); a card sits on each side of every edge.

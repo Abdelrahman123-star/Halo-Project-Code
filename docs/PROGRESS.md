@@ -160,6 +160,45 @@ _Last updated: 2026-11-10_
   - FastAPI (`services/api`): Implemented authenticated `POST /v1/garment/analyze` with Supabase Bearer JWT verification (`dependencies.py`), server-side magic-bytes, size, and pixel dimension validation (`32–8192px`), and RLS-forwarded `wardrobe_items` persistence.
 - Checks run: `tsc --noEmit` clean (0 errors), Jest **91/91** passing (15 suites), Backend `pytest` **35/35** passing. Every touched file strictly `< 250` lines.
 
+**Digital Wardrobe (frontend only):** `/(app)/garment` is a horizontally scrolling closet built from images (`closet-left/middle/right.jpg`; male users get `closet-*-men.jpg` with their own slot positions and a steel/navy palette), with saved garments packed into calibrated slots (rod: outerwear/dresses; shelves: tops, bottoms), category pills, refresh, detail sheet (callouts, Fix it / Edit details → existing editor, Try on my avatar, In the wash — device-only, Delete). tsc clean, Jest 173/173, iOS + Android export OK; device visual check pending.
+
+**Gender-specific rooms:** bedroom and bathroom pick their scene by the user's registered gender (`src/features/home/rooms/roomScenes.ts`): female (and unknown) → girl rooms, male → boy rooms. The male bathroom has no makeup mark. Device check pending.
+
+**Interactive Bathroom (frontend only):** full-screen bathroom image; skincare shelf → Skin recommendations (`/(app)/skincare`, PROTOTYPE sample data), vanity mirror → Wellness & skin (`/(app)/wellness`, sample data), makeup shelf → Makeup (`/(app)/makeup`, PROTOTYPE sample data). Sample content lives in `src/features/home/bathroom/beautySampleData.ts`; pages are labelled "Preview · sample data". tsc clean, Jest 145/145. Device check pending.
+
+**Interactive Bedroom (frontend only)** — full-screen room image with tappable wardrobe (→ Digital Wardrobe `/(app)/garment`) and mirror (→ avatar page / Create Avatar; a dedicated 3D try-on screen is not built yet), minimal line-icon hints with labels revealed on touch/hover, breathing edge light, shimmer + zoom transitions. tsc clean, Jest 140/140. Device check pending.
+
+**Measurements pinned on the avatar (device check pending).** After preprocessing, the final screen and the
+avatar page show the preview avatar with the user's ratios pinned to body parts (dots, measured segments,
+callout labels). Anchor positions were found by running MediaPipe Pose + Face on the avatar image itself
+(`services/api/scripts/compute_avatar_anchors.py`); the waist uses the notebook's 65 % shoulder→hip estimate.
+The backend now verifies logins with the public anon key when no service-role key is set and then returns
+results unsaved (`saved: false`); the app keeps the ratios on the device. Checks: backend pytest 69/69,
+mobile tsc clean + Jest 133/133, layout verified with a rendered mock. Root cause of "couldn't reach the HALO
+server": the app still had `EXPO_PUBLIC_API_URL=localhost` baked in (Expo needs a `-c` restart after `.env` edits).
+
+**Bottom nav no longer overlaps screens (device check pending).** The bar is laid out below the screen
+stack in `app/(app)/_layout.tsx` instead of floating over it, and owns the bottom safe-area inset. Hidden on
+`house-entrance`, `hallway` (full-screen scenes with their own controls) and `create-avatar` (guarded flow).
+tsc clean, Jest 128/128, Android export bundles.
+
+**Avatar preprocessing — implemented in code; migration + device E2E pending.** Create Avatar now goes
+review → consent → processing → results → complete. With consent, the three photos (camera or library)
+are uploaded to `POST /v1/avatar/preprocess`, which runs the Colab pipeline as backend modules
+(`services/api/app/ai/avatar/`: OpenCV quality checks + MediaPipe Pose/Face Landmarker + body, silhouette
+and face features), discards the photos and saves a per-user profile (`avatars`, `body_scans`, migration
+0003). Validation failures ask for specific retakes; network/config errors offer a retry. Deleting the
+avatar also deletes the saved profile. The 3D avatar is still the labelled preview image.
+- Checks run 2026-11-08: backend pytest 67/67, ruff clean on new files, real-model benchmark median 198 ms
+  (public MediaPipe test images), uvicorn LAN smoke (health/401/503); mobile `tsc --noEmit` clean, Jest
+  127/127 (20 suites), `expo export --platform android` bundles.
+- **Not yet verified:** migration 0003 applied (user), backend `.env` with Supabase service key (user),
+  full device run in Expo Go, accuracy on real photos, RLS isolation with two users.
+- Also: hardcoded Roboflow key fallback removed from `garmentApi.ts` (missing key → clear error);
+  **the leaked key must be rotated** and is still bundled from `.env` as `EXPO_PUBLIC_*`.
+- Next: user applies 0003 + fills `services/api/.env` → device E2E → benchmark with real photos → tune
+  thresholds; then move Roboflow behind the backend.
+
 **Preview avatar (PROTOTYPE / MOCKED OUTPUT):** finishing Create Avatar assigns a fixed sample avatar image (`assets/avatar-preview.png`), shown on Home in place of the "+" silhouette and on the new avatar page (`app/(app)/avatar.tsx`) with a Delete option. It is not generated from the user's photos and is labelled "Preview avatar" in the UI. Stored as a per-user on-device flag only. tsc clean, Jest 66/66.
 
 **Create Your Avatar — camera capture implemented (PROTOTYPE: no avatar generation)**, device check pending. Guided front / back / face capture with live `expo-camera` preview, guides, timer, camera switch, retake, progress, review, and an honest "generation coming soon" screen. Photos are local/in-memory only. tsc clean, Jest 63/63, iOS + Android export OK. Next: test on device; consent screen + explicit cache cleanup before any upload work.

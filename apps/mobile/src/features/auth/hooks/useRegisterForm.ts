@@ -1,25 +1,18 @@
 import { useCallback, useState } from 'react';
-import { fieldErrors, registerSchema, type Gender } from '../schemas';
+import { fieldErrors, registerSchema } from '../schemas';
 import { signUp } from '../api/authApi';
 
-type Field = 'displayName' | 'email' | 'password' | 'confirmPassword';
-
-interface RegisterFormValues {
-  displayName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  gender: Gender | '';
-}
+type Field = 'displayName' | 'gender' | 'email' | 'password' | 'confirmPassword';
 
 /** Orchestrates sign-up. `confirmationSent` is true when Supabase requires email verification. */
 export function useRegisterForm() {
-  const [values, setValues] = useState<RegisterFormValues>({
+  const [values, setValues] = useState<Record<Field, string>>({
     displayName: '',
+    // Empty until the user picks one; the schema rejects ''.
+    gender: '',
     email: '',
     password: '',
     confirmPassword: '',
-    gender: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -31,16 +24,6 @@ export function useRegisterForm() {
       setValues((previous) => ({ ...previous, [name]: text })),
     [],
   );
-
-  const setGender = useCallback((gender: Gender) => {
-    setValues((previous) => ({ ...previous, gender }));
-    setErrors((previous) => {
-      if (!previous.gender) return previous;
-      const next = { ...previous };
-      delete next.gender;
-      return next;
-    });
-  }, []);
 
   async function submit() {
     setFormError(null);
@@ -65,5 +48,5 @@ export function useRegisterForm() {
     if (result.needsEmailConfirmation) setConfirmationSent(true);
   }
 
-  return { values, errors, formError, confirmationSent, loading, setField, setGender, submit };
+  return { values, errors, formError, confirmationSent, loading, setField, submit };
 }
