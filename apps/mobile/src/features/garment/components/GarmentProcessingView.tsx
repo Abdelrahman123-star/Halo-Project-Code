@@ -18,6 +18,7 @@ import { GarmentDetectedCard } from '@/features/garment/components/GarmentDetect
 import { GarmentRoadmapCard } from '@/features/garment/components/GarmentRoadmapCard';
 import type { GarmentAnalysisResponse } from '@/features/garment/types/garment';
 import type { WardrobeItem } from '@/features/wardrobe/types/wardrobe';
+import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
 
 interface GarmentProcessingViewProps {
   isLoading: boolean;
@@ -163,7 +164,8 @@ export function GarmentProcessingView({
 }
 
 const styles = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingBottom: 40, alignItems: 'center', gap: 16 },
+  // Clears the floating bottom navigation so the last button ("Done · View in My Wardrobe") stays tappable.
+  container: { paddingHorizontal: 20, paddingBottom: BOTTOM_NAV_CLEARANCE + 24, alignItems: 'center', gap: 16 },
   loadingCard: { width: '100%', padding: 24, alignItems: 'center', gap: 12 },
   spinnerCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(139, 123, 239, 0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   loadingTitle: { fontSize: 18, fontWeight: '800', color: '#2E2242' },

@@ -1,7 +1,7 @@
 /**
  * PhotoCaptureGuide — how to photograph a garment so the automatic 3D
  * conversion (single-image image-to-3D) gets a clean silhouette.
- * Expanded by default; tap to collapse.
+ * Expanded by default (`defaultExpanded`); tap to collapse / expand.
  */
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,8 +17,8 @@ const TIPS = [
   { title: 'Sharp photo', detail: 'Hold steady; a blurry photo gives a blurry 3D model.' },
 ] as const;
 
-export function PhotoCaptureGuide(): React.JSX.Element {
-  const [isExpanded, setIsExpanded] = useState(true);
+export function PhotoCaptureGuide({ defaultExpanded = true }: { defaultExpanded?: boolean } = {}): React.JSX.Element {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
 
   return (
     <Pressable

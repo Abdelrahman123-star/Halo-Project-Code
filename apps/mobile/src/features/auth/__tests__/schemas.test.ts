@@ -2,6 +2,7 @@ import { fieldErrors, loginSchema, registerSchema } from '../schemas';
 
 const validRegistration = {
   displayName: 'Sara',
+  gender: 'female',
   email: 'sara@example.com',
   password: 'Passw0rdOK',
   confirmPassword: 'Passw0rdOK',
@@ -62,5 +63,22 @@ describe('registerSchema', () => {
 
   it('requires a name', () => {
     expect(registerSchema.safeParse({ ...validRegistration, displayName: '  ' }).success).toBe(false);
+  });
+});
+
+describe('registerSchema — gender', () => {
+  it('accepts female and male', () => {
+    expect(registerSchema.safeParse({ ...validRegistration, gender: 'female' }).success).toBe(true);
+    expect(registerSchema.safeParse({ ...validRegistration, gender: 'male' }).success).toBe(true);
+  });
+
+  it('requires a choice, with a friendly message', () => {
+    const result = registerSchema.safeParse({ ...validRegistration, gender: '' });
+    expect(result.success).toBe(false);
+    if (!result.success) expect(fieldErrors(result.error).gender).toBe('Please choose your gender.');
+  });
+
+  it('rejects anything else', () => {
+    expect(registerSchema.safeParse({ ...validRegistration, gender: 'other' }).success).toBe(false);
   });
 });

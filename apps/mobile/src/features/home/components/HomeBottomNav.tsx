@@ -37,6 +37,13 @@ const NAV_ITEMS: readonly NavItem[] = [
  */
 const HIDDEN_ON_ROUTES = ['house-entrance', 'hallway', 'create-avatar'] as const;
 
+/**
+ * Bottom space a screen must leave free so its last content / bottom overlays
+ * sit above the floating bar (bar + typical home-indicator inset). Matches the
+ * `paddingBottom: 110` most screens already use.
+ */
+export const BOTTOM_NAV_CLEARANCE = 110;
+
 export function shouldShowBottomNav(pathname: string | null | undefined): boolean {
   return !HIDDEN_ON_ROUTES.some((route) => pathname?.includes(route));
 }
@@ -47,9 +54,9 @@ type HomeBottomNavProps = {
 };
 
 /**
- * Rendered by app/(app)/_layout.tsx *below* the screen stack (in normal layout flow, not
- * floating over it), so it can never cover a screen's content or buttons. It owns the
- * bottom safe-area inset; screens should not add their own bottom inset.
+ * Rendered by app/(app)/_layout.tsx floating over the bottom of the screen stack, with a
+ * transparent surround so the page shows through. It owns the bottom safe-area inset;
+ * screens keep `BOTTOM_NAV_CLEARANCE` of bottom space so nothing sits under it.
  */
 export function HomeBottomNav({ blurTarget: _blurTarget }: HomeBottomNavProps = {}) {
   const router = useRouter();
@@ -138,8 +145,8 @@ export const AppBottomNav = HomeBottomNav;
 const RADIUS = 28;
 
 const styles = StyleSheet.create({
-  // Same pastel as the app screens, so the strip reads as part of the page.
-  wrapper: { paddingHorizontal: 14, paddingTop: 8, backgroundColor: '#EEF2FB' },
+  // Transparent: the bar floats over the page, so the room/page shows around it.
+  wrapper: { paddingHorizontal: 14, paddingTop: 8, backgroundColor: 'transparent' },
   shadow: {
     borderRadius: RADIUS,
     shadowColor: '#78689E',

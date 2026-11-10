@@ -1,8 +1,16 @@
 # Progress
 
-_Last updated: 2026-11-08_
+_Last updated: 2026-11-09_
 
 ## Current state
+**Digital Wardrobe (frontend only):** `/(app)/garment` is a horizontally scrolling closet built from images (`closet-left/middle/right.jpg`; male users get `closet-*-men.jpg` with their own slot positions and a steel/navy palette), with saved garments packed into calibrated slots (rod: outerwear/dresses; shelves: tops, bottoms), category pills, refresh, detail sheet (callouts, Fix it / Edit details → existing editor, Try on my avatar, In the wash — device-only, Delete). tsc clean, Jest 173/173, iOS + Android export OK; device visual check pending.
+
+**Gender-specific rooms:** bedroom and bathroom pick their scene by the user's registered gender (`src/features/home/rooms/roomScenes.ts`): female (and unknown) → girl rooms, male → boy rooms. The male bathroom has no makeup mark. Device check pending.
+
+**Interactive Bathroom (frontend only):** full-screen bathroom image; skincare shelf → Skin recommendations (`/(app)/skincare`, PROTOTYPE sample data), vanity mirror → Wellness & skin (`/(app)/wellness`, sample data), makeup shelf → Makeup (`/(app)/makeup`, PROTOTYPE sample data). Sample content lives in `src/features/home/bathroom/beautySampleData.ts`; pages are labelled "Preview · sample data". tsc clean, Jest 145/145. Device check pending.
+
+**Interactive Bedroom (frontend only)** — full-screen room image with tappable wardrobe (→ Digital Wardrobe `/(app)/garment`) and mirror (→ avatar page / Create Avatar; a dedicated 3D try-on screen is not built yet), minimal line-icon hints with labels revealed on touch/hover, breathing edge light, shimmer + zoom transitions. tsc clean, Jest 140/140. Device check pending.
+
 **Measurements pinned on the avatar (device check pending).** After preprocessing, the final screen and the
 avatar page show the preview avatar with the user's ratios pinned to body parts (dots, measured segments,
 callout labels). Anchor positions were found by running MediaPipe Pose + Face on the avatar image itself

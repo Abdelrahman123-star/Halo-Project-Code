@@ -2,12 +2,14 @@ import { useCallback, useState } from 'react';
 import { fieldErrors, registerSchema } from '../schemas';
 import { signUp } from '../api/authApi';
 
-type Field = 'displayName' | 'email' | 'password' | 'confirmPassword';
+type Field = 'displayName' | 'gender' | 'email' | 'password' | 'confirmPassword';
 
 /** Orchestrates sign-up. `confirmationSent` is true when Supabase requires email verification. */
 export function useRegisterForm() {
   const [values, setValues] = useState<Record<Field, string>>({
     displayName: '',
+    // Empty until the user picks one; the schema rejects ''.
+    gender: '',
     email: '',
     password: '',
     confirmPassword: '',

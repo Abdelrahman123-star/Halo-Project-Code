@@ -8,6 +8,7 @@ import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { BlurTargetView } from 'expo-blur';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BOTTOM_NAV_CLEARANCE } from '@/features/home/components/HomeBottomNav';
 import { PastelBlobBackground } from '@/features/auth/components/PastelBlobBackground';
 import { usePreviewAvatar } from '@/features/avatar/hooks/usePreviewAvatar';
 import { FadeInView } from '@/features/home/components/FadeInView';
@@ -62,7 +63,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SCREEN_GUTTER,
     paddingTop: 8,
     // The bottom nav sits below this screen (not over it), so only normal breathing room is needed.
-    paddingBottom: 32,
+    // Room for the floating bottom nav.
+    paddingBottom: BOTTOM_NAV_CLEARANCE,
     gap: 24,
   },
 });
