@@ -9,7 +9,9 @@ import {
   HairlineDivider,
   SocialButtons,
 } from './AuthComponents';
+import { AuthGenderSelector } from './AuthGenderSelector';
 import { Banner } from '@/shared/ui/Banner';
+import type { Gender } from '../schemas';
 
 interface LoginFormViewProps {
   form: {
@@ -76,11 +78,12 @@ export function LoginFormView({ form, onSwitchToRegister }: LoginFormViewProps) 
 
 interface RegisterFormViewProps {
   form: {
-    values: { displayName: string; email: string; password: string };
-    errors: { displayName?: string; email?: string; password?: string };
+    values: { displayName: string; email: string; password: string; gender?: Gender | '' };
+    errors: { displayName?: string; email?: string; password?: string; gender?: string };
     formError: string | null;
     loading: boolean;
     setField: (field: 'displayName' | 'email' | 'password') => (text: string) => void;
+    setGender?: (gender: Gender) => void;
   };
   confirmPassword: string;
   confirmError: string;
@@ -111,6 +114,12 @@ export function RegisterFormView({
           autoComplete="name"
           returnKeyType="next"
           blurOnSubmit={false}
+        />
+
+        <AuthGenderSelector
+          value={form.values.gender}
+          onChange={(gender) => form.setGender?.(gender)}
+          error={form.errors.gender}
         />
 
         <AuthInput

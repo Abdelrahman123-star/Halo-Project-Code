@@ -11,9 +11,16 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required.'),
 });
 
+export const genderEnum = z.enum(['female', 'male'], {
+  message: 'Please select Female or Male.',
+});
+
+export type Gender = z.infer<typeof genderEnum>;
+
 export const registerSchema = z
   .object({
     displayName: z.string().trim().min(1, 'Name is required.').max(60, 'Name is too long.'),
+    gender: genderEnum,
     email: emailField,
     password: z
       .string()

@@ -1,0 +1,9 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/admin/users/route": "/api/admin/users",
+  "/(auth)/login/page": "/login",
+  "/(dashboard)/page": "/",
+  "/(dashboard)/system/page": "/system",
+  "/(dashboard)/wardrobe/page": "/wardrobe",
+  "/(dashboard)/users/page": "/users"
+}

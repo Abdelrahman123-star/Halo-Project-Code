@@ -2,6 +2,7 @@ import { fieldErrors, loginSchema, registerSchema } from '../schemas';
 
 const validRegistration = {
   displayName: 'Sara',
+  gender: 'female' as const,
   email: 'sara@example.com',
   password: 'Passw0rdOK',
   confirmPassword: 'Passw0rdOK',
@@ -62,5 +63,40 @@ describe('registerSchema', () => {
 
   it('requires a name', () => {
     expect(registerSchema.safeParse({ ...validRegistration, displayName: '  ' }).success).toBe(false);
+  });
+
+  it('accepts male as a valid gender', () => {
+    expect(registerSchema.safeParse({ ...validRegistration, gender: 'male' }).success).toBe(true);
+  });
+
+  it('accepts female as a valid gender', () => {
+    expect(registerSchema.safeParse({ ...validRegistration, gender: 'female' }).success).toBe(true);
+  });
+
+  it('rejects missing or empty gender', () => {
+    const withoutGender = { ...validRegistration };
+    delete (withoutGender as { gender?: unknown }).gender;
+    const missingResult = registerSchema.safeParse(withoutGender);
+    expect(missingResult.success).toBe(false);
+    if (!missingResult.success) {
+      expect(fieldErrors(missingResult.error).gender).toBe('Please select Female or Male.');
+    }
+
+    const emptyResult = registerSchema.safeParse({ ...validRegistration, gender: '' });
+    expect(emptyResult.success).toBe(false);
+    if (!emptyResult.success) {
+      expect(fieldErrors(emptyResult.error).gender).toBe('Please select Female or Male.');
+    }
+  });
+
+  it('rejects any gender options other than female or male', () => {
+    const invalidResult = registerSchema.safeParse({
+      ...validRegistration,
+      gender: 'other',
+    });
+    expect(invalidResult.success).toBe(false);
+    if (!invalidResult.success) {
+      expect(fieldErrors(invalidResult.error).gender).toBe('Please select Female or Male.');
+    }
   });
 });
